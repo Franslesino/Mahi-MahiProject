@@ -1,130 +1,168 @@
-{{-- resources/views/layouts/instructor.blade.php --}}
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'EDUQUEST') }} - Instructor</title>
-    
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-</head>
-<body class="bg-gray-50" x-data="{ sidebarOpen: true }">
-    
-    <button 
-        @click="sidebarOpen = !sidebarOpen" 
-        class="hidden lg:block fixed z-50 p-2 bg-white rounded-r-lg shadow-lg transition-all duration-300 hover:bg-gray-50"
-        :class="sidebarOpen ? 'left-[320px] top-20' : 'left-0 top-20'">
-        <svg 
-            class="w-5 h-5 text-gray-600 transition-transform duration-300" 
-            :class="sidebarOpen ? '' : 'rotate-180'"
-            fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-        </svg>
-    </button>
+@extends('layouts.instructor')
 
-    <button 
-        @click="sidebarOpen = !sidebarOpen" 
-        class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg">
-        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-    </button>
+@section('content')
+<div class="p-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-800">Dashboard Instruktur</h2>
+        <p class="text-gray-600 mt-2">Selamat datang kembali, {{ auth()->user()->name }}!</p>
+    </div>
 
-    <div x-show="sidebarOpen" @click="sidebarOpen = false" x-transition.opacity
-        class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"></div>
-
-    <aside 
-        x-show="sidebarOpen"
-        x-transition:enter="transform transition ease-out duration-300"
-        x-transition:enter-start="-translate-x-full"
-        x-transition:enter-end="translate-x-0"
-        x-transition:leave="transform transition ease-in duration-300"
-        x-transition:leave-start="translate-x-0"
-        x-transition:leave-end="-translate-x-full"
-        class="fixed top-0 left-0 z-40 h-screen w-80 bg-white shadow-xl overflow-y-auto lg:translate-x-0">
-        
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-blue-900">EDUQUEST</h2>
-                <button @click="sidebarOpen = false" class="lg:hidden text-gray-500 hover:text-gray-700 transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="flex items-center gap-3">
-                <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span class="text-white text-xl font-bold">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</span>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-gray-900 truncate">{{ auth()->user()->name }}</h3>
-                    <p class="text-sm text-gray-500 truncate">Instruktur</p>
-                </div>
-            </div>
-        </div>
-
-        <nav class="p-4 space-y-2 pb-24">
-            <a href="{{ route('instructor.dashboard') }}" 
-               class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('instructor.dashboard') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
-                <i class="fas fa-th-large w-5 text-center"></i>
-                <span class="font-medium">Dashboard</span>
-            </a>
-
-            <a href="{{ route('instructor.courses') }}" 
-               class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('instructor.courses*') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
-                <i class="fas fa-book w-5 text-center"></i>
-                <span class="font-medium">Kursus Saya</span>
-            </a>
-        </nav>
-
-        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" 
-                    class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-medium">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                    <span>Logout</span>
-                </button>
-            </form>
-        </div>
-    </aside>
-
-    <main class="transition-all duration-300 min-h-screen" :class="sidebarOpen ? 'lg:ml-80' : 'lg:ml-0'">
-        <header class="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-20">
+   
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Kursus -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
             <div class="flex items-center justify-between">
-                <h1 class="text-xl font-semibold text-gray-800">Instructor Panel</h1>
+                <div>
+                    <p class="text-gray-500 text-sm">Total Kursus</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ $stats['totalCourses'] }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-book text-blue-600 text-xl"></i>
+                </div>
             </div>
-        </header>
-
-        @if(session('success'))
-        <div class="mx-8 mt-4 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg flex items-center gap-3">
-            <i class="fas fa-check-circle"></i>
-            <span>{{ session('success') }}</span>
         </div>
-        @endif
 
-        @if(session('error'))
-        <div class="mx-8 mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center gap-3">
-            <i class="fas fa-exclamation-circle"></i>
-            <span>{{ session('error') }}</span>
+        <!-- Kursus Aktif -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm">Kursus Aktif</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ $stats['activeCourses'] }}</p>
+                </div>
+                <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chart-line text-emerald-600 text-xl"></i>
+                </div>
+            </div>
         </div>
-        @endif
 
-        @yield('content')
-    </main>
+        <!-- Total Siswa -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm">Total Siswa</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ $stats['totalStudents'] }}</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-purple-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
 
-    @stack('scripts')
-</body>
-</html>
+        <!-- Total Materi -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm">Total Materi</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ $stats['totalMaterials'] }}</p>
+                </div>
+                <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-file-alt text-amber-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 
-{{-- resources/views/instructor/course-detail.blade.php --}}
+    <!-- Revenue Card (Full Width) -->
+    <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-emerald-100 text-sm mb-1">Total Pendapatan</p>
+                <h3 class="text-3xl font-bold">Rp {{ number_format($stats['totalRevenue'], 0, ',', '.') }}</h3>
+                <p class="text-emerald-100 text-sm mt-2">Dari semua kursus Anda</p>
+            </div>
+            <div class="w-16 h-16 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-wallet text-3xl"></i>
+            </div>
+        </div>
+    </div>
 
+    <!-- Charts & Analytics -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Course Performance -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-800">
+                    <i class="fas fa-trophy text-yellow-500 mr-2"></i>
+                    Performa Kursus
+                </h3>
+            </div>
 
-{{-- resources/views/instructor/materials/create.blade.php --}}
+            @if($courseStats->isEmpty())
+                <div class="text-center py-12">
+                    <i class="fas fa-chart-bar text-gray-300 text-5xl mb-4"></i>
+                    <p class="text-gray-500">Belum ada data performa kursus</p>
+                </div>
+            @else
+                <div class="space-y-4">
+                    @foreach($courseStats->take(5) as $course)
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                        <div class="flex items-center gap-4 flex-1">
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-graduation-cap text-blue-600"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-semibold text-gray-800 mb-1 truncate">{{ $course->title }}</h4>
+                                <div class="flex items-center gap-4 text-sm text-gray-500">
+                                    <span><i class="fas fa-users mr-1"></i>{{ $course->students_count ?? 0 }} siswa</span>
+                                    <span><i class="fas fa-file-alt mr-1"></i>{{ $course->materials_count }} materi</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right flex-shrink-0 ml-4">
+                            <p class="text-lg font-bold text-emerald-600">Rp {{ number_format($course->total_revenue ?? 0, 0, ',', '.') }}</p>
+                            <p class="text-xs text-gray-500">Revenue</p>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-6">
+                <i class="fas fa-bell text-blue-500 mr-2"></i>
+                Aktivitas Terbaru
+            </h3>
+            
+            @if($recentEnrollments->isEmpty())
+                <div class="text-center py-12">
+                    <i class="fas fa-bell-slash text-gray-300 text-4xl mb-3"></i>
+                    <p class="text-gray-500 text-sm">Belum ada aktivitas</p>
+                </div>
+            @else
+                <div class="space-y-4">
+                    @foreach($recentEnrollments as $enrollment)
+                    <div class="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-white text-sm font-bold">{{ substr($enrollment->user->name, 0, 1) }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800">{{ $enrollment->user->name }}</p>
+                            <p class="text-xs text-gray-500 truncate">Mendaftar {{ Str::limit($enrollment->course->title, 25) }}</p>
+                            <p class="text-xs text-gray-400 mt-1">
+                                <i class="fas fa-clock mr-1"></i>
+                                {{ $enrollment->created_at->diffForHumans() }}
+                            </p>
+                        </div>
+                        @if($enrollment->status === 'paid' || $enrollment->status === 'completed')
+                        <span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full font-medium flex-shrink-0">Lunas</span>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+    </div>
+</div>
+
+<style>
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
+@endsection

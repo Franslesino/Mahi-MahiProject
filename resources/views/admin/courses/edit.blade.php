@@ -164,7 +164,7 @@
                     <i class="fas fa-save mr-2"></i>
                     Update Kursus
                 </button>
-                <a href="{{ route('admin.courses') }}"
+                <a href="{{ route('admin.courses.index') }}"
                    class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">
                     Batal
                 </a>

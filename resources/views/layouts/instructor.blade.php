@@ -57,7 +57,7 @@
         <!-- Header Sidebar -->
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-blue-900">EDUQUEST</h2>
+                <h2 class="text-xl font-bold text-blue-900">Menu Instruktur</h2>
                 <button @click="sidebarOpen = false" class="lg:hidden text-gray-500 hover:text-gray-700 transition">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -65,14 +65,17 @@
                 </button>
             </div>
 
-            <!-- User Profile -->
+            <!-- User Profile with Email -->
             <div class="flex items-center gap-3">
                 <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span class="text-white text-xl font-bold">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</span>
+                    <span class="text-white text-xl font-bold">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
                 </div>
                 <div class="flex-1 min-w-0">
                     <h3 class="font-semibold text-gray-900 truncate">{{ auth()->user()->name }}</h3>
-                    <p class="text-sm text-gray-500 truncate">Instruktur</p>
+                    <p class="text-sm text-gray-500 truncate">{{ auth()->user()->email }}</p>
+                    <span class="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                        Instruktur
+                    </span>
                 </div>
             </div>
         </div>
@@ -82,15 +85,42 @@
             <!-- Dashboard -->
             <a href="{{ route('instructor.dashboard') }}" 
                class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('instructor.dashboard') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
-                <i class="fas fa-th-large w-5 text-center"></i>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
                 <span class="font-medium">Dashboard</span>
             </a>
 
             <!-- Kursus Saya -->
             <a href="{{ route('instructor.courses') }}" 
                class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('instructor.courses*') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
-                <i class="fas fa-book w-5 text-center"></i>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
                 <span class="font-medium">Kursus Saya</span>
+            </a>
+
+            <!-- Edit Profile -->
+            {{-- <a href="{{ route('profile') }}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('profile') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                <span class="font-medium">Edit Profile</span>
+            </a> --}}
+
+            <!-- Divider -->
+            <div class="py-2">
+                <div class="border-t border-gray-200"></div>
+            </div>
+
+            <!-- Bantuan -->
+            <a href="#" 
+               class="flex items-center gap-3 px-4 py-3 rounded-lg transition text-gray-700 hover:bg-gray-50">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="font-medium">Bantuan</span>
             </a>
         </nav>
 
@@ -122,35 +152,70 @@
                 <h1 class="text-xl font-semibold text-gray-800">Instructor Panel</h1>
                 <div class="flex items-center gap-4">
                     <!-- Notifications (Optional) -->
-                    <button class="p-2 hover:bg-gray-100 rounded-lg transition">
+                    <button class="p-2 hover:bg-gray-100 rounded-lg transition relative">
                         <i class="fas fa-bell text-gray-600"></i>
+                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                     </button>
+                    
+                    <!-- User Avatar Mobile -->
+                    <div class="lg:hidden flex items-center gap-2">
+                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm font-semibold">{{ substr(auth()->user()->name, 0, 1) }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
 
         <!-- Flash Messages -->
         @if(session('success'))
-        <div class="mx-8 mt-4 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg flex items-center gap-3">
-            <i class="fas fa-check-circle"></i>
-            <span>{{ session('success') }}</span>
+        <div class="mx-8 mt-4 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-check-circle"></i>
+                <span>{{ session('success') }}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-700 hover:text-emerald-900">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
         @endif
 
         @if(session('error'))
-        <div class="mx-8 mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center gap-3">
-            <i class="fas fa-exclamation-circle"></i>
-            <span>{{ session('error') }}</span>
+        <div class="mx-8 mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>{{ session('error') }}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-700 hover:text-red-900">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        @endif
+
+        @if(session('info'))
+        <div class="mx-8 mt-4 p-4 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-info-circle"></i>
+                <span>{{ session('info') }}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-blue-700 hover:text-blue-900">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
         @endif
 
         @if($errors->any())
         <div class="mx-8 mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-            <div class="flex items-center gap-3 mb-2">
-                <i class="fas fa-exclamation-circle"></i>
-                <span class="font-semibold">Terjadi kesalahan:</span>
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span class="font-semibold">Terjadi kesalahan:</span>
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" class="text-red-700 hover:text-red-900">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="list-disc list-inside space-y-1 ml-8">
                 @foreach($errors->all() as $error)
                 <li>{{ $error }}</li>
                 @endforeach

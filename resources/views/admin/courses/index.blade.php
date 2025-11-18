@@ -57,10 +57,16 @@
                     @forelse($courses as $course)
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <img src="{{ $course->image ?? 'https://via.placeholder.com/100' }}" 
-                                 alt="{{ $course->title }}" 
-                                 class="w-16 h-16 object-cover rounded-lg">
-                        </td>
+    @if($course->image)
+        <img src="{{ asset('storage/' . $course->image) }}" 
+             alt="{{ $course->title }}" 
+             class="w-16 h-16 object-cover rounded-lg">
+    @else
+        <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+            <i class="fas fa-image text-gray-400"></i>
+        </div>
+    @endif
+</td>
                         <td class="px-6 py-4">
                             <div class="max-w-xs">
                                 <p class="font-semibold text-gray-900">{{ $course->title }}</p>
@@ -169,4 +175,5 @@
     </div>
 
 </div>
+
 @endsection

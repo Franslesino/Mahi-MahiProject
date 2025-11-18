@@ -4,9 +4,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Instructor\InstructorController;       
 use App\Http\Controllers\Instructor\MaterialController;
 use App\Models\Course;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\ProfileController;
 
 // ==========================
 // Public Routes
@@ -38,6 +40,7 @@ Route::middleware('auth')->group(function () {
     // Student Routes
     // ======================
     Route::middleware('role:student')->group(function () {
+        
         Route::get('/courses', 'App\Http\Controllers\Student\CourseController@index')->name('courses.index');
         Route::get('/courses/{course}', 'App\Http\Controllers\Student\CourseController@show')->name('courses.show');
         Route::post('/courses/{course}/enroll', [\App\Http\Controllers\Student\StudentController::class, 'enroll'])->name('courses.enroll');      
@@ -57,7 +60,9 @@ Route::middleware(['auth', 'role:student'])->group(function () {
     )->name('student.course.learn');
 
 });
-
+Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 
 
         Route::get('/my-courses', function () {
@@ -102,18 +107,11 @@ Route::middleware(['auth', 'role:student'])->group(function () {
     // Instructor Routes
     // ======================
     Route::middleware('role:instructor')
-        ->prefix('instructor')
-        ->name('instructor.')
-        ->group(function () {
+    ->prefix('instructor')
+    ->name('instructor.')
+    ->group(function () {
 
-            
-
-        Route::get('/dashboard', function () {
-            $myCourses = Course::where('instructor_id', Auth::id())->withCount('materials')->get();
-            $totalMaterials = \App\Models\CourseMaterial::whereIn('course_id', $myCourses->pluck('id'))->count();
-            
-            return view('instructor.dashboard', compact('myCourses', 'totalMaterials'));
-        })->name('dashboard');
+    Route::get('/dashboard', [InstructorController::class, 'dashboard'])->name('dashboard');
         
         // Course Management
         Route::get('/courses', [MaterialController::class, 'index'])->name('courses');

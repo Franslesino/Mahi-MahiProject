@@ -58,29 +58,118 @@
             </div>
         </div>
 
-        <!-- Recent Activity -->
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Aktivitas Terbaru</h3>
-            @if(isset($recentEnrollments) && $recentEnrollments->count() > 0)
-                <div class="space-y-4">
-                    @foreach($recentEnrollments as $enrollment)
-                    <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                                <span class="text-gray-600 font-semibold">{{ substr($enrollment->user->name, 0, 1) }}</span>
+        <!-- Charts and Recent Activity Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Revenue Chart -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-6">Pendapatan per Kategori</h3>
+                <div class="flex items-center justify-center">
+                    <canvas id="revenueChart" width="250" height="250"></canvas>
+                </div>
+                <div class="mt-6 grid grid-cols-2 gap-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                        <div>
+                            <p class="text-xs text-gray-500">Web Development</p>
+                            <p class="text-sm font-semibold text-gray-800">Rp. 64.2%</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                        <div>
+                            <p class="text-xs text-gray-500">Mobile Development</p>
+                            <p class="text-sm font-semibold text-gray-800">Rp. 15.3%</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-cyan-400"></div>
+                        <div>
+                            <p class="text-xs text-gray-500">Data Science</p>
+                            <p class="text-sm font-semibold text-gray-800">Rp. 48.6%</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div>
+                            <p class="text-xs text-gray-500">Design</p>
+                            <p class="text-sm font-semibold text-gray-800">Rp. 8.6%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Aktivitas Terbaru</h3>
+                @if(isset($recentEnrollments) && $recentEnrollments->count() > 0)
+                    <div class="space-y-4">
+                        @foreach($recentEnrollments as $enrollment)
+                        <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                                    <span class="text-gray-600 font-semibold">{{ substr($enrollment->user->name, 0, 1) }}</span>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-800">{{ $enrollment->user->name }}</p>
+                                    <p class="text-xs text-gray-500">Mendaftar {{ $enrollment->course->title }}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-800">{{ $enrollment->user->name }}</p>
-                                <p class="text-xs text-gray-500">Mendaftar {{ $enrollment->course->title }}</p>
+                            <span class="text-xs text-gray-400">{{ $enrollment->created_at->diffForHumans() }}</span>
+                        </div>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="text-gray-400 text-center py-8">Belum ada aktivitas</p>
+                @endif
+            </div>
+        </div>
+
+        <!-- Second Row Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+           
+
+            <!-- Top Courses -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Kursus Terpopuler</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-800">Laravel Mastery</p>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                <div class="bg-emerald-500 h-2 rounded-full" style="width: 85%"></div>
                             </div>
                         </div>
-                        <span class="text-xs text-gray-400">{{ $enrollment->created_at->diffForHumans() }}</span>
+                        <span class="text-sm font-semibold text-gray-600 ml-4">245</span>
                     </div>
-                    @endforeach
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-800">React Native Basics</p>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                <div class="bg-blue-500 h-2 rounded-full" style="width: 70%"></div>
+                            </div>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-600 ml-4">198</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-800">Python for Data Science</p>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                <div class="bg-cyan-400 h-2 rounded-full" style="width: 65%"></div>
+                            </div>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-600 ml-4">176</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-800">UI/UX Design Fundamentals</p>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                <div class="bg-purple-500 h-2 rounded-full" style="width: 50%"></div>
+                            </div>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-600 ml-4">142</span>
+                    </div>
                 </div>
-            @else
-                <p class="text-gray-400 text-center py-8">Belum ada aktivitas</p>
-            @endif
+            </div>
         </div>
     </div>
 
@@ -92,7 +181,6 @@
             <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-3">
                 <div class="flex items-center space-x-3">
                   <form method="GET" action="{{ route('admin.courses.index') }}" class="flex items-center">
-
                         <input type="text" name="search" placeholder="Cari kursus..." 
                                value="{{ request('search') }}"
                                class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
@@ -273,7 +361,6 @@
             <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-3">
                 <div class="flex items-center space-x-3">
                    <form method="GET" action="{{ route('admin.users.index') }}" class="flex items-center">
-
                         <input type="text" name="search" placeholder="Cari pengguna..." 
                                value="{{ request('search') }}"
                                class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
@@ -368,6 +455,9 @@
 @endsection
 
 @push('scripts')
+<!-- Chart.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
 <script>
     // Set currentPage from URL parameter
     const urlParams = new URLSearchParams(window.location.search);
@@ -377,6 +467,102 @@
         Alpine.data('dashboardData', () => ({
             currentPage: page
         }));
+    });
+
+    // Initialize charts when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Revenue Donut Chart
+        const revenueCtx = document.getElementById('revenueChart');
+        if (revenueCtx) {
+            new Chart(revenueCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Web Development', 'Mobile Development', 'Data Science', 'Design'],
+                    datasets: [{
+                        data: [64.2, 15.3, 48.6, 8.6],
+                        backgroundColor: [
+                            '#F59E0B', // amber-500
+                            '#3B82F6', // blue-500
+                            '#06B6D4', // cyan-400
+                            '#EF4444'  // red-500
+                        ],
+                        borderWidth: 0,
+                        cutout: '70%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Enrollment Line Chart
+        const enrollmentCtx = document.getElementById('enrollmentChart');
+        if (enrollmentCtx) {
+            new Chart(enrollmentCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'],
+                    datasets: [{
+                        label: 'Pendaftaran',
+                        data: [45, 52, 48, 65, 72, 68, 85, 92, 88, 95, 108, 115],
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#10B981',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                borderDash: [5, 5]
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value;
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
     });
 </script>
 @endpush

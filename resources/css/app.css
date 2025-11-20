@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pnj-blue: #003d82;
+  --color-pnj-yellow: #ffd700;
+  --color-pnj-gray: #f5f5f5;
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  }
+  
+  .btn-primary {
+    @apply bg-[--color-pnj-blue] text-white hover:bg-blue-900;
+  }
+  
+  .card {
+    @apply bg-white shadow-md rounded-lg p-6;
+  }
+  
+  .input {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[--color-pnj-blue];
+  }
+}

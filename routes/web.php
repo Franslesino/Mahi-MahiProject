@@ -1,0 +1,127 @@
+<?php 
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Admin\CourseController as AdminCourseController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Instructor\InstructorController;       
+use App\Http\Controllers\Instructor\MaterialController;
+use App\Models\Kursus;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\ProfileController;
+
+// ==========================
+// Public Routes
+// ==========================
+Route::get('/', function () {
+    $courses = Kursus::where('status_diterbitkan', true)
+                    ->with('pembuat')
+                    ->latest()
+                    ->paginate(10);
+    return view('home.index', compact('courses'));
+})->name('home');
+
+
+// ==========================
+// Authentication
+// ==========================
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// ==========================
+// Protected Routes
+// ==========================
+Route::middleware('auth')->group(function () {
+    
+    // ======================
+    // Student Routes
+    // ======================
+    Route::middleware('role:student')->group(function () {
+        
+        Route::get('/courses', 'App\Http\Controllers\Student\CourseController@index')->name('courses.index');
+        Route::get('/courses/{course}', 'App\Http\Controllers\Student\CourseController@show')->name('courses.show');
+        Route::post('/courses/{course}/enroll', [\App\Http\Controllers\Student\StudentController::class, 'enroll'])->name('courses.enroll');      
+        // ✅ route utama untuk student setelah login
+       Route::get('/user', function () {
+    $courses = \App\Models\Kursus::where('status_diterbitkan', true)
+                ->with('pembuat')
+                ->latest()
+                ->paginate(10);
+    return view('home.index', compact('courses'));
+})->name('user.home');
+
+Route::middleware(['auth', 'role:student'])->group(function () {
+
+    Route::get('/courses/{course}/learn', 
+        [\App\Http\Controllers\Student\StudentController::class, 'learn']
+    )->name('student.course.learn');
+
+});
+Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+
+        Route::get('/my-courses', function () {
+            return view('student.courses.index');
+        })->name('my-courses');
+        
+        Route::get('/profile', function () {
+            return view('profile');
+        })->name('profile');
+    });
+
+    // ======================
+    // Admin Routes
+    // ======================
+    Route::middleware('role:admin')
+        ->prefix('admin')
+        ->name('admin.')
+        ->group(function () {
+
+        Route::get('/dashboard', function () {
+            $totalCourses = Kursus::count();
+            $activeCourses = Kursus::where('status_diterbitkan', true)->count();
+            $totalStudents = \App\Models\User::where('role', 'student')->count();
+            $totalInstructors = \App\Models\User::where('role', 'instructor')->count();
+
+            return view('admin.dashboard', compact(
+                'totalCourses',
+                'activeCourses',
+                'totalStudents',
+                'totalInstructors'
+            ));
+        })->name('dashboard');
+
+        // ✅ Tambahkan route users biar error hilang
+        Route::resource('users', UserController::class);
+
+        // ✅ Route lama tetap dipertahankan
+        Route::resource('courses', AdminCourseController::class);
+    });
+
+    // ======================
+    // Instructor Routes
+    // ======================
+    Route::middleware('role:instructor')
+    ->prefix('instructor')
+    ->name('instructor.')
+    ->group(function () {
+
+    Route::get('/dashboard', [InstructorController::class, 'dashboard'])->name('dashboard');
+        
+        // Course Management
+        Route::get('/courses', [MaterialController::class, 'index'])->name('courses');
+        Route::get('/courses/{course}', [MaterialController::class, 'show'])->name('courses.show');
+        
+        // Material Management
+        Route::get('/courses/{course}/materials/create', [MaterialController::class, 'create'])->name('materials.create');
+        Route::post('/courses/{course}/materials', [MaterialController::class, 'store'])->name('materials.store');
+        Route::get('/courses/{course}/materials/{material}/edit', [MaterialController::class, 'edit'])->name('materials.edit');
+        Route::put('/courses/{course}/materials/{material}', [MaterialController::class, 'update'])->name('materials.update');
+        Route::delete('/courses/{course}/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
+    });
+});

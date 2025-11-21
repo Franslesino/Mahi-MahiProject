@@ -15,7 +15,6 @@ use Illuminate\Notifications\Notifiable;
  * @property string|null $profile_url
  * @property string|null $jenis_kelamin
  * @property string $role
- * @property int|null $role_id
  * @property \Illuminate\Support\Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $remember_token
@@ -37,7 +36,6 @@ class User extends Authenticatable
         'no_telepon',
         'profile_url',
         'jenis_kelamin',
-        'role_id',
     ];
 
     protected $hidden = [

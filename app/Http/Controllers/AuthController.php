@@ -23,7 +23,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|string',
+            'email'    => 'required|string',
             'password' => 'required|min:6',
         ]);
 
@@ -32,24 +32,24 @@ class AuthController extends Controller
         }
 
         $credentials = [
-            'email' => $request->email,
+            'email'    => $request->email,
             'password' => $request->password,
         ];
 
         if (Auth::attempt($credentials, $request->remember)) {
             $request->session()->regenerate();
 
-            // ✅ Tetap: redirect admin
+            // ✅ Admin
             if (Auth::user()->role === 'admin') {
                 return redirect('/admin/dashboard');
             }
 
-            // ✅ DITAMBAHKAN: redirect instructor
+            // ✅ Instructor
             if (Auth::user()->role === 'instructor') {
                 return redirect('/instructor/dashboard');
             }
 
-            // ✅ Tetap: student
+            // ✅ Student
             return redirect('/user');
         }
 
@@ -59,27 +59,31 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'phone' => 'nullable|string|max:15',
-            'password' => 'required|min:8|confirmed',
+            'name'                  => 'required|string|max:255',
+            'email'                 => 'required|email|unique:users,email',
+            'phone'                 => 'nullable|string|max:15',
+            'password'              => 'required|min:8|confirmed',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
+        User::create([
+            'name'     => $request->name,      // ini diisi dari hidden full_name di form
+            'email'    => $request->email,
+            'phone'    => $request->phone,
             'password' => Hash::make($request->password),
-            'role' => 'student',
+            'role'     => 'student',
         ]);
 
-        Auth::login($user);
+        // ❌ Tidak auto login lagi
+        // Auth::login($user);
 
-        return redirect('/user/dashboard')->with('success', 'Registrasi berhasil!');
+        // ✅ Setelah register, arahkan ke halaman login
+        return redirect()
+            ->route('login')
+            ->with('success', 'Registrasi berhasil, silakan login.');
     }
 
     public function logout(Request $request)

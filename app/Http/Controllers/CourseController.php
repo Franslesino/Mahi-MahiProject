@@ -1,89 +1,78 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
-use App\Models\Kursus;
-use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // ✅ WAJIB ADA
+use App\Models\Kursus;
 
 class CourseController extends Controller
 {
-    public function index()
+    /**
+     * Halaman semua kursus (search + kategori)
+     */
+    public function index(Request $request)
     {
-        $courses = Kursus::with(['pembuat'])
-                        ->withCount('materi')
-                        ->latest()
-                        ->paginate(10);
+        $query = Kursus::where('status_diterbitkan', true)
+            ->with(['instructor'])
+            ->withCount('materi');
 
-        return view('admin.courses.index', compact('courses'));
+        // 🔍 SEARCH
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('judul', 'ILIKE', "%{$search}%")
+                  ->orWhere('deskripsi', 'ILIKE', "%{$search}%");
+            });
+        }
+
+        // 🏷 FILTER KATEGORI
+        if ($request->filled('category') && $request->category !== 'all') {
+            $query->where('kategori', $request->category);
+        }
+
+        $courses = $query
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
+
+        return view('courses.index', compact('courses'));
     }
 
-    public function create()
+    /**
+     * Detail Kursus
+     */
+    public function show(Kursus $course)
     {
-        $instructors = User::where('role', 'instructor')->get();
-        return view('admin.courses.create', compact('instructors'));
-    }
+        // Hitung total materi
+        $course->load(['instructor'])
+               ->loadCount('materi');
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'judul' => 'required|string|max:255',
-            'deskripsi' => 'required|string',
-            'kategori' => 'required|string|max:100',
-            'harga' => 'required|numeric|min:0',
-            'status' => 'required|in:active,inactive,draft',
-            'status_berbayar' => 'nullable|boolean',
-            'status_diterbitkan' => 'nullable|boolean',
-            'pembuat' => 'required|exists:users,id',
-        ]);
+        // Untuk detail halaman
+        $materials = $course->materi;
 
-        // ✅ Auth sudah dikenali
-        $validated['pembuat'] = Auth::id();
+        // Enroll status (sementara false jika tidak ada fitur enroll)
+        $isEnrolled = false;
 
-        Kursus::create($validated);
+        // Related Courses
+        $relatedCourses = Kursus::where('kategori', $course->kategori)
+            ->where('id', '!=', $course->id)
+            ->latest()
+            ->take(4)
+            ->get();
 
-        return redirect()->route('admin.courses.index')
-                         ->with('success', 'Kursus berhasil ditambahkan!');
-    }
+        // Instructor stats
+        $instructorCourses = Kursus::where('instructor_id', $course->instructor_id)->count();
+        $instructorStudents = 0;
 
-    public function edit(Kursus $kursus)
-    {
-        $instructors = User::where('role', 'instructor')->get();
-        return view('admin.courses.edit', compact('kursus', 'instructors'));
-    }
-
-    public function update(Request $request, Kursus $kursus)
-    {
-        $validated = $request->validate([
-            'judul' => 'required|string|max:255',
-            'deskripsi' => 'required|string',
-            'kategori' => 'required|string|max:100',
-            'harga' => 'required|numeric|min:0',
-            'status' => 'required|in:active,inactive,draft',
-            'status_berbayar' => 'nullable|boolean',
-            'status_diterbitkan' => 'nullable|boolean',
-            'pembuat' => 'required|exists:users,id',
-        ]);
-
-        $kursus->update($validated);
-
-        return redirect()->route('admin.courses.index')
-                        ->with('success', 'Kursus berhasil diupdate!');
-    }
-
-    public function destroy(Kursus $kursus)
-    {
-        $kursus->delete();
-
-        return redirect()->route('admin.courses.index')
-                        ->with('success', 'Kursus berhasil dihapus!');
-    }
-
-    public function show(Kursus $kursus)
-    {
-        $kursus->load(['pembuat', 'materi']);
-        return view('admin.courses.show', compact('kursus'));
+        return view('courses.show', compact(
+            'course',
+            'materials',
+            'relatedCourses',
+            'isEnrolled',
+            'instructorCourses',
+            'instructorStudents'
+        ));
     }
 }

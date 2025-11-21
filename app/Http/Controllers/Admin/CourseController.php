@@ -3,21 +3,20 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Course;
+use App\Models\Kursus;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
 
 class CourseController extends Controller
 {
     public function index()
     {
-        $courses = Course::with(['instructor', 'creator'])
-                        ->withCount('materials')
-                        ->latest()
-                        ->paginate(10);
+        $courses = Kursus::with(['pembuat', 'instructor'])
+            ->withCount('materi')
+            ->latest()
+            ->paginate(10);
 
         return view('admin.courses.index', compact('courses'));
     }
@@ -30,128 +29,132 @@ class CourseController extends Controller
 
     public function store(Request $request)
     {
-        // Debug log
-        Log::info('Store method called');
-        Log::info('Has file: ' . ($request->hasFile('image') ? 'YES' : 'NO'));
-
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'category' => 'required|string|max:100',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'mode' => 'required|in:Online,Offline,Hybrid',
-            'price' => 'required|numeric|min:0',
+            'title'          => 'required|string|max:255',
+            'description'    => 'required|string',
+            'category'       => 'required|string|max:100',
+            'price'          => 'required|numeric|min:0',
             'discount_price' => 'nullable|numeric|min:0|lt:price',
-            'learning' => 'nullable|string',
-            'badge' => 'nullable|string|max:50',
-            'badge_color' => 'nullable|string|max:50',
-            'status' => 'required|in:active,inactive,draft',
-            'instructor_id' => 'required|exists:users,id',
+            'mode'           => 'required|in:Online,Offline,Hybrid',
+            'learning'       => 'nullable|string',
+            'badge'          => 'nullable|string|max:50',
+            'badge_color'    => 'nullable|string|max:50',
+            'status'         => 'required|in:active,inactive,draft',
+            'instructor_id'  => 'required|exists:users,id',
+            'image'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
-        // Handle Image Upload
+        $data = [
+            'judul'              => $validated['title'],
+            'deskripsi'          => $validated['description'],
+            'kategori'           => $validated['category'],
+            'harga'              => $validated['price'],
+            'status'             => $validated['status'],
+            'status_berbayar'    => $validated['price'] > 0,
+            'status_diterbitkan' => $validated['status'] === 'active',
+            'pembuat'            => Auth::id(),
+
+            'mode'           => $validated['mode'],
+            'discount_price' => $validated['discount_price'] ?? 0,
+            'learning'       => $validated['learning'] ?? null,
+            'badge'          => $validated['badge'] ?? null,
+            'badge_color'    => $validated['badge_color'] ?? 'blue',
+            'instructor_id'  => $validated['instructor_id'],
+            'created_by'     => Auth::id(),
+            'rating'         => 0,
+            'videos'         => 0,
+        ];
+
         if ($request->hasFile('image')) {
-            try {
-                $file = $request->file('image');
-                Log::info('Original name: ' . $file->getClientOriginalName());
-                
-                // Generate unique filename
-                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                
-                // Store file
-                $path = $file->storeAs('courses', $filename, 'public');
-                
-                Log::info('File stored at: ' . $path);
-                
-                $validated['image'] = $path;
-            } catch (\Exception $e) {
-                Log::error('Upload error: ' . $e->getMessage());
-                return back()->with('error', 'Gagal upload gambar: ' . $e->getMessage());
-            }
+            $file     = $request->file('image');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $path     = $file->storeAs('courses', $filename, 'public');
+            $data['image'] = $path;
         }
 
-        $validated['created_by'] = Auth::id();
-        $validated['rating'] = 0;
-        $validated['videos'] = 0;
+        Kursus::create($data);
 
-        Course::create($validated);
-
-        return redirect()->route('admin.courses.index')
-                         ->with('success', 'Kursus berhasil ditambahkan!');
+        return redirect()
+            ->route('admin.courses.index')
+            ->with('success', 'Kursus berhasil ditambahkan!');
     }
 
-    public function edit(Course $course)
+    public function edit(Kursus $course)
     {
         $instructors = User::where('role', 'instructor')->get();
+        // variabel yang dilempar ke view: $course dan $instructors
         return view('admin.courses.edit', compact('course', 'instructors'));
     }
 
-    public function update(Request $request, Course $course)
+    public function update(Request $request, Kursus $course)
     {
-        Log::info('Update method called for course: ' . $course->id);
-        Log::info('Has file: ' . ($request->hasFile('image') ? 'YES' : 'NO'));
-
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'category' => 'required|string|max:100',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'mode' => 'required|in:Online,Offline,Hybrid',
-            'price' => 'required|numeric|min:0',
+            'title'          => 'required|string|max:255',
+            'description'    => 'required|string',
+            'category'       => 'required|string|max:100',
+            'price'          => 'required|numeric|min:0',
             'discount_price' => 'nullable|numeric|min:0|lt:price',
-            'learning' => 'nullable|string',
-            'badge' => 'nullable|string|max:50',
-            'badge_color' => 'nullable|string|max:50',
-            'status' => 'required|in:active,inactive,draft',
-            'instructor_id' => 'required|exists:users,id',
+            'mode'           => 'required|in:Online,Offline,Hybrid',
+            'learning'       => 'nullable|string',
+            'badge'          => 'nullable|string|max:50',
+            'badge_color'    => 'nullable|string|max:50',
+            'status'         => 'required|in:active,inactive,draft',
+            'instructor_id'  => 'required|exists:users,id',
+            'image'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
-        // Handle Image Upload
+        $data = [
+            'judul'              => $validated['title'],
+            'deskripsi'          => $validated['description'],
+            'kategori'           => $validated['category'],
+            'harga'              => $validated['price'],
+            'status'             => $validated['status'],
+            'status_berbayar'    => $validated['price'] > 0,
+            'status_diterbitkan' => $validated['status'] === 'active',
+
+            'mode'           => $validated['mode'],
+            'discount_price' => $validated['discount_price'] ?? 0,
+            'learning'       => $validated['learning'] ?? null,
+            'badge'          => $validated['badge'] ?? null,
+            'badge_color'    => $validated['badge_color'] ?? 'blue',
+            'instructor_id'  => $validated['instructor_id'],
+        ];
+
         if ($request->hasFile('image')) {
-            try {
-                // Delete old image
-                if ($course->image && Storage::disk('public')->exists($course->image)) {
-                    Storage::disk('public')->delete($course->image);
-                    Log::info('Old image deleted: ' . $course->image);
-                }
-                
-                $file = $request->file('image');
-                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $path = $file->storeAs('courses', $filename, 'public');
-                
-                Log::info('New file stored at: ' . $path);
-                
-                $validated['image'] = $path;
-            } catch (\Exception $e) {
-                Log::error('Upload error: ' . $e->getMessage());
-                return back()->with('error', 'Gagal upload gambar: ' . $e->getMessage());
+            if ($course->image && Storage::disk('public')->exists($course->image)) {
+                Storage::disk('public')->delete($course->image);
             }
+
+            $file     = $request->file('image');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $path     = $file->storeAs('courses', $filename, 'public');
+            $data['image'] = $path;
         }
 
-        $course->update($validated);
+        $course->update($data);
 
-        return redirect()->route('admin.courses.index')
-                        ->with('success', 'Kursus berhasil diupdate!');
+        return redirect()
+            ->route('admin.courses.index')
+            ->with('success', 'Kursus berhasil diupdate!');
     }
 
-    public function destroy(Course $course)
+    public function destroy(Kursus $course)
     {
-        // Delete image
         if ($course->image && Storage::disk('public')->exists($course->image)) {
             Storage::disk('public')->delete($course->image);
         }
 
         $course->delete();
 
-        return redirect()->route('admin.courses.index')
-                        ->with('success', 'Kursus berhasil dihapus!');
+        return redirect()
+            ->route('admin.courses.index')
+            ->with('success', 'Kursus berhasil dihapus!');
     }
 
-    public function show(Course $course)
+    public function show(Kursus $course)
     {
-        $course->load(['instructor', 'materials.uploader']);
+        $course->load(['pembuat', 'materi', 'instructor']);
+
         return view('admin.courses.show', compact('course'));
     }
-
-    
 }

@@ -37,27 +37,28 @@
                         
                         <!-- Logo -->
                         <div class="flex items-center gap-3">
-                            <a href="{{ route('home') }}" class="flex items-center gap-2">
-                                <div class="w-10 h-10 bg-pnj-blue rounded-lg flex items-center justify-center">
-                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                                    </svg>
-                                </div>
-                                <span class="text-xl font-bold text-pnj-blue hidden sm:block">Pelayanan TIK</span>
+                               <a href="{{ route('home') }}" class="flex items-center">
+                            <img src="/logo.png" alt="Logo" class="object-contain" style="height: 200px;">
+                        </a>
                             </a>
                         </div>
 
-                        <!-- Search Bar -->
+                        <!-- Search Bar (Desktop) -->
                         <div class="hidden md:flex flex-1 mx-10 max-w-lg">
-                            <div class="relative w-full">
-                                <input 
-                                    type="text" 
-                                    placeholder="Cari kursus, pelatihan, atau topik..." 
-                                    class="w-full rounded-full border border-gray-300 pl-12 pr-4 py-2 focus:ring-2 focus:ring-pnj-blue focus:outline-none shadow-sm placeholder-gray-400 text-sm">
-                                <svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                                </svg>
-                            </div>
+                            <form action="{{ route('home') }}" method="GET" class="hidden md:flex flex-1 mx-6 max-w-md">
+    <div class="relative w-full">
+        <input
+            type="text"
+            name="search"
+            value="{{ request('search') }}"
+            placeholder="Cari kursus, pelatihan, atau topik..."
+            class="w-full rounded-full border border-gray-300 pl-12 pr-4 py-2 focus:ring-2 focus:ring-pnj-blue focus:outline-none shadow-sm placeholder-gray-400 text-sm">
+        <svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+    </div>
+</form>
+
                         </div>
 
                         <!-- Auth Buttons / User Info -->
@@ -96,15 +97,18 @@
 
             <!-- Mobile Search -->
             <div class="md:hidden bg-white border-b border-gray-200 py-2 px-4">
-                <div class="relative">
-                    <input 
-                        type="text" 
-                        placeholder="Cari kursus..." 
-                        class="w-full rounded-full border border-gray-300 pl-10 pr-4 py-2 focus:ring-2 focus:ring-pnj-blue focus:outline-none shadow-sm placeholder-gray-400 text-sm">
-                    <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                </div>
+                <form action="{{ route('home') }}" method="GET" class="relative">
+    <input 
+        type="text"
+        name="search"
+        value="{{ request('search') }}"
+        placeholder="Cari kursus..." 
+        class="w-full rounded-full border border-gray-300 pl-10 pr-4 py-2 focus:ring-2 focus:ring-pnj-blue focus:outline-none shadow-sm placeholder-gray-400 text-sm">
+    <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+    </svg>
+</form>
+
             </div>
 
             <!-- Flash Messages -->

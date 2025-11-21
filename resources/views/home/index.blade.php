@@ -16,7 +16,7 @@
                 Dapatkan Voucher Kode Bagi<br>Mahasiswa Politeknik Negeri Jakarta
             </p>
             <button class="bg-white text-teal-700 px-6 py-2 rounded-lg font-semibold hover:bg-teal-50 transition shadow-sm">
-                Dapatkan Sekarang
+                MASUKKAN NIM ANDA
             </button>
         </div>
         <div class="absolute right-0 top-0 w-40 h-40 bg-teal-500/30 rounded-full -mr-20 -mt-10"></div>
@@ -27,7 +27,7 @@
     <div class="mb-8">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-xl font-bold text-gray-900">Kategori</h3>
-            <a href="#" class="text-pnj-blue font-semibold text-sm hover:underline flex items-center gap-1">
+            <a href="{{ route('home') }}" class="text-pnj-blue font-semibold text-sm hover:underline flex items-center gap-1">
                 LIHAT SEMUA
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -36,21 +36,39 @@
         </div>
 
         <div class="flex gap-3 overflow-x-auto pb-2">
-            <button class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm bg-pnj-blue text-white">
+            @php
+                $currentCategory = request('category', 'Semua');
+            @endphp
+
+            <a href="{{ route('home', array_merge(request()->only('search'), ['category' => 'Semua'])) }}"
+               class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm
+               {{ $currentCategory === 'Semua' ? 'bg-pnj-blue text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
                 Semua
-            </button>
-            <button class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm bg-white text-gray-700 hover:bg-gray-50">
+            </a>
+
+            <a href="{{ route('home', array_merge(request()->only('search'), ['category' => '3D Design'])) }}"
+               class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm
+               {{ $currentCategory === '3D Design' ? 'bg-pnj-blue text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
                 3D Design
-            </button>
-            <button class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm bg-white text-gray-700 hover:bg-gray-50">
+            </a>
+
+            <a href="{{ route('home', array_merge(request()->only('search'), ['category' => 'Data Analytic'])) }}"
+               class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm
+               {{ $currentCategory === 'Data Analytic' ? 'bg-pnj-blue text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
                 Data Analytic
-            </button>
-            <button class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm bg-white text-gray-700 hover:bg-gray-50">
+            </a>
+
+            <a href="{{ route('home', array_merge(request()->only('search'), ['category' => 'Graphic Design'])) }}"
+               class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm
+               {{ $currentCategory === 'Graphic Design' ? 'bg-pnj-blue text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
                 Graphic Design
-            </button>
-            <button class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm bg-white text-gray-700 hover:bg-gray-50">
+            </a>
+
+            <a href="{{ route('home', array_merge(request()->only('search'), ['category' => 'Web Development'])) }}"
+               class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm
+               {{ $currentCategory === 'Web Development' ? 'bg-pnj-blue text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
                 Web Development
-            </button>
+            </a>
         </div>
     </div>
 
@@ -64,7 +82,8 @@
             <div class="relative h-40 bg-gray-900 overflow-hidden">
                 @if($course->image)
                     <img src="{{ asset('storage/' . $course->image) }}"
-                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                         alt="{{ $course->judul }}">
                 @else
                     <div class="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                         <i class="fas fa-graduation-cap text-white text-5xl opacity-50"></i>
@@ -74,7 +93,7 @@
                 <!-- Category -->
                 <div class="absolute top-3 left-3">
                     <span class="bg-teal-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                        {{ $course->category ?? 'General' }}
+                        {{ $course->kategori ?? 'General' }}
                     </span>
                 </div>
 
@@ -90,29 +109,51 @@
 
             <!-- Info Card -->
             <div class="p-4">
-                <h4 class="font-bold text-gray-900 mb-2 line-clamp-2">{{ $course->title }}</h4>
+                <h4 class="font-bold text-gray-900 mb-2 line-clamp-2">{{ $course->judul }}</h4>
 
                 <div class="flex items-center gap-2 text-sm text-gray-600 mb-3">
                     <i class="fas fa-user-tie"></i>
-                    <span>{{ $course->instructor->name ?? 'Instruktur' }}</span>
+                    <span>{{ $course->instructor->name ?? $course->pembuat->name ?? 'Instruktur' }}</span>
                 </div>
 
                 <div class="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                    <span><i class="fas fa-video mr-1"></i>{{ $course->videos }} Video</span>
+                    <span><i class="fas fa-video mr-1"></i>{{ $course->videos ?? 0 }} Video</span>
                     <span class="text-gray-400">•</span>
-                    <span>{{ $course->materials_count }} Materi</span>
+                    <span>{{ $course->materi_count ?? 0 }} Materi</span>
                 </div>
 
                 <div class="flex items-center justify-between">
-                    <span class="text-2xl font-bold text-pnj-blue">
-                        Rp {{ number_format($course->price, 0, ',', '.') }}
-                    </span>
+    @php
+        // fallback harga
+        $basePrice = $course->harga ?? $course->price ?? 0;
 
-                    <div class="flex items-center gap-1 text-yellow-500">
-                        <i class="fas fa-star text-yellow-500"></i>
-                        <span class="text-sm text-gray-600">{{ number_format($course->rating, 1) }}</span>
-                    </div>
-                </div>
+        // final price (gunakan diskon kalau ada)
+        $finalPrice = ($course->discount_price ?? 0) > 0
+            ? $course->discount_price
+            : $basePrice;
+    @endphp
+
+    <div class="flex flex-col gap-1">
+        <span class="text-2xl font-bold text-pnj-blue">
+            Rp {{ number_format($finalPrice, 0, ',', '.') }}
+        </span>
+
+        {{-- kalau lagi diskon, tampilkan harga asli dicoret --}}
+        @if(($course->discount_price ?? 0) > 0)
+            <span class="text-sm text-gray-500 line-through">
+                Rp {{ number_format($basePrice, 0, ',', '.') }}
+            </span>
+        @endif
+    </div>
+
+    <div class="flex items-center gap-1 text-yellow-500">
+        <i class="fas fa-star text-yellow-500"></i>
+        <span class="text-sm text-gray-600">
+            {{ number_format($course->rating ?? 0, 1) }}
+        </span>
+    </div>
+</div>
+
             </div>
 
         </a>

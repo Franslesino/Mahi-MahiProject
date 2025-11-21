@@ -1,5 +1,14 @@
+@php
+    use Illuminate\Support\Facades\Storage;
+@endphp
+
 <!-- Sidebar Component with Toggle -->
-<div x-data="{ sidebarOpen: true }">
+<div 
+    x-data="{
+        sidebarOpen: localStorage.getItem('sidebarOpen') === 'false' ? false : true
+    }"
+    x-init="$watch('sidebarOpen', value => localStorage.setItem('sidebarOpen', value))"
+>
     
     <!-- Toggle Button (Desktop) -->
     <button 
@@ -43,7 +52,7 @@
         x-transition:leave-start="translate-x-0"
         x-transition:leave-end="-translate-x-full"
         class="fixed top-0 left-0 z-40 h-screen w-80 bg-white shadow-xl overflow-y-auto lg:translate-x-0">
-        
+    
         <!-- Header Sidebar -->
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between mb-4">
@@ -57,13 +66,38 @@
 
             <!-- User Profile -->
             <div class="flex items-center gap-3">
-                <div class="w-14 h-14 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span class="text-white text-xl font-bold">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
+
+                {{-- Foto Profil --}}
+                <div class="w-14 h-14 rounded-full overflow-hidden ring-2 ring-teal-500/20 bg-gray-100 flex-shrink-0">
+
+                    @if(Auth::user()->avatar_path && Storage::disk('public')->exists(Auth::user()->avatar_path))
+                        <!-- Jika user punya foto profil -->
+                        <img 
+                            src="{{ asset('storage/' . Auth::user()->avatar_path) }}"
+                            alt="Avatar"
+                            class="w-full h-full object-cover"
+                        >
+                    @else
+                        <!-- Jika belum punya foto profil → tampilkan avatar inisial -->
+                        <div class="w-full h-full bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center">
+                            <span class="text-white text-xl font-bold">
+                                {{ strtoupper(substr(Auth::user()->first_name ?? Auth::user()->name, 0, 1)) }}
+                            </span>
+                        </div>
+                    @endif
+
                 </div>
+
+                {{-- Nama & Email --}}
                 <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-gray-900 truncate">{{ Auth::user()->name }}</h3>
-                    <p class="text-sm text-gray-500 truncate">{{ Auth::user()->email }}</p>
+                    <h3 class="font-semibold text-gray-900 truncate">
+                        {{ Auth::user()->name }}
+                    </h3>
+                    <p class="text-sm text-gray-500 truncate">
+                        {{ Auth::user()->email }}
+                    </p>
                 </div>
+
             </div>
         </div>
 

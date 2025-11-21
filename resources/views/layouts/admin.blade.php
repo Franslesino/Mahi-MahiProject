@@ -7,17 +7,21 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'EDUQUEST') }} - Admin Dashboard</title>
     
-   @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-<script src="{{ asset('js/app.js') }}" defer></script>
+    <script src="{{ asset('js/app.js') }}" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    {{-- Alpine.js --}}
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-gray-50" x-data="{ sidebarOpen: true }">
+<body class="bg-gray-50"
+      x-data="adminSidebar()"
+      x-init="init()">
     
     <!-- Toggle Button (Desktop) -->
     <button 
-        @click="sidebarOpen = !sidebarOpen" 
+        @click="toggle()" 
         class="hidden lg:block fixed z-50 p-2 bg-white rounded-r-lg shadow-lg transition-all duration-300 hover:bg-gray-50"
         :class="sidebarOpen ? 'left-[320px] top-20' : 'left-0 top-20'">
         <svg 
@@ -32,7 +36,7 @@
 
     <!-- Mobile Toggle Button -->
     <button 
-        @click="sidebarOpen = !sidebarOpen" 
+        @click="toggle()" 
         class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg">
         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -92,22 +96,13 @@
 
             <!-- Kursus -->
             <a href="{{ route('admin.courses.index') }}"
-
                class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('admin.courses*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
                 <i class="fas fa-book w-5 text-center"></i>
                 <span class="font-medium">Kursus</span>
             </a>
 
-            {{-- <!-- Transactions -->
-            <a href="{{ route('admin.transactions') }}" 
-               class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('admin.transactions*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
-                <i class="fas fa-exchange-alt w-5 text-center"></i>
-                <span class="font-medium">Transactions</span>
-            </a> --}}
-
             <!-- Pengguna -->
-            <a href="{{ route('admin.users.index')
- }}" 
+            <a href="{{ route('admin.users.index') }}" 
                class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('admin.users*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
                 <i class="fas fa-users w-5 text-center"></i>
                 <span class="font-medium">Pengguna</span>
@@ -136,19 +131,6 @@
         class="transition-all duration-300 min-h-screen"
         :class="sidebarOpen ? 'lg:ml-80' : 'lg:ml-0'">
         
-        <!-- Header -->
-        <header class="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-20">
-            <div class="flex items-center justify-between">
-                <div class="flex-1 max-w-md">
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" 
-                               placeholder="Search" 
-                               class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    </div>
-                </div>
-            </div>
-        </header>
 
         <!-- Flash Messages -->
         @if(session('success'))
@@ -182,6 +164,25 @@
         <!-- Content -->
         @yield('content')
     </main>
+
+    {{-- Alpine component: simpan state sidebar di localStorage --}}
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('adminSidebar', () => ({
+                sidebarOpen: true,
+
+                init() {
+                    const saved = localStorage.getItem('adminSidebar');
+                    this.sidebarOpen = saved === null ? true : saved === 'true';
+                },
+
+                toggle() {
+                    this.sidebarOpen = !this.sidebarOpen;
+                    localStorage.setItem('adminSidebar', this.sidebarOpen ? 'true' : 'false');
+                }
+            }));
+        });
+    </script>
 
     @stack('scripts')
 </body>

@@ -4,83 +4,77 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
     /**
-     * Show profile edit form
+     * Tampilkan form edit profil user yang sedang login
      */
     public function edit()
     {
-        return view('profile');
+        $user = Auth::user();
+
+        return view('profile', compact('user'));
     }
 
     /**
-     * Update profile
+     * Update data profil (termasuk upload foto avatar)
      */
     public function update(Request $request)
     {
         $user = Auth::user();
 
-        // Validasi
+        // Validasi input
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('users')->ignore($user->id)
-            ],
-            
-            'phone' => 'nullable|string|max:20',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name'  => ['required', 'string', 'max:255'],
+            'phone'      => ['nullable', 'string', 'max:20'],
+            'dob'        => ['nullable', 'date'],
+            'gender'     => ['nullable', 'in:Pria,Wanita,Other'],
+            'nim'        => ['nullable', 'string', 'max:50'],
+            'avatar'     => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
-        // Update data user
-        $user->name = $validated['name'];
-        $user->email = $validated['email'];
-       
-        $user->phone = $validated['phone'] ?? null;
+        // Update field teks
+        $user->first_name = $validated['first_name'];
+        $user->last_name  = $validated['last_name'];
+        $user->name       = trim($validated['first_name'].' '.$validated['last_name']);
 
-        // Handle avatar upload (opsional)
+        $user->phone = $validated['phone'] ?? null;
+        $user->dob   = $validated['dob'] ?? null;
+        $user->gender = $validated['gender'] ?? null;
+
+        if (array_key_exists('nim', $validated)) {
+            $user->nim = $validated['nim'];
+        }
+
+        /**
+         * Upload Avatar (Foto Profil)
+         */
         if ($request->hasFile('avatar')) {
             // Hapus avatar lama jika ada
-            if ($user->avatar && file_exists(storage_path('app/public/' . $user->avatar))) {
-                unlink(storage_path('app/public/' . $user->avatar));
+            if ($user->avatar_path && Storage::disk('public')->exists($user->avatar_path)) {
+                Storage::disk('public')->delete($user->avatar_path);
             }
 
-            // Upload avatar baru
-            $avatarPath = $request->file('avatar')->store('avatars', 'public');
-            $user->avatar = $avatarPath;
+            // Buat nama file unik: user_ID_timestamp.ext
+            $ext = $request->file('avatar')->getClientOriginalExtension();
+            $filename = 'user_' . $user->id . '_' . time() . '.' . $ext;
+
+            // Simpan file ke storage/app/public/profile_photos
+            $path = $request->file('avatar')->storeAs('profile_photos', $filename, 'public');
+
+            // Simpan path ke database
+            $user->avatar_path = $path;
         }
 
+        // Simpan perubahan ke database
         $user->save();
 
-        return redirect()->route('profile')->with('success', 'Profile berhasil diupdate!');
-    }
+        // ✅ Refresh session user agar sidebar & navbar pakai data terbaru
+        Auth::setUser($user);
 
-    /**
-     * Update password
-     */
-    public function updatePassword(Request $request)
-    {
-        $user = Auth::user();
-
-        $validated = $request->validate([
-            'current_password' => 'required',
-            'password' => 'required|min:8|confirmed',
-        ]);
-
-        // Cek password lama
-        if (!Hash::check($validated['current_password'], $user->password)) {
-            return back()->withErrors(['current_password' => 'Password lama tidak sesuai']);
-        }
-
-        // Update password
-        $user->password = Hash::make($validated['password']);
-        $user->save();
-
-        return redirect()->route('profile')->with('success', 'Password berhasil diupdate!');
+        return back()->with('success', 'Profil berhasil diperbarui!');
     }
 }

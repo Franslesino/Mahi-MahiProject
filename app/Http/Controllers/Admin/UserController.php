@@ -20,7 +20,7 @@ class UserController extends Controller
 
         // Search
         if ($request->has('search') && $request->search) {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
                   ->orWhere('email', 'like', '%' . $request->search . '%');
             });
@@ -31,7 +31,6 @@ class UserController extends Controller
             $query->where('role', $request->role);
         }
 
-        // PENTING: Gunakan paginate() bukan all()
         $users = $query->latest()->paginate(15);
 
         return view('admin.users.index', compact('users'));
@@ -39,23 +38,27 @@ class UserController extends Controller
 
     public function create()
     {
-        return view('admin.users.create');
+        // tambahin ini supaya $instructors ada di view create.blade.php
+        $instructors = User::where('role', 'instructor')->get();
+
+        return view('admin.users.create', compact('instructors'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:admin,instructor,user',
+            'role'     => 'required|in:admin,instructor,user',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
 
         User::create($validated);
 
-        return redirect()->route('admin.users.index')
+        return redirect()
+            ->route('admin.users.index')
             ->with('success', 'Pengguna berhasil ditambahkan!');
     }
 
@@ -72,10 +75,10 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
-            'role' => 'required|in:admin,instructor,user',
+            'role'     => 'required|in:admin,instructor,user',
         ]);
 
         if ($request->filled('password')) {
@@ -86,12 +89,14 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        return redirect()->route('admin.users.index')
+        return redirect()
+            ->route('admin.users.index')
             ->with('success', 'Pengguna berhasil diperbarui!');
     }
 
     public function destroy(User $user)
     {
+        // kalau nanti mau larang hapus akun sendiri, tinggal aktifin lagi pengecekan di bawah
         // if ($user->getKey() === optional(auth()->user())->getKey()) {
         //     return redirect()->route('admin.users.index')
         //         ->with('error', 'Anda tidak dapat menghapus akun sendiri!');
@@ -99,7 +104,8 @@ class UserController extends Controller
 
         $user->delete();
 
-        return redirect()->route('admin.users.index')
+        return redirect()
+            ->route('admin.users.index')
             ->with('success', 'Pengguna berhasil dihapus!');
     }
 }

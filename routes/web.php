@@ -67,6 +67,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/courses', [StudentCourseController::class, 'index'])->name('courses.index');
         Route::get('/courses/{course}', [StudentCourseController::class, 'show'])->name('courses.show');
 
+        // Payment routes
+        Route::get('/courses/{course}/checkout', [StudentController::class, 'showCheckout'])->name('payment.checkout');
+        Route::post('/courses/{course}/payment/process', [StudentController::class, 'processPayment'])->name('payment.process');
+
         // Enroll
         Route::post('/courses/{course}/enroll', [StudentController::class, 'enroll'])->name('courses.enroll');
 

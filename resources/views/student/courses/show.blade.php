@@ -69,6 +69,7 @@
                 </div>
 
                 <!-- Skills Section -->
+                 <!-- Masih Statis -->
                 <div>
                     <h2 class="text-2xl font-bold text-gray-900 mb-4">Keterampilan yang didapat</h2>
                     <div class="flex flex-wrap gap-3">
@@ -91,9 +92,13 @@
                         dan akan memperkenalkan konsep-konsep pemrograman fundamental termasuk struktur data, 
                         antarmuka program aplikasi jaringan, dan basis data, menggunakan bahasa pemrograman Python.
                     </p>
-                    <button class="px-8 py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition">
-                        Bayar
-                    </button>
+                    @auth
+                        @if(!$isEnrolled)
+                            <a href="{{ route('payment.checkout', $course) }}" class="inline-block px-8 py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition">
+                                Bayar
+                            </a>
+                        @endif
+                    @endauth
                 </div>
             </div>
 
@@ -131,14 +136,11 @@
                                 Lanjutkan Belajar
                             </a>
                         @else
-                            <form action="{{ route('courses.enroll', $course) }}" method="POST" class="mb-3">
-                                @csrf
-                                <button type="submit" 
-                                        class="w-full px-6 py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition">
-                                    <i class="fas fa-shopping-cart mr-2"></i>
-                                    Beli Sekarang
-                                </button>
-                            </form>
+                            <a href="{{ route('payment.checkout', $course) }}" 
+                               class="block w-full text-center px-6 py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition mb-3">
+                                <i class="fas fa-shopping-cart mr-2"></i>
+                                Beli Sekarang
+                            </a>
                         @endif
                     @else
                         <a href="{{ route('login') }}" 

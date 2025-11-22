@@ -44,7 +44,7 @@ class CourseController extends Controller
             ->distinct()
             ->pluck('kategori');
 
-        return view('courses.index', compact('courses', 'categories'));
+        return view('student.courses.index', compact('courses', 'categories'));
     }
 
     /**
@@ -101,7 +101,7 @@ class CourseController extends Controller
         ->distinct('user_id')
         ->count('user_id');
 
-        return view('courses.show', compact(
+        return view('student.courses.show', compact(
             'course',
             'materials',
             'isEnrolled',

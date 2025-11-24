@@ -44,7 +44,7 @@ class CourseController extends Controller
             ->distinct()
             ->pluck('kategori');
 
-        return view('courses.index', compact('courses', 'categories'));
+        return view('student.courses.index', compact('courses', 'categories'));
     }
 
     /**

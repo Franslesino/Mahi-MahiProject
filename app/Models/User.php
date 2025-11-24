@@ -17,7 +17,6 @@ use Illuminate\Notifications\Notifiable;
  * @property string|null $google_id
  * @property string|null $jenis_kelamin
  * @property string $role
- * @property int|null $role_id
  * @property \Illuminate\Support\Carbon|null $email_verified_at
  * @property string|null $password
  * @property string|null $remember_token
@@ -41,7 +40,6 @@ class User extends Authenticatable
         'avatar',
         'google_id',
         'jenis_kelamin',
-        'role_id',
     ];
 
     protected $hidden = [

@@ -37,20 +37,45 @@ Route::get('/', function (Request $request) {
         ->withCount('materi')
         ->latest()
         ->paginate(12)
-        ->withQueryString(); // biar query tetap ada di pagination
+        ->withQueryString();
 
     return view('home.index', compact('courses'));
 })->name('home');
 
+// Test Google Config (Public - untuk debugging)
+Route::get('/test-google-config', function() {
+    return [
+        'socialite_installed' => class_exists('Laravel\Socialite\Facades\Socialite'),
+        'client_id' => config('services.google.client_id'),
+        'client_secret' => config('services.google.client_secret') ? 'SET (' . strlen(config('services.google.client_secret')) . ' chars)' : 'NOT SET',
+        'redirect' => config('services.google.redirect'),
+        'env_client_id' => env('GOOGLE_CLIENT_ID') ? 'SET' : 'NOT SET',
+    ];
+});
+
 // ==========================
-// Authentication
+// Voucher Validation (AJAX)
 // ==========================
+Route::post('/voucher/validate', [App\Http\Controllers\VoucherController::class, 'validate'])
+    ->middleware('auth')
+    ->name('voucher.validate');
+
+// ==========================
+// Authentication Routes
+// ==========================
+
+// Login & Register (Manual)
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 
+// Google OAuth Routes
+Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
+Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+
+// Logout
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // ==========================
@@ -59,35 +84,47 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
 
     // ======================
-    // Student Routes
-    // ======================
-    Route::middleware('role:student')->group(function () {
+// Student Routes
+// ======================
+Route::middleware('role:student')->group(function () {
 
-        // List & detail course (pakai controller student)
-        Route::get('/courses', [StudentCourseController::class, 'index'])->name('courses.index');
-        Route::get('/courses/{course}', [StudentCourseController::class, 'show'])->name('courses.show');
+    // List & detail course
+    Route::get('/courses', [StudentCourseController::class, 'index'])->name('courses.index');
+    Route::get('/courses/{course}', [StudentCourseController::class, 'show'])->name('courses.show');
 
-        // Enroll
-        Route::post('/courses/{course}/enroll', [StudentController::class, 'enroll'])->name('courses.enroll');
-
-        // Home student -> pakai view yang sama dengan home, tapi lewat route home
-        Route::get('/user', function (Request $request) {
-            return redirect()->route('home', $request->only('search', 'category'));
-        })->name('user.home');
-
-        // Learn
-        Route::get('/courses/{course}/learn', [StudentController::class, 'learn'])->name('student.course.learn');
-
-        // Profile (controller beneran)
-        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
-        Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
-        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
-
-        // My courses (sementara view statis)
-        Route::get('/my-courses', function () {
-            return view('student.courses.index');
-        })->name('my-courses');
+    // Transactions (NEW!)
+    Route::prefix('transactions')->name('transactions.')->group(function () {
+        Route::get('/checkout/{course}', [\App\Http\Controllers\Student\TransactionController::class, 'checkout'])->name('checkout');
+        Route::post('/process/{course}', [\App\Http\Controllers\Student\TransactionController::class, 'process'])->name('process');
+        Route::get('/{transaction}', [\App\Http\Controllers\Student\TransactionController::class, 'show'])->name('show');
+        Route::post('/{transaction}/confirm', [\App\Http\Controllers\Student\TransactionController::class, 'confirm'])->name('confirm');
+        Route::post('/{transaction}/cancel', [\App\Http\Controllers\Student\TransactionController::class, 'cancel'])->name('cancel');
     });
+
+    // My transactions
+    Route::get('/my-transactions', [\App\Http\Controllers\Student\TransactionController::class, 'myTransactions'])->name('my-transactions');
+
+    // Enroll (redirect to checkout)
+    Route::post('/courses/{course}/enroll', function(Kursus $course) {
+        return redirect()->route('transactions.checkout', $course);
+    })->name('courses.enroll');
+
+    // Home student
+    Route::get('/user', function (Request $request) {
+        return redirect()->route('home', $request->only('search', 'category'));
+    })->name('user.home');
+
+    // Learn
+    Route::get('/courses/{course}/learn', [StudentController::class, 'learn'])->name('student.course.learn');
+
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // My courses
+    Route::get('/my-courses', [StudentController::class, 'myCourses'])->name('my-courses');
+});
 
     // ======================
     // Admin Routes
@@ -116,6 +153,18 @@ Route::middleware('auth')->group(function () {
 
             // Courses management
             Route::resource('courses', AdminCourseController::class);
+
+            // Transactions management
+        Route::get('transactions', [\App\Http\Controllers\Admin\TransactionController::class, 'index'])
+            ->name('transactions.index');
+        Route::get('transactions/{transaction}', [\App\Http\Controllers\Admin\TransactionController::class, 'show'])
+            ->name('transactions.show');
+        Route::patch('transactions/{transaction}/status', [\App\Http\Controllers\Admin\TransactionController::class, 'updateStatus'])
+            ->name('transactions.updateStatus');
+        Route::delete('transactions/{transaction}', [\App\Http\Controllers\Admin\TransactionController::class, 'destroy'])
+            ->name('transactions.destroy');
+        Route::get('transactions/export', [\App\Http\Controllers\Admin\TransactionController::class, 'export'])
+            ->name('transactions.export');
         });
 
     // ======================

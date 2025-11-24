@@ -81,6 +81,11 @@ class Kursus extends Model
         return $this->belongsTo(User::class, 'pembuat');
     }
 
+     public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
     // materi
     public function materi()
     {

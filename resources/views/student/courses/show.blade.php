@@ -32,106 +32,158 @@
 
 @section('content')
 <div class="bg-gray-50 min-h-screen">
-    <!-- Hero Section -->
-    <div class="bg-gradient-to-r from-blue-900 to-blue-800 text-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Course Info -->
-                <div class="lg:col-span-2">
-                    <!-- Breadcrumb -->
-                    <nav class="flex items-center gap-2 text-sm text-blue-200 mb-4">
-                        <a href="{{ route('home') }}" class="hover:text-white">Beranda</a>
+    <!-- Header Navigation -->
+    <div class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-8">
+                    <a href="{{ route('home') }}" class="text-2xl font-bold text-teal-600">
+                        UpGreenius
+                    </a>
+                    <nav class="hidden md:flex items-center gap-2 text-sm text-gray-500">
+                        <a href="{{ route('home') }}" class="hover:text-gray-700">Beranda</a>
                         <i class="fas fa-chevron-right text-xs"></i>
-                        <a href="{{ route('courses.index') }}" class="hover:text-white">Kursus</a>
+                        <a href="{{ route('courses.index') }}" class="hover:text-gray-700">Kursus</a>
                         <i class="fas fa-chevron-right text-xs"></i>
-                        <span class="text-white">{{ $judul }}</span>
+                        <span class="text-gray-900">{{ $judul }}</span>
                     </nav>
-
-                    <!-- Category & Badge -->
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="px-3 py-1 bg-teal-500 text-white text-sm rounded-full font-semibold">
-                            {{ $kategori }}
-                        </span>
-                        @if($badge)
-                            <span class="px-3 py-1 bg-yellow-500 text-white text-sm rounded-full font-semibold">
-                                {{ $badge }}
-                            </span>
-                        @endif
-                        <span class="px-3 py-1 bg-purple-500 text-white text-sm rounded-full font-semibold">
-                            {{ $mode }}
-                        </span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="relative hidden sm:block">
+                        <input type="text" placeholder="Cari..." 
+                               class="w-64 px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                    <!-- Title -->
-                    <h1 class="text-4xl font-bold mb-4">{{ $judul }}</h1>
-                    
-                    <!-- Description -->
-                    <p class="text-blue-100 text-lg mb-6 leading-relaxed">{{ $deskripsi }}</p>
+    <!-- Main Content -->
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Course Card -->
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+            <!-- Course Image -->
+            @if($course->image)
+                <img src="{{ asset('storage/' . $course->image) }}" alt="{{ $judul }}" 
+                     class="w-full h-80 object-cover">
+            @else
+                <div class="w-full h-80 bg-gradient-to-br from-teal-400 via-blue-500 to-purple-600 flex items-center justify-center">
+                    <i class="fas fa-code text-white text-8xl opacity-30"></i>
+                </div>
+            @endif
 
-                    <!-- Meta Info -->
-                    <div class="flex flex-wrap items-center gap-6 text-sm">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-user-tie"></i>
-                            <span>{{ $course->instructor->name ?? 'Instruktur' }}</span>
+            <!-- Course Info -->
+            <div class="p-8">
+                <!-- Category & Badge -->
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-md font-medium">
+                        {{ $kategori }}
+                    </span>
+                    @if($badge)
+                        <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-sm rounded-md font-medium">
+                            {{ $badge }}
+                        </span>
+                    @endif
+                    <span class="px-3 py-1 bg-teal-100 text-teal-700 text-sm rounded-md font-medium">
+                        {{ $mode }}
+                    </span>
+                </div>
+
+                <!-- Title -->
+                <h1 class="text-3xl font-bold text-gray-900 mb-3">{{ $judul }}</h1>
+                
+                <!-- Description -->
+                <p class="text-gray-600 text-base leading-relaxed mb-6">{{ $deskripsi }}</p>
+
+                <!-- Instructor -->
+                @if($course->instructor)
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-white text-sm font-bold">{{ substr($course->instructor->name, 0, 1) }}</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-video"></i>
-                            <span>{{ $course->videos ?? 0 }} Video</span>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">{{ $course->instructor->name }}</p>
+                            <p class="text-xs text-gray-500">Instructur</p>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-file-alt"></i>
-                            <span>{{ $materialsCount }} Materi</span>
+                    </div>
+                @endif
+
+                <!-- Skills Tags -->
+                @if($course->learning)
+                    <div class="mb-6">
+                        <h3 class="text-sm font-semibold text-gray-900 mb-3">Keterampilan yang didapat</h3>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach(explode("\n", $course->learning) as $item)
+                                @if(trim($item))
+                                    <span class="px-4 py-2 bg-teal-600 text-white text-sm rounded-md font-medium">
+                                        {{ trim($item) }}
+                                    </span>
+                                @endif
+                            @endforeach
                         </div>
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-star text-yellow-400"></i>
-                            <span>{{ number_format($course->rating ?? 0, 1) }} Rating</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-users"></i>
-                            <span>{{ $course->students_count ?? 0 }} Siswa</span>
-                        </div>
+                    </div>
+                @endif
+
+                <!-- Stats -->
+                <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-6 pb-6 border-b border-gray-200">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-video"></i>
+                        <span>{{ $course->videos ?? 0 }} Video</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-file-alt"></i>
+                        <span>{{ $materialsCount }} Materi</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <span>{{ number_format($course->rating ?? 0, 1) }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-users"></i>
+                        <span>{{ $course->students_count ?? 0 }} Siswa</span>
                     </div>
                 </div>
 
-                <!-- Price Card -->
-                <div class="lg:col-span-1">
-                    <div class="bg-white rounded-xl shadow-xl p-6 text-gray-900 sticky top-4">
-                        @if($course->image)
-                            <img src="{{ asset('storage/' . $course->image) }}" alt="{{ $judul }}" 
-                                 class="w-full h-48 object-cover rounded-lg mb-4">
-                        @else
-                            <div class="w-full h-48 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg mb-4 flex items-center justify-center">
-                                <i class="fas fa-graduation-cap text-white text-6xl opacity-50"></i>
-                            </div>
-                        @endif
+                <!-- What You'll Learn -->
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Apa yang akan kamu pelajari?</h2>
+                    <p class="text-gray-700 leading-relaxed mb-4">
+                        Spesialisasi ini dibangun berdasarkan kesuksesan kursus {{ $judul }} untuk Semua Orang 
+                        dan akan memperkenalkan konsep-konsep pemrograman fundamental termasuk struktur data, 
+                        antarmuka program aplikasi jaringan, dan basis data, menggunakan bahasa pemrograman yang dipelajari.
+                    </p>
+                </div>
 
-                        <!-- Price -->
-                        <div class="mb-6">
-                            @if($hargaDiskon)
-                                <div class="flex items-center gap-3 mb-2">
-                                    <span class="text-3xl font-bold text-blue-900">
-                                        Rp {{ number_format($hargaDiskon, 0, ',', '.') }}
-                                    </span>
-                                    <span class="text-lg text-gray-500 line-through">
-                                        Rp {{ number_format($hargaAsli, 0, ',', '.') }}
-                                    </span>
-                                </div>
-                                @if($persenDiskon > 0)
-                                    <span class="inline-block px-3 py-1 bg-red-100 text-red-700 text-sm rounded-full font-semibold">
-                                        Hemat {{ $persenDiskon }}%
-                                    </span>
-                                @endif
-                            @else
-                                <span class="text-3xl font-bold text-blue-900">
+                <!-- Price & Action -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-6 bg-gray-50 rounded-xl">
+                    <div>
+                        @if($hargaDiskon)
+                            <div class="flex items-center gap-3 mb-1">
+                                <span class="text-3xl font-bold text-gray-900">
+                                    Rp {{ number_format($hargaDiskon, 0, ',', '.') }}
+                                </span>
+                                <span class="text-lg text-gray-500 line-through">
                                     Rp {{ number_format($hargaAsli, 0, ',', '.') }}
                                 </span>
+                            </div>
+                            @if($persenDiskon > 0)
+                                <span class="inline-block px-2 py-1 bg-red-100 text-red-600 text-xs rounded font-semibold">
+                                    Hemat {{ $persenDiskon }}%
+                                </span>
                             @endif
-                        </div>
+                        @else
+                            <span class="text-3xl font-bold text-gray-900">
+                                Rp {{ number_format($hargaAsli, 0, ',', '.') }}
+                            </span>
+                        @endif
+                    </div>
 
+                    <div class="flex gap-3">
                         @auth
                             @if($isEnrolled)
                                 <a href="{{ route('student.course.learn', $course) }}" 
-                                   class="block w-full text-center px-6 py-4 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition shadow-lg mb-3">
+                                   class="px-8 py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition shadow-sm">
                                     <i class="fas fa-play-circle mr-2"></i>
                                     Lanjutkan Belajar
                                 </a>
@@ -139,225 +191,189 @@
                                 <form action="{{ route('courses.enroll', $course) }}" method="POST">
                                     @csrf
                                     <button type="submit" 
-                                            class="w-full px-6 py-4 bg-blue-900 text-white rounded-lg font-semibold hover:bg-blue-800 transition shadow-lg mb-3">
-                                        <i class="fas fa-shopping-cart mr-2"></i>
-                                        Beli Sekarang
+                                            class="px-8 py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition shadow-sm">
+                                        Bayar
                                     </button>
                                 </form>
                             @endif
                         @else
                             <a href="{{ route('login') }}" 
-                               class="block w-full text-center px-6 py-4 bg-blue-900 text-white rounded-lg font-semibold hover:bg-blue-800 transition shadow-lg mb-3">
-                                <i class="fas fa-sign-in-alt mr-2"></i>
+                               class="px-8 py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition shadow-sm">
                                 Login untuk Membeli
                             </a>
                         @endauth
 
-                        <button class="w-full px-6 py-3 border-2 border-blue-900 text-blue-900 rounded-lg font-semibold hover:bg-blue-50 transition">
-                            <i class="fas fa-heart mr-2"></i>
-                            Tambah ke Wishlist
-                        </button>
+                       
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Content Section -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Main Content -->
-            <div class="lg:col-span-2 space-y-8">
-                <!-- What You'll Learn -->
-                @if($course->learning)
-                    <div class="bg-white rounded-xl shadow-sm p-6">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-4">
-                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                            Yang Akan Anda Pelajari
-                        </h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            @foreach(explode("\n", $course->learning) as $item)
-                                @if(trim($item))
-                                    <div class="flex items-start gap-3">
-                                        <i class="fas fa-check text-green-500 mt-1"></i>
-                                        <span class="text-gray-700">{{ trim($item) }}</span>
-                                    </div>
-                                @endif
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-
-                <!-- Course Content -->
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900">
-                            <i class="fas fa-list mr-2"></i>
-                            Konten Kursus
-                        </h2>
-                        <span class="text-sm text-gray-600">
-                            {{ $materialsCount }} Materi • {{ $course->videos ?? 0 }} Video
-                        </span>
-                    </div>
-
-                    @if($materials->isEmpty())
-                        <div class="text-center py-12">
-                            <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
-                            <p class="text-gray-500">Materi kursus sedang disiapkan</p>
-                        </div>
-                    @else
-                        <div class="space-y-3">
-                            @foreach($materials as $index => $material)
-                                <div class="border border-gray-200 rounded-lg hover:border-blue-300 transition">
-                                    <div class="p-4">
-                                        <div class="flex items-start justify-between">
-                                            <div class="flex items-start gap-4 flex-1">
-                                                <!-- Icon -->
-                                                <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 {{ 
-                                                    $material->type === 'video' ? 'bg-red-100' : 
-                                                    ($material->type === 'pdf' ? 'bg-blue-100' : 
-                                                    ($material->type === 'quiz' ? 'bg-purple-100' : 'bg-gray-100'))
-                                                }}">
-                                                    <i class="fas fa-{{ 
-                                                        $material->type === 'video' ? 'play-circle' : 
-                                                        ($material->type === 'pdf' ? 'file-pdf' : 
-                                                        ($material->type === 'quiz' ? 'question-circle' : 'align-left'))
-                                                    }} text-{{ 
-                                                        $material->type === 'video' ? 'red' : 
-                                                        ($material->type === 'pdf' ? 'blue' : 
-                                                        ($material->type === 'quiz' ? 'purple' : 'gray'))
-                                                    }}-600"></i>
-                                                </div>
-
-                                                <!-- Content -->
-                                                <div class="flex-1">
-                                                    <div class="flex items-center gap-2 mb-1">
-                                                        <h4 class="font-semibold text-gray-900">{{ $material->title }}</h4>
-                                                        @if($material->is_preview)
-                                                            <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                                                                Preview Gratis
-                                                            </span>
-                                                        @endif
-                                                    </div>
-                                                    @if($material->description)
-                                                        <p class="text-sm text-gray-600 mb-2">{{ $material->description }}</p>
-                                                    @endif
-                                                    <div class="flex items-center gap-4 text-sm text-gray-500">
-                                                        <span class="capitalize">
-                                                            <i class="fas fa-tag mr-1"></i>{{ $material->type }}
-                                                        </span>
-                                                        @if($material->duration)
-                                                            <span>
-                                                                <i class="fas fa-clock mr-1"></i>{{ $material->duration }} menit
-                                                            </span>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Action -->
-                                            @if($material->is_preview || $isEnrolled)
-                                                <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">
-                                                    <i class="fas fa-play mr-1"></i>
-                                                    Lihat
-                                                </button>
-                                            @else
-                                                <div class="flex items-center gap-2 text-gray-400">
-                                                    <i class="fas fa-lock"></i>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    @endif
+        <!-- Course Content -->
+        @if(!$materials->isEmpty())
+            <div class="bg-white rounded-2xl shadow-sm p-8 mb-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Konten Kursus</h2>
+                    <span class="text-sm text-gray-600">
+                        {{ $materialsCount }} Materi • {{ $course->videos ?? 0 }} Video
+                    </span>
                 </div>
 
-                <!-- Instructor Info -->
-                @if($course->instructor)
-                    <div class="bg-white rounded-xl shadow-sm p-6">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-4">
-                            <i class="fas fa-user-tie mr-2"></i>
-                            Instruktur
-                        </h2>
-                        <div class="flex items-start gap-4">
-                            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                                <span class="text-white text-2xl font-bold">{{ substr($course->instructor->name, 0, 1) }}</span>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-gray-900 mb-1">{{ $course->instructor->name }}</h3>
-                                <p class="text-gray-600 mb-3">{{ $course->instructor->email }}</p>
-                                <div class="flex items-center gap-4 text-sm text-gray-600">
-                                    <span><i class="fas fa-book mr-1"></i>{{ $instructorCourses }} Kursus</span>
-                                    <span><i class="fas fa-users mr-1"></i>{{ $instructorStudents }} Siswa</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-            </div>
-
-            <!-- Sidebar -->
-            <div class="lg:col-span-1">
-                <!-- Course Features -->
-                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4">Fitur Kursus</h3>
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-3 text-gray-700">
-                            <i class="fas fa-infinity text-blue-600"></i>
-                            <span>Akses Selamanya</span>
-                        </div>
-                        <div class="flex items-center gap-3 text-gray-700">
-                            <i class="fas fa-mobile-alt text-blue-600"></i>
-                            <span>Akses via Mobile</span>
-                        </div>
-                        <div class="flex items-center gap-3 text-gray-700">
-                            <i class="fas fa-certificate text-blue-600"></i>
-                            <span>Sertifikat</span>
-                        </div>
-                        <div class="flex items-center gap-3 text-gray-700">
-                            <i class="fas fa-download text-blue-600"></i>
-                            <span>Materi Download</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Related Courses -->
-                @if($relatedCourses->isNotEmpty())
-                    <div class="bg-white rounded-xl shadow-sm p-6">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Kursus Terkait</h3>
-                        <div class="space-y-4">
-                            @foreach($relatedCourses as $related)
-                                @php
-                                    $relatedJudul = $related->judul ?? $related->title;
-                                    $relatedHarga = $related->discount_price && $related->discount_price > 0
-                                        ? $related->discount_price
-                                        : ($related->harga ?? $related->price ?? 0);
-                                @endphp
-                                <a href="{{ route('courses.show', $related) }}" class="block group">
-                                    <div class="flex gap-3">
-                                        <div class="w-24 h-16 flex-shrink-0 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg overflow-hidden">
-                                            @if($related->image)
-                                                <img src="{{ asset('storage/' . $related->image) }}" alt="{{ $relatedJudul }}" class="w-full h-full object-cover">
-                                            @endif
+                <div class="space-y-3">
+                    @foreach($materials as $index => $material)
+                        <div class="border border-gray-200 rounded-xl hover:border-teal-300 transition overflow-hidden">
+                            <div class="p-5">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-4 flex-1">
+                                        <!-- Icon -->
+                                        <div class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 {{ 
+                                            $material->type === 'video' ? 'bg-red-50' : 
+                                            ($material->type === 'pdf' ? 'bg-blue-50' : 
+                                            ($material->type === 'quiz' ? 'bg-purple-50' : 'bg-gray-50'))
+                                        }}">
+                                            <i class="fas fa-{{ 
+                                                $material->type === 'video' ? 'play-circle' : 
+                                                ($material->type === 'pdf' ? 'file-pdf' : 
+                                                ($material->type === 'quiz' ? 'question-circle' : 'align-left'))
+                                            }} text-{{ 
+                                                $material->type === 'video' ? 'red' : 
+                                                ($material->type === 'pdf' ? 'blue' : 
+                                                ($material->type === 'quiz' ? 'purple' : 'gray'))
+                                            }}-500 text-xl"></i>
                                         </div>
+
+                                        <!-- Content -->
                                         <div class="flex-1">
-                                            <h4 class="font-semibold text-gray-900 group-hover:text-blue-600 transition line-clamp-2 text-sm mb-1">
-                                                {{ $relatedJudul }}
-                                            </h4>
-                                            <span class="text-sm font-bold text-blue-900">
-                                                Rp {{ number_format($relatedHarga, 0, ',', '.') }}
-                                            </span>
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <h4 class="font-semibold text-gray-900">{{ $material->title }}</h4>
+                                                @if($material->is_preview)
+                                                    <span class="px-2 py-1 bg-teal-50 text-teal-700 text-xs rounded font-medium">
+                                                        Preview Gratis
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            @if($material->description)
+                                                <p class="text-sm text-gray-600 mb-2">{{ $material->description }}</p>
+                                            @endif
+                                            <div class="flex items-center gap-4 text-xs text-gray-500">
+                                                <span class="capitalize">
+                                                    <i class="fas fa-tag mr-1"></i>{{ $material->type }}
+                                                </span>
+                                                @if($material->duration)
+                                                    <span>
+                                                        <i class="fas fa-clock mr-1"></i>{{ $material->duration }} menit
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
-                                </a>
-                            @endforeach
+
+                                    <!-- Action -->
+                                    @if($material->is_preview || $isEnrolled)
+                                        <button class="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition text-sm font-medium">
+                                            <i class="fas fa-play mr-2"></i>
+                                            Lihat
+                                        </button>
+                                    @else
+                                        <div class="flex items-center gap-2 text-gray-300">
+                                            <i class="fas fa-lock text-lg"></i>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        <!-- Additional Info Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Course Features -->
+            <div class="bg-white rounded-2xl shadow-sm p-8">
+                <h3 class="text-xl font-bold text-gray-900 mb-6">Fitur Kursus</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3 text-gray-700">
+                        <div class="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-infinity text-teal-600"></i>
+                        </div>
+                        <span>Akses Selamanya</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-gray-700">
+                        <div class="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-mobile-alt text-teal-600"></i>
+                        </div>
+                        <span>Akses via Mobile</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-gray-700">
+                        <div class="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-certificate text-teal-600"></i>
+                        </div>
+                        <span>Sertifikat</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-gray-700">
+                        <div class="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-download text-teal-600"></i>
+                        </div>
+                        <span>Materi Download</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructor Details -->
+            @if($course->instructor)
+                <div class="bg-white rounded-2xl shadow-sm p-8">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">Tentang Instruktur</h3>
+                    <div class="flex items-start gap-4 mb-4">
+                        <div class="w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-white text-2xl font-bold">{{ substr($course->instructor->name, 0, 1) }}</span>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-900 mb-1">{{ $course->instructor->name }}</h4>
+                            <p class="text-sm text-gray-600 mb-3">{{ $course->instructor->email }}</p>
                         </div>
                     </div>
-                @endif
-            </div>
+                    <div class="flex items-center gap-6 text-sm text-gray-600">
+                        <span><i class="fas fa-book mr-2 text-teal-600"></i>{{ $instructorCourses }} Kursus</span>
+                        <span><i class="fas fa-users mr-2 text-teal-600"></i>{{ $instructorStudents }} Siswa</span>
+                    </div>
+                </div>
+            @endif
         </div>
+
+        <!-- Related Courses -->
+        @if($relatedCourses->isNotEmpty())
+            <div class="bg-white rounded-2xl shadow-sm p-8">
+                <h3 class="text-xl font-bold text-gray-900 mb-6">Kursus Terkait</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($relatedCourses as $related)
+                        @php
+                            $relatedJudul = $related->judul ?? $related->title;
+                            $relatedHarga = $related->discount_price && $related->discount_price > 0
+                                ? $related->discount_price
+                                : ($related->harga ?? $related->price ?? 0);
+                        @endphp
+                        <a href="{{ route('courses.show', $related) }}" class="block group">
+                            <div class="border border-gray-200 rounded-xl overflow-hidden hover:border-teal-300 transition">
+                                <div class="h-32 bg-gradient-to-br from-teal-400 to-blue-500 overflow-hidden">
+                                    @if($related->image)
+                                        <img src="{{ asset('storage/' . $related->image) }}" alt="{{ $relatedJudul }}" class="w-full h-full object-cover">
+                                    @endif
+                                </div>
+                                <div class="p-4">
+                                    <h4 class="font-semibold text-gray-900 group-hover:text-teal-600 transition mb-2 line-clamp-2">
+                                        {{ $relatedJudul }}
+                                    </h4>
+                                    <span class="text-lg font-bold text-gray-900">
+                                        Rp {{ number_format($relatedHarga, 0, ',', '.') }}
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        @endif
     </div>
 </div>
 

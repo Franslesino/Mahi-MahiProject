@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -72,12 +73,20 @@ class AuthController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        User::create([
+        $user = User::create([
             'name'     => $request->name,
             'email'    => $request->email,
             'phone'    => $request->phone,
             'password' => Hash::make($request->password),
             'role'     => 'student',
+        ]);
+
+        // Create notification for new account
+        Notification::create([
+            'user_id' => $user->id,
+            'title' => 'Akun Berhasil Dibuat',
+            'message' => 'Selamat datang di Mahi-Mahi! Akun Anda telah berhasil dibuat. Silakan login untuk mulai belajar.',
+            'type' => 'success',
         ]);
 
         return redirect()
@@ -134,6 +143,14 @@ class AuthController extends Controller
                 'role'      => 'student',
                 'password'  => null, // Password null untuk OAuth user
                 'email_verified_at' => now(), // Email sudah terverifikasi via Google
+            ]);
+
+            // Create notification for new account via Google
+            Notification::create([
+                'user_id' => $newUser->id,
+                'title' => 'Akun Berhasil Dibuat',
+                'message' => 'Selamat datang di Mahi-Mahi! Akun Anda telah berhasil dibuat melalui Google. Silakan mulai belajar.',
+                'type' => 'success',
             ]);
 
             Auth::login($newUser, true);

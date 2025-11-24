@@ -22,8 +22,6 @@ class VoucherUsage extends Model
         'used_at' => 'datetime',
     ];
 
-    public $timestamps = false;
-
     // Relationships
     public function voucher()
     {

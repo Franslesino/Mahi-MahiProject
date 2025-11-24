@@ -8,6 +8,7 @@ use App\Models\Transaction;
 use App\Models\Enrollment;
 use App\Models\Voucher;
 use App\Models\VoucherUsage;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -200,6 +201,14 @@ class TransactionController extends Controller
                 'kursus_id' => $transaction->kursus_id,
                 'status_pendaftaran' => 'active',
                 'tanggal_daftar' => now(),
+            ]);
+
+            // Create notification for successful payment
+            Notification::create([
+                'user_id' => $transaction->user_id,
+                'title' => 'Pembayaran Berhasil',
+                'message' => 'Pembayaran untuk kursus "' . $transaction->kursus->nama . '" telah berhasil dikonfirmasi. Selamat belajar!',
+                'type' => 'success',
             ]);
 
             DB::commit();

@@ -101,6 +101,17 @@
                 <span class="font-medium">Kursus</span>
             </a>
 
+            <a href="{{ route('admin.transactions.index') }}" 
+   class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('admin.transactions.*') ? 'bg-white/10' : '' }}">
+    <i class="fas fa-receipt text-xl"></i>
+    <span>Transaksi</span>
+    @if(isset($pendingTransactionsCount) && $pendingTransactionsCount > 0)
+    <span class="ml-auto px-2 py-1 text-xs font-bold bg-yellow-500 text-white rounded-full">
+        {{ $pendingTransactionsCount }}
+    </span>
+    @endif
+</a>
+
             <!-- Pengguna -->
             <a href="{{ route('admin.users.index') }}" 
                class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('admin.users*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">

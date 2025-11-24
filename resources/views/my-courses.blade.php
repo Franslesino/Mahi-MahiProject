@@ -1,20 +1,235 @@
+{{-- resources/views/student/my-courses.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Kursus Saya - Pelayanan TIK PNJ')
+@section('title', 'Kursus Saya')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Kursus Saya</h1>
-    
-    <div class="bg-white rounded-lg shadow-sm p-12 text-center">
-        <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-        </svg>
-        <h2 class="text-2xl font-semibold text-gray-700 mb-2">Belum Ada Kursus</h2>
-        <p class="text-gray-500 mb-6">Anda belum mendaftar kursus apapun</p>
-        <a href="{{ route('home') }}" class="inline-block px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition">
-            Jelajahi Kursus
-        </a>
+<div class="bg-gray-50 min-h-screen">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Header with Back Button -->
+        <div class="mb-6">
+            <a href="{{ route('home') }}" class="inline-flex items-center text-gray-700 hover:text-gray-900 mb-4">
+                <i class="fas fa-arrow-left mr-2"></i>
+                <span class="font-semibold">Kursus Saya</span>
+            </a>
+
+            <!-- Search Bar -->
+            <div class="relative">
+                <input type="text" 
+                       id="searchCourse"
+                       placeholder="Cari Kursus" 
+                       class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                <button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-search text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="flex gap-3 mb-6 overflow-x-auto pb-2">
+            <button class="filter-tab active px-6 py-2 bg-teal-700 text-white rounded-full font-semibold whitespace-nowrap transition hover:bg-teal-800" data-filter="all">
+                Berlangsung
+            </button>
+            <button class="filter-tab px-6 py-2 bg-white text-gray-700 rounded-full font-semibold whitespace-nowrap border border-gray-300 transition hover:bg-gray-50" data-filter="ongoing">
+                Selesai
+            </button>
+        </div>
+
+        @if($enrollments->isEmpty())
+            <!-- Empty State -->
+            <div class="bg-white rounded-2xl shadow-sm p-12 text-center">
+                <div class="max-w-sm mx-auto">
+                    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-graduation-cap text-gray-400 text-4xl"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-2">Belum Ada Kursus</h2>
+                    <p class="text-gray-600 mb-6">Mulai perjalanan belajar Anda dengan memilih kursus yang sesuai</p>
+                    <a href="{{ route('courses.index') }}" 
+                       class="inline-flex items-center px-6 py-3 bg-teal-700 text-white rounded-xl hover:bg-teal-800 transition font-semibold">
+                        <i class="fas fa-search mr-2"></i>
+                        Jelajahi Kursus
+                    </a>
+                </div>
+            </div>
+        @else
+            <!-- Courses List -->
+            <div class="space-y-4" id="coursesList">
+                @foreach($enrollments as $enrollment)
+                    @php
+                        $course = $enrollment->kursus;
+                        $judul = $course->judul ?? $course->title ?? 'Untitled';
+                        $kategori = $course->kategori ?? 'General';
+                        $instructor = $course->pembuat ?? $course->instructor ?? null;
+                        $materiCount = $course->materi_count ?? $course->materi->count() ?? 0;
+                        
+                        // Calculate progress
+                        $progress = 0; // TODO: Implement actual progress tracking
+                        $isCompleted = $progress >= 100;
+                        
+                        
+                    @endphp
+
+                    <div class="course-item bg-white rounded-2xl shadow-sm hover:shadow-md transition p-4" 
+                         data-status="{{ $isCompleted ? 'completed' : 'ongoing' }}"
+                         data-course-name="{{ strtolower($judul) }}">
+                        
+                        <div class="flex gap-4">
+                            <!-- Course Thumbnail -->
+                            <div class="flex-shrink-0">
+                                <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-gradient-to-br from-gray-700 to-gray-900">
+                                    @if($course->image)
+                                        <img src="{{ asset('storage/' . $course->image) }}" 
+                                             alt="{{ $judul }}" 
+                                             class="w-full h-full object-cover">
+                                    @else
+                                        <div class="w-full h-full flex items-center justify-center">
+                                            <i class="fas fa-graduation-cap text-white text-3xl opacity-50"></i>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- Course Info -->
+                            <div class="flex-1 min-w-0">
+                                <!-- Category Label -->
+                                <div class="mb-2">
+                                    <span class="inline-block px-3 py-1 text-xs font-bold rounded-full
+                                        {{ $kategori === 'Graphic Design' ? 'bg-orange-100 text-orange-600' : '' }}
+                                        {{ $kategori === 'Digital Marketing' ? 'bg-orange-100 text-orange-600' : '' }}
+                                        {{ $kategori === 'Web Development' ? 'bg-blue-100 text-blue-600' : '' }}
+                                        {{ $kategori === 'Programming' ? 'bg-purple-100 text-purple-600' : '' }}
+                                        {{ $kategori === 'business' ? 'bg-green-100 text-green-600' : '' }}
+                                        {{ !in_array($kategori, ['Graphic Design', 'Digital Marketing', 'Web Development', 'Programming', 'business']) ? 'bg-gray-100 text-gray-600' : '' }}">
+                                        {{ ucwords($kategori) }}
+                                    </span>
+                                </div>
+
+                                <!-- Course Title -->
+                                <h3 class="font-bold text-gray-900 text-base mb-1 line-clamp-2">
+                                    {{ $judul }}
+                                </h3>
+
+                              
+
+                                <!-- Download Certificate Button -->
+                                @if($isCompleted)
+                                    <button class="inline-flex items-center text-sm font-semibold text-teal-700 hover:text-teal-800 transition">
+                                        <i class="fas fa-download mr-1"></i>
+                                        UNDUH SERTIFIKAT
+                                    </button>
+                                @else
+                                    <div class="flex items-center gap-2">
+                                        <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                            <div class="bg-teal-600 h-2 rounded-full transition-all" style="width: {{ $progress }}%"></div>
+                                        </div>
+                                        <span class="text-xs font-semibold text-gray-600">{{ $progress }}%</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Action Button -->
+                            <div class="flex items-start">
+                                <a href="{{ route('student.course.learn', $course) }}" 
+                                   class="w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white transition shadow-lg">
+                                    <i class="fas fa-play text-sm"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                @endforeach
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-2 gap-4 mt-8">
+                <div class="bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl p-4 text-white">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
+                            <i class="fas fa-book-open text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold">{{ $enrollments->count() }}</div>
+                            <div class="text-sm opacity-90">Total Kursus</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
+                            <i class="fas fa-certificate text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold">0</div>
+                            <div class="text-sm opacity-90">Sertifikat</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
     </div>
 </div>
+
+<style>
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .filter-tab.active {
+        background-color: #0f766e;
+        color: white;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filter functionality
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const courseItems = document.querySelectorAll('.course-item');
+
+    filterTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Update active state
+            filterTabs.forEach(t => {
+                t.classList.remove('active', 'bg-teal-700', 'text-white');
+                t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+            });
+            
+            this.classList.add('active', 'bg-teal-700', 'text-white');
+            this.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+
+            // Filter courses
+            const filter = this.dataset.filter;
+            
+            courseItems.forEach(item => {
+                if (filter === 'all') {
+                    item.style.display = 'block';
+                } else {
+                    const status = item.dataset.status;
+                    item.style.display = status === filter ? 'block' : 'none';
+                }
+            });
+        });
+    });
+
+    // Search functionality
+    const searchInput = document.getElementById('searchCourse');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            courseItems.forEach(item => {
+                const courseName = item.dataset.courseName;
+                const matches = courseName.includes(searchTerm);
+                item.style.display = matches ? 'block' : 'none';
+            });
+        });
+    }
+});
+</script>
 @endsection

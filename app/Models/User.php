@@ -13,11 +13,13 @@ use Illuminate\Notifications\Notifiable;
  * @property string|null $phone
  * @property string|null $no_telepon
  * @property string|null $profile_url
+ * @property string|null $avatar
+ * @property string|null $google_id
  * @property string|null $jenis_kelamin
  * @property string $role
  * @property int|null $role_id
  * @property \Illuminate\Support\Carbon|null $email_verified_at
- * @property string $password
+ * @property string|null $password
  * @property string|null $remember_token
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -36,6 +38,8 @@ class User extends Authenticatable
         'phone',
         'no_telepon',
         'profile_url',
+        'avatar',
+        'google_id',
         'jenis_kelamin',
         'role_id',
     ];
@@ -65,6 +69,11 @@ class User extends Authenticatable
     public function enrollments()
     {
         return $this->hasMany(Enrollment::class);
+    }
+      // --- Relasi ke Transactions (NEW!) ---
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
     }
 
     // --- Relasi ke Materi ---
@@ -99,5 +108,11 @@ class User extends Authenticatable
     public function isStudent()
     {
         return $this->role === 'student';
+    }
+
+    // --- Google OAuth helper ---
+    public function isGoogleUser()
+    {
+        return !is_null($this->google_id);
     }
 }

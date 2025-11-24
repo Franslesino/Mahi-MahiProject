@@ -1,6 +1,5 @@
-<?php 
- 
- 
+<?php
+
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
@@ -11,76 +10,62 @@ use Illuminate\Support\Facades\Auth;
 
 class StudentController extends Controller
 {
-protected $middleware = ['auth', 'role:student'];
+    protected $middleware = ['auth', 'role:student'];
 
-public function __construct()
-{
-}
+    public function __construct()
+    {
+        // Middleware already applied in routes
+    }
 
-/**
-* Enroll student to course
-*/
-public function enroll(Request $request, Kursus $course)
-{
-// Check if already enrolled
-$existingEnrollment = Enrollment::where('user_id', Auth::id())
-->where('kursus_id', $course->id)
-->first();
+    /**
+     * Enroll student to course (DEPRECATED - use TransactionController)
+     */
+    public function enroll(Request $request, Kursus $course)
+    {
+        // Redirect to checkout instead
+        return redirect()->route('transactions.checkout', $course);
+    }
 
-if ($existingEnrollment) {
-return redirect()
-->route('courses.show', $course)
-->with('error', 'Anda sudah terdaftar di kursus ini!');
-}
+    /**
+     * Show learning page
+     */
+    public function learn(Kursus $course)
+    {
+        // Check if enrolled
+        $enrollment = Enrollment::where('user_id', Auth::id())
+            ->where('kursus_id', $course->id)
+            ->where('status_pendaftaran', 'active')
+            ->firstOrFail();
 
-// Create enrollment
-$enrollment = Enrollment::create([
-'user_id' => Auth::id(),
-'kursus_id' => $course->id,
-'status_pendaftaran' => 'active',
-'tanggal_daftar' => now(),
-]);
+        $course->load([
+            'pembuat',
+            'materi' => function($query) {
+                $query->orderBy('urutan');
+            }
+        ]);
 
-return redirect()
-->route('student.course.learn', $course)
-->with('success', 'Selamat! Anda berhasil mendaftar kursus ini.');
-}
+        $materials = $course->materi;
+        $currentMaterial = $materials->first();
 
-/**
-* Show learning page
-*/
-public function learn(Kursus $course)
-{
-// Check if enrolled
-$enrollment = Enrollment::where('user_id', Auth::id())
-->where('kursus_id', $course->id)
-->where('status_pendaftaran', 'active')
-->firstOrFail();
+        return view('student.learn', compact('course', 'materials', 'currentMaterial', 'enrollment'));
+    }
 
-$course->load([
-'pembuat',
-'materi' => function($query) {
-$query->orderBy('urutan');
-}
-]);
+    /**
+     * My courses page
+     */
+    public function myCourses()
+    {
+        $enrollments = Enrollment::where('user_id', Auth::id())
+            ->where('status_pendaftaran', 'active')
+            ->with([
+                'kursus' => function($query) {
+                    $query->withCount('materi');
+                },
+                'kursus.pembuat'
+            ])
+            ->latest('tanggal_daftar')
+            ->get();
 
-$materials = $course->materi;
-$currentMaterial = $materials->first();
-
-return view('student.learn', compact('course', 'materials', 'currentMaterial', 'enrollment'));
-}
-
-/**
-* My courses page
-*/
-public function myCourses()
-{
-$enrollments = Enrollment::where('user_id', Auth::id())
-->where('status_pendaftaran', 'active')
-->with(['kursus.pembuat'])
-->latest()
-->get();
-
-return view('student.my-courses', compact('enrollments'));
-}
+        return view('my-courses', compact('enrollments'));
+    }
 }

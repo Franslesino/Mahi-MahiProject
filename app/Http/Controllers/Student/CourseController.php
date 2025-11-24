@@ -101,7 +101,7 @@ class CourseController extends Controller
         ->distinct('user_id')
         ->count('user_id');
 
-        return view('courses.show', compact(
+        return view('student.courses.show', compact(
             'course',
             'materials',
             'isEnrolled',

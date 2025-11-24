@@ -92,6 +92,7 @@ Route::middleware('role:student')->group(function () {
     Route::get('/courses', [StudentCourseController::class, 'index'])->name('courses.index');
     Route::get('/courses/{course}', [StudentCourseController::class, 'show'])->name('courses.show');
 
+<<<<<<< HEAD
     // Transactions (NEW!)
     Route::prefix('transactions')->name('transactions.')->group(function () {
         Route::get('/checkout/{course}', [\App\Http\Controllers\Student\TransactionController::class, 'checkout'])->name('checkout');
@@ -99,6 +100,32 @@ Route::middleware('role:student')->group(function () {
         Route::get('/{transaction}', [\App\Http\Controllers\Student\TransactionController::class, 'show'])->name('show');
         Route::post('/{transaction}/confirm', [\App\Http\Controllers\Student\TransactionController::class, 'confirm'])->name('confirm');
         Route::post('/{transaction}/cancel', [\App\Http\Controllers\Student\TransactionController::class, 'cancel'])->name('cancel');
+=======
+        // Payment routes
+        Route::get('/courses/{course}/checkout', [StudentController::class, 'showCheckout'])->name('payment.checkout');
+        Route::post('/courses/{course}/payment/process', [StudentController::class, 'processPayment'])->name('payment.process');
+
+        // Enroll
+        Route::post('/courses/{course}/enroll', [StudentController::class, 'enroll'])->name('courses.enroll');
+
+        // Home student -> pakai view yang sama dengan home, tapi lewat route home
+        Route::get('/user', function (Request $request) {
+            return redirect()->route('home', $request->only('search', 'category'));
+        })->name('user.home');
+
+        // Learn
+        Route::get('/courses/{course}/learn', [StudentController::class, 'learn'])->name('student.course.learn');
+
+        // Profile (controller beneran)
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
+        Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+        // My courses (sementara view statis)
+        Route::get('/my-courses', function () {
+            return view('student.courses.index');
+        })->name('my-courses');
+>>>>>>> c44a01782b241f2b66e884295841e03b9efc7488
     });
 
     // My transactions

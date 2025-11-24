@@ -43,7 +43,7 @@ Route::get('/', function (Request $request) {
 })->name('home');
 
 // Test Google Config (Public - untuk debugging)
-Route::get('/test-google-config', function() {
+Route::get('/test-google-config', function () {
     return [
         'socialite_installed' => class_exists('Laravel\Socialite\Facades\Socialite'),
         'client_id' => config('services.google.client_id'),
@@ -84,31 +84,32 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
 
     // ======================
-// Student Routes
-// ======================
-Route::middleware('role:student')->group(function () {
+    // Student Routes
+    // ======================
+    Route::middleware('role:student')->group(function () {
 
-    // List & detail course
-    Route::get('/courses', [StudentCourseController::class, 'index'])->name('courses.index');
-    Route::get('/courses/{course}', [StudentCourseController::class, 'show'])->name('courses.show');
+        // List & detail course
+        Route::get('/courses', [StudentCourseController::class, 'index'])->name('courses.index');
+        Route::get('/courses/{course}', [StudentCourseController::class, 'show'])->name('courses.show');
 
-<<<<<<< HEAD
-    // Transactions (NEW!)
-    Route::prefix('transactions')->name('transactions.')->group(function () {
-        Route::get('/checkout/{course}', [\App\Http\Controllers\Student\TransactionController::class, 'checkout'])->name('checkout');
-        Route::post('/process/{course}', [\App\Http\Controllers\Student\TransactionController::class, 'process'])->name('process');
-        Route::get('/{transaction}', [\App\Http\Controllers\Student\TransactionController::class, 'show'])->name('show');
-        Route::post('/{transaction}/confirm', [\App\Http\Controllers\Student\TransactionController::class, 'confirm'])->name('confirm');
-        Route::post('/{transaction}/cancel', [\App\Http\Controllers\Student\TransactionController::class, 'cancel'])->name('cancel');
-=======
-        // Payment routes
-        Route::get('/courses/{course}/checkout', [StudentController::class, 'showCheckout'])->name('payment.checkout');
-        Route::post('/courses/{course}/payment/process', [StudentController::class, 'processPayment'])->name('payment.process');
+        // Transactions (NEW!)
+        Route::prefix('transactions')->name('transactions.')->group(function () {
+            Route::get('/checkout/{course}', [\App\Http\Controllers\Student\TransactionController::class, 'checkout'])->name('checkout');
+            Route::post('/process/{course}', [\App\Http\Controllers\Student\TransactionController::class, 'process'])->name('process');
+            Route::get('/{transaction}', [\App\Http\Controllers\Student\TransactionController::class, 'show'])->name('show');
+            Route::post('/{transaction}/confirm', [\App\Http\Controllers\Student\TransactionController::class, 'confirm'])->name('confirm');
+            Route::post('/{transaction}/cancel', [\App\Http\Controllers\Student\TransactionController::class, 'cancel'])->name('cancel');
+        });
 
-        // Enroll
-        Route::post('/courses/{course}/enroll', [StudentController::class, 'enroll'])->name('courses.enroll');
+        // My transactions
+        Route::get('/my-transactions', [\App\Http\Controllers\Student\TransactionController::class, 'myTransactions'])->name('my-transactions');
 
-        // Home student -> pakai view yang sama dengan home, tapi lewat route home
+        // Enroll (redirect to checkout)
+        Route::post('/courses/{course}/enroll', function (Kursus $course) {
+            return redirect()->route('transactions.checkout', $course);
+        })->name('courses.enroll');
+
+        // Home student
         Route::get('/user', function (Request $request) {
             return redirect()->route('home', $request->only('search', 'category'));
         })->name('user.home');
@@ -116,42 +117,18 @@ Route::middleware('role:student')->group(function () {
         // Learn
         Route::get('/courses/{course}/learn', [StudentController::class, 'learn'])->name('student.course.learn');
 
-        // Profile (controller beneran)
+        // Profile
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
         Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 
-        // My courses (sementara view statis)
-        Route::get('/my-courses', function () {
-            return view('student.courses.index');
-        })->name('my-courses');
->>>>>>> c44a01782b241f2b66e884295841e03b9efc7488
+        // Notifications
+        Route::post('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+        Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+
+        // My courses
+        Route::get('/my-courses', [StudentController::class, 'myCourses'])->name('my-courses');
     });
-
-    // My transactions
-    Route::get('/my-transactions', [\App\Http\Controllers\Student\TransactionController::class, 'myTransactions'])->name('my-transactions');
-
-    // Enroll (redirect to checkout)
-    Route::post('/courses/{course}/enroll', function(Kursus $course) {
-        return redirect()->route('transactions.checkout', $course);
-    })->name('courses.enroll');
-
-    // Home student
-    Route::get('/user', function (Request $request) {
-        return redirect()->route('home', $request->only('search', 'category'));
-    })->name('user.home');
-
-    // Learn
-    Route::get('/courses/{course}/learn', [StudentController::class, 'learn'])->name('student.course.learn');
-
-    // Profile
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
-    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
-
-    // My courses
-    Route::get('/my-courses', [StudentController::class, 'myCourses'])->name('my-courses');
-});
 
     // ======================
     // Admin Routes
@@ -166,12 +143,25 @@ Route::middleware('role:student')->group(function () {
                 $activeCourses    = Kursus::where('status_diterbitkan', true)->count();
                 $totalStudents    = \App\Models\User::where('role', 'student')->count();
                 $totalInstructors = \App\Models\User::where('role', 'instructor')->count();
+                
+                // Total Users (semua pengguna)
+                $totalUsers = \App\Models\User::count();
+                
+                // Total Transaksi (enrollments atau transactions)
+                $totalEnrollments = \App\Models\Transaction::count();
+                
+                // Total Pendapatan (dari transaksi yang sudah paid)
+                $totalRevenue = \App\Models\Transaction::where('status', 'paid')
+                    ->sum('total_bayar');
 
                 return view('admin.dashboard', compact(
                     'totalCourses',
                     'activeCourses',
                     'totalStudents',
-                    'totalInstructors'
+                    'totalInstructors',
+                    'totalUsers',
+                    'totalEnrollments',
+                    'totalRevenue'
                 ));
             })->name('dashboard');
 
@@ -182,16 +172,21 @@ Route::middleware('role:student')->group(function () {
             Route::resource('courses', AdminCourseController::class);
 
             // Transactions management
-        Route::get('transactions', [\App\Http\Controllers\Admin\TransactionController::class, 'index'])
-            ->name('transactions.index');
-        Route::get('transactions/{transaction}', [\App\Http\Controllers\Admin\TransactionController::class, 'show'])
-            ->name('transactions.show');
-        Route::patch('transactions/{transaction}/status', [\App\Http\Controllers\Admin\TransactionController::class, 'updateStatus'])
-            ->name('transactions.updateStatus');
-        Route::delete('transactions/{transaction}', [\App\Http\Controllers\Admin\TransactionController::class, 'destroy'])
-            ->name('transactions.destroy');
-        Route::get('transactions/export', [\App\Http\Controllers\Admin\TransactionController::class, 'export'])
-            ->name('transactions.export');
+            Route::get('transactions', [\App\Http\Controllers\Admin\TransactionController::class, 'index'])
+                ->name('transactions.index');
+            Route::get('transactions/{transaction}', [\App\Http\Controllers\Admin\TransactionController::class, 'show'])
+                ->name('transactions.show');
+            Route::patch('transactions/{transaction}/status', [\App\Http\Controllers\Admin\TransactionController::class, 'updateStatus'])
+                ->name('transactions.updateStatus');
+            Route::delete('transactions/{transaction}', [\App\Http\Controllers\Admin\TransactionController::class, 'destroy'])
+                ->name('transactions.destroy');
+            Route::get('transactions/export', [\App\Http\Controllers\Admin\TransactionController::class, 'export'])
+                ->name('transactions.export');
+
+            // Vouchers management
+            Route::resource('vouchers', \App\Http\Controllers\Admin\VoucherController::class);
+            Route::patch('vouchers/{voucher}/toggle', [\App\Http\Controllers\Admin\VoucherController::class, 'toggleStatus'])
+                ->name('vouchers.toggle');
         });
 
     // ======================
@@ -216,3 +211,4 @@ Route::middleware('role:student')->group(function () {
             Route::delete('/courses/{course}/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
         });
 });
+    

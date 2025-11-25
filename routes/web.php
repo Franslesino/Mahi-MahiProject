@@ -88,13 +88,17 @@ Route::middleware('auth')->group(function () {
     // ======================
     // Student Routes
     // ======================
-    Route::middleware('role:student')->group(function () {
+        Route::middleware('role:student')->group(function () {
 
 
 
-        // List & detail course
-        Route::get('/courses', [StudentCourseController::class, 'index'])->name('courses.index');
-        Route::get('/courses/{course}', [StudentCourseController::class, 'show'])->name('courses.show');
+            // List & detail course
+            Route::get('/courses', [StudentCourseController::class, 'index'])->name('courses.index');
+            Route::get('/courses/{course}', [StudentCourseController::class, 'show'])->name('courses.show');
+            Route::get('/courses/{course}/materials/{material}', [\App\Http\Controllers\Student\StudentController::class, 'viewMaterial'])->name('courses.materials.view');
+            Route::post('/courses/{course}/materials/{material}/complete', [\App\Http\Controllers\Student\StudentController::class, 'markMaterialComplete'])->name('courses.materials.complete');
+            Route::get('/courses/{course}/materials/{material}/quiz', [\App\Http\Controllers\Student\StudentController::class, 'quiz'])->name('courses.materials.quiz');
+            Route::post('/courses/{course}/materials/{material}/quiz/submit', [\App\Http\Controllers\Student\StudentController::class, 'quizSubmit'])->name('courses.materials.quiz.submit');
 
         // Transactions (NEW!)
         Route::prefix('transactions')->name('transactions.')->group(function () {
@@ -258,6 +262,10 @@ Route::middleware('auth')->group(function () {
             // Material Management
             Route::get('/courses/{course}/materials/create', [MaterialController::class, 'create'])->name('materials.create');
             Route::post('/courses/{course}/materials', [MaterialController::class, 'store'])->name('materials.store');
+             // Route preview materi (fix error)
+            Route::post('/', [MaterialController::class, 'store'])->name('store');
+            Route::get('/courses/{course}/materials/{material}/preview', [MaterialController::class, 'preview'])->name('materials.preview');
+
             Route::get('/courses/{course}/materials/{material}/edit', [MaterialController::class, 'edit'])->name('materials.edit');
             Route::put('/courses/{course}/materials/{material}', [MaterialController::class, 'update'])->name('materials.update');
             Route::delete('/courses/{course}/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
@@ -283,9 +291,15 @@ Route::middleware('auth')->group(function () {
             Route::delete('/assignments/{assignment}', [\App\Http\Controllers\Instructor\AssignmentController::class, 'destroy'])->name('assignments.destroy');
             Route::get('/assignments/{assignment}/questions', [\App\Http\Controllers\Instructor\AssignmentController::class, 'editQuestions'])->name('assignments.edit-questions');
             Route::post('/assignments/{assignment}/questions', [\App\Http\Controllers\Instructor\AssignmentController::class, 'addQuestions'])->name('assignments.add-questions');
+            Route::post('/assignments/{assignment}/questions/create', [\App\Http\Controllers\Instructor\AssignmentController::class, 'storeQuestion'])->name('assignments.store-question');
             Route::delete('/assignments/{assignment}/questions/{question}', [\App\Http\Controllers\Instructor\AssignmentController::class, 'removeQuestion'])->name('assignments.remove-question');
             Route::post('/assignments/{assignment}/publish', [\App\Http\Controllers\Instructor\AssignmentController::class, 'publish'])->name('assignments.publish');
             Route::post('/assignments/{assignment}/unpublish', [\App\Http\Controllers\Instructor\AssignmentController::class, 'unpublish'])->name('assignments.unpublish');
+
+            // Quick quiz creation from course detail
+            Route::post('/courses/{course}/quizzes', [\App\Http\Controllers\Instructor\AssignmentController::class, 'quickCreateFromCourse'])->name('courses.quizzes.store');
+
+            // Section Management (INSTRUKTUR)
+            Route::resource('courses.sections', \App\Http\Controllers\Instructor\SectionController::class)->shallow();
         });
 });
-    

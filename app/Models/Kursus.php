@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Kursus extends Model
 {
@@ -129,15 +130,14 @@ class Kursus extends Model
         return $this->belongsTo(User::class, 'instructor_id');
     }
 
+    public function sections(): HasMany
+{
+    return $this->hasMany(CourseSection::class, 'course_id')->orderBy('order');
+}
+
     // admin yang membuat (kalau dipakai)
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
-    }
-
-    // assignments/quiz
-    public function assignments()
-    {
-        return $this->hasMany(Assignment::class, 'kursus_id');
     }
 }

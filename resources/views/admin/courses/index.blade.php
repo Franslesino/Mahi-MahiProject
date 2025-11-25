@@ -19,9 +19,9 @@
         </div>
 
         <a href="{{ route('admin.courses.create') }}"
-           class="flex items-center gap-2 px-5 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition shadow">
-            <i class="fas fa-plus"></i>
-            <span>Tambah Kursus</span>
+           class="flex items-center gap-2 px-5 py-3 bg-emerald-600 !text-white font-semibold rounded-lg hover:bg-emerald-700 transition shadow">
+            <i class="fas fa-plus text-white"></i>
+            <span class="!text-white">Tambah Kursus</span>
         </a>
     </div>
 

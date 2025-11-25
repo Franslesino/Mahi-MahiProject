@@ -49,9 +49,13 @@
                         <td class="px-6 py-4 text-sm text-gray-600">#{{ $user->id }}</td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center">
-                                    <span class="text-white font-bold text-sm">{{ strtoupper(substr($user->name, 0, 2)) }}</span>
-                                </div>
+                                @if($user->avatar_path)
+                                    <img src="{{ asset('storage/' . $user->avatar_path) }}" alt="{{ $user->name }}" class="w-10 h-10 rounded-full object-cover">
+                                @else
+                                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center">
+                                        <span class="text-white font-bold text-sm">{{ strtoupper(substr($user->name, 0, 2)) }}</span>
+                                    </div>
+                                @endif
                                 <p class="font-medium text-gray-800">{{ $user->name }}</p>
                             </div>
                         </td>
@@ -68,15 +72,21 @@
                         <td class="px-6 py-4 text-sm text-gray-600">{{ $user->created_at->format('d M Y') }}</td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-2">
-                                <a href="{{ route('admin.users.edit', $user->id) }}" class="text-blue-600 hover:text-blue-800">
+                                {{-- TOMBOL SHOW/VIEW (BARU) --}}
+                                <a href="{{ route('admin.users.show', $user->id) }}" class="text-emerald-600 hover:text-emerald-800" title="Lihat Detail">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {{-- TOMBOL EDIT --}}
+                                <a href="{{ route('admin.users.edit', $user->id) }}" class="text-blue-600 hover:text-blue-800" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
+                                {{-- TOMBOL DELETE --}}
                                 @if($user->id !== auth()->id())
                                 <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline"
                                       onsubmit="return confirm('Yakin ingin menghapus pengguna ini?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-800">
+                                    <button type="submit" class="text-red-600 hover:text-red-800" title="Hapus">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>

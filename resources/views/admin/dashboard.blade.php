@@ -2,454 +2,312 @@
 @extends('layouts.admin')
 
 @section('content')
-<div x-data="{ currentPage: '{{ request()->get('page', 'dashboard') }}' }">
-    <!-- Dashboard Page -->
-    <div x-show="currentPage === 'dashboard'" x-transition class="p-8">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h2>
-        
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 text-sm">Total Kursus</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ $totalCourses ?? 0 }}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-book text-blue-600 text-xl"></i>
-                    </div>
-                </div>
-            </div>
+<div class="p-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-800">Dashboard Admin</h2>
+        <p class="text-gray-600 mt-1">Selamat datang kembali, {{ Auth::user()->name }}!</p>
+    </div>
 
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 text-sm">Total Pengguna</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ $totalUsers ?? 0 }}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-users text-emerald-600 text-xl"></i>
-                    </div>
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Kursus -->
+        <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium">Total Kursus</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">{{ $totalCourses }}</p>
+                    <p class="text-xs text-green-600 mt-1 font-semibold">
+                        <i class="fas fa-arrow-up"></i>
+                        {{ $activeCourses }} Aktif
+                    </p>
                 </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 text-sm">Total Transaksi</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ $totalEnrollments ?? 0 }}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-exchange-alt text-purple-600 text-xl"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 text-sm">Total Pendapatan</p>
-                        <p class="text-2xl font-bold text-gray-800">Rp {{ number_format($totalRevenue ?? 0, 0, ',', '.') }}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-wallet text-amber-600 text-xl"></i>
-                    </div>
+                <div class="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-book text-blue-600 text-2xl"></i>
                 </div>
             </div>
         </div>
 
-        <!-- Charts and Recent Activity Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <!-- Revenue Chart -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-6">Pendapatan per Kategori</h3>
-                <div class="flex items-center justify-center">
-                    <canvas id="revenueChart" width="250" height="250"></canvas>
+        <!-- Total Pengguna -->
+        <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium">Total Pengguna</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">{{ $totalUsers }}</p>
+                    <p class="text-xs text-gray-600 mt-1 font-semibold">
+                        {{ $totalStudents }} Students • {{ $totalInstructors }} Instructors
+                    </p>
                 </div>
-                <div class="mt-6 grid grid-cols-2 gap-4">
-                    <div class="flex items-center gap-2">
-                        <div class="w-3 h-3 rounded-full bg-amber-500"></div>
-                        <div>
-                            <p class="text-xs text-gray-500">Web Development</p>
-                            <p class="text-sm font-semibold text-gray-800">Rp. 64.2%</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="w-3 h-3 rounded-full bg-blue-500"></div>
-                        <div>
-                            <p class="text-xs text-gray-500">Mobile Development</p>
-                            <p class="text-sm font-semibold text-gray-800">Rp. 15.3%</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="w-3 h-3 rounded-full bg-cyan-400"></div>
-                        <div>
-                            <p class="text-xs text-gray-500">Data Science</p>
-                            <p class="text-sm font-semibold text-gray-800">Rp. 48.6%</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                        <div>
-                            <p class="text-xs text-gray-500">Design</p>
-                            <p class="text-sm font-semibold text-gray-800">Rp. 8.6%</p>
-                        </div>
-                    </div>
+                <div class="w-14 h-14 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-emerald-600 text-2xl"></i>
                 </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Aktivitas Terbaru</h3>
-                @if(isset($recentEnrollments) && $recentEnrollments->count() > 0)
-                    <div class="space-y-4">
-                        @foreach($recentEnrollments as $enrollment)
-                        <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                                    <span class="text-gray-600 font-semibold">{{ substr($enrollment->user->name, 0, 1) }}</span>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-800">{{ $enrollment->user->name }}</p>
-                                    <p class="text-xs text-gray-500">Mendaftar {{ $enrollment->course->title }}</p>
-                                </div>
-                            </div>
-                            <span class="text-xs text-gray-400">{{ $enrollment->created_at->diffForHumans() }}</span>
-                        </div>
-                        @endforeach
-                    </div>
-                @else
-                    <p class="text-gray-400 text-center py-8">Belum ada aktivitas</p>
-                @endif
             </div>
         </div>
 
-        <!-- Second Row Charts -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-           
+        <!-- Total Transaksi -->
+        <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium">Total Transaksi</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">{{ $totalTransactions }}</p>
+                    <p class="text-xs text-yellow-600 mt-1 font-semibold">
+                        <i class="fas fa-clock"></i>
+                        {{ $pendingTransactions }} Pending
+                    </p>
+                </div>
+                <div class="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-exchange-alt text-purple-600 text-2xl"></i>
+                </div>
+            </div>
+        </div>
 
-            <!-- Top Courses -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Kursus Terpopuler</h3>
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-800">Laravel Mastery</p>
-                            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                                <div class="bg-emerald-500 h-2 rounded-full" style="width: 85%"></div>
-                            </div>
-                        </div>
-                        <span class="text-sm font-semibold text-gray-600 ml-4">245</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-800">React Native Basics</p>
-                            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                                <div class="bg-blue-500 h-2 rounded-full" style="width: 70%"></div>
-                            </div>
-                        </div>
-                        <span class="text-sm font-semibold text-gray-600 ml-4">198</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-800">Python for Data Science</p>
-                            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                                <div class="bg-cyan-400 h-2 rounded-full" style="width: 65%"></div>
-                            </div>
-                        </div>
-                        <span class="text-sm font-semibold text-gray-600 ml-4">176</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-800">UI/UX Design Fundamentals</p>
-                            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                                <div class="bg-purple-500 h-2 rounded-full" style="width: 50%"></div>
-                            </div>
-                        </div>
-                        <span class="text-sm font-semibold text-gray-600 ml-4">142</span>
-                    </div>
+        <!-- Total Pendapatan -->
+        <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium">Total Pendapatan</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">
+                        Rp {{ number_format($totalRevenue, 0, ',', '.') }}
+                    </p>
+                    <p class="text-xs text-green-600 mt-1 font-semibold">
+                        <i class="fas fa-check-circle"></i>
+                        {{ $paidTransactions }} Paid
+                    </p>
+                </div>
+                <div class="w-14 h-14 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-wallet text-amber-600 text-2xl"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Kursus Page -->
-    <div x-show="currentPage === 'kursus'" x-transition class="p-8">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Kelola Kursus</h2>
-        <div class="bg-white rounded-lg shadow-sm">
-            <!-- Page Header -->
-            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-3">
-                <div class="flex items-center space-x-3">
-                  <form method="GET" action="{{ route('admin.courses.index') }}" class="flex items-center">
-                        <input type="text" name="search" placeholder="Cari kursus..." 
-                               value="{{ request('search') }}"
-                               class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                        <button type="submit" class="ml-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </form>
+    <!-- Charts Row 1: Revenue & Transactions -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Revenue by Category Chart -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-800">Pendapatan per Kategori</h3>
+                <span class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                    Total: Rp {{ number_format($categoryData->sum('total'), 0, ',', '.') }}
+                </span>
+            </div>
+            
+            @if($categoryData->count() > 0)
+            <div class="flex items-center justify-center mb-6">
+                <canvas id="revenueChart" width="250" height="250"></canvas>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                @php
+                    $colors = ['#F59E0B', '#3B82F6', '#06B6D4', '#EF4444', '#10B981', '#8B5CF6'];
+                @endphp
+                @foreach($categoryData->take(6) as $index => $cat)
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: {{ $colors[$index % 6] }}"></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs text-gray-500 truncate">{{ $cat['category'] }}</p>
+                        <p class="text-sm font-bold text-gray-800">{{ $cat['percentage'] }}%</p>
+                    </div>
                 </div>
-                <a href="{{ route('admin.courses.create') }}" class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 flex items-center">
-                    <i class="fas fa-plus mr-2"></i>
-                    Tambah Kursus
+                @endforeach
+            </div>
+            @else
+            <div class="flex flex-col items-center justify-center py-12">
+                <i class="fas fa-chart-pie text-6xl text-gray-300 mb-3"></i>
+                <p class="text-gray-500 font-semibold">Belum ada data pendapatan</p>
+                <p class="text-gray-400 text-sm mt-1">Data akan muncul setelah ada transaksi paid</p>
+            </div>
+            @endif
+        </div>
+
+        <!-- Monthly Transactions Chart -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-800">Transaksi Bulanan {{ now()->year }}</h3>
+                <span class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                    Total: {{ $monthlyData->sum() }} transaksi
+                </span>
+            </div>
+            
+            <div style="height: 250px;">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2: Gender & Profession -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Gender Distribution Chart -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-800">Distribusi Gender Pengguna</h3>
+                <span class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                    Total: {{ $genderData->sum('count') }} pengguna
+                </span>
+            </div>
+            
+            @if($genderData->count() > 0)
+            <div class="flex items-center justify-center mb-6">
+                <canvas id="genderChart" width="250" height="250"></canvas>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                @php
+                    $genderColors = ['#3B82F6', '#EC4899', '#8B5CF6'];
+                @endphp
+                @foreach($genderData as $index => $gender)
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: {{ $genderColors[$index % 3] }}"></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs text-gray-500">{{ $gender['gender'] }}</p>
+                        <p class="text-sm font-bold text-gray-800">{{ $gender['count'] }} ({{ $gender['percentage'] }}%)</p>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            @else
+            <div class="flex flex-col items-center justify-center py-12">
+                <i class="fas fa-users text-6xl text-gray-300 mb-3"></i>
+                <p class="text-gray-500 font-semibold">Belum ada data gender</p>
+                <p class="text-gray-400 text-sm mt-1">Data akan muncul setelah pengguna mengisi profil</p>
+            </div>
+            @endif
+        </div>
+
+        <!-- Profession Distribution Chart -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-800">Profesi Pengguna</h3>
+                <span class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                    Total: {{ $profesiData->sum('count') }} pengguna
+                </span>
+            </div>
+            
+            @if($profesiData->count() > 0)
+            <div style="height: 300px;">
+                <canvas id="profesiChart"></canvas>
+            </div>
+            @else
+            <div class="flex flex-col items-center justify-center py-12">
+                <i class="fas fa-briefcase text-6xl text-gray-300 mb-3"></i>
+                <p class="text-gray-500 font-semibold">Belum ada data profesi</p>
+                <p class="text-gray-400 text-sm mt-1">Data akan muncul setelah pengguna mengisi profil</p>
+            </div>
+            @endif
+        </div>
+    </div>
+
+    <!-- Bottom Row: Top Courses & Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Courses -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-800">Kursus Terpopuler</h3>
+                <a href="{{ route('admin.courses.index') }}" class="text-xs text-blue-600 hover:text-blue-700 font-semibold">
+                    Lihat Semua <i class="fas fa-arrow-right ml-1"></i>
                 </a>
             </div>
-
-            <!-- Courses Table -->
-            @if(isset($courses) && $courses->count() > 0)
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kursus</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Instruktur</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Harga</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @foreach($courses as $course)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-3">
-                                    @if($course->image)
-                                    <img src="{{ asset('storage/' . $course->image) }}" alt="{{ $course->title }}" class="w-12 h-12 rounded-lg object-cover">
-                                    @else
-                                    <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                                        <i class="fas fa-book text-gray-400"></i>
-                                    </div>
-                                    @endif
-                                    <div>
-                                        <p class="font-medium text-gray-800">{{ $course->title }}</p>
-                                        <p class="text-sm text-gray-500">{{ $course->videos }} video</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-600">{{ $course->category }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-600">{{ $course->instructor->name ?? 'Belum ditentukan' }}</td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm">
-                                    @if($course->discount_price)
-                                    <span class="text-gray-400 line-through">Rp {{ number_format($course->price, 0, ',', '.') }}</span>
-                                    <span class="text-emerald-600 font-semibold ml-2">Rp {{ number_format($course->discount_price, 0, ',', '.') }}</span>
-                                    @else
-                                    <span class="text-gray-800 font-semibold">Rp {{ number_format($course->price, 0, ',', '.') }}</span>
-                                    @endif
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                @if($course->status === 'active')
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700">Aktif</span>
-                                @elseif($course->status === 'inactive')
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Nonaktif</span>
-                                @else
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">Draft</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-2">
-                                    <a href="{{ route('admin.courses.edit', $course->id) }}" class="text-blue-600 hover:text-blue-800">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.courses.destroy', $course->id) }}" method="POST" class="inline" 
-                                          onsubmit="return confirm('Yakin ingin menghapus kursus ini?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-800">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <div class="px-6 py-4">
-                {{ $courses->links() }}
+            
+            @if($topCourses->count() > 0)
+            <div class="space-y-4">
+                @foreach($topCourses as $index => $course)
+                <div class="flex items-center justify-between group hover:bg-gray-50 p-3 rounded-lg transition">
+                    <div class="flex items-center gap-3 flex-1">
+                        <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <span class="text-white font-bold text-sm">{{ $index + 1 }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-gray-800 truncate group-hover:text-emerald-600 transition">
+                                {{ $course['title'] }}
+                            </p>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                <div class="bg-emerald-500 h-2 rounded-full transition-all" style="width: {{ $course['percentage'] }}%"></div>
+                            </div>
+                        </div>
+                        <span class="text-sm font-bold text-gray-600 ml-4">{{ $course['count'] }}</span>
+                    </div>
+                </div>
+                @endforeach
             </div>
             @else
-            <!-- Empty State -->
-            <div class="flex flex-col items-center justify-center py-16 px-6">
-                <i class="fas fa-book-open text-6xl text-gray-300 mb-4"></i>
-                <p class="text-gray-500 text-lg font-semibold">Belum ada data kursus</p>
-                <p class="text-gray-400 text-sm mt-2 text-center">Klik tombol "Tambah Kursus" untuk menambahkan kursus baru</p>
+            <div class="flex flex-col items-center justify-center py-12">
+                <i class="fas fa-trophy text-6xl text-gray-300 mb-3"></i>
+                <p class="text-gray-500 font-semibold">Belum ada data kursus</p>
+                <p class="text-gray-400 text-sm mt-1">Kursus terpopuler akan muncul di sini</p>
             </div>
             @endif
         </div>
-    </div>
 
-    <!-- Transactions Page -->
-    <div x-show="currentPage === 'transactions'" x-transition class="p-8">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Transaksi</h2>
-        <div class="bg-white rounded-lg shadow-sm">
-            <!-- Page Header -->
-            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-3">
-                <div class="flex items-center space-x-3">
-                    <select class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                        <option value="">Semua Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="paid">Lunas</option>
-                        <option value="completed">Selesai</option>
-                    </select>
-                    <input type="date" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                </div>
-                <button class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 flex items-center">
-                    <i class="fas fa-download mr-2"></i>
-                    Export
-                </button>
-            </div>
-
-            <!-- Transactions Table -->
-            @if(isset($enrollments) && $enrollments->count() > 0)
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pengguna</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kursus</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jumlah</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @foreach($enrollments as $enrollment)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 text-sm text-gray-600">#{{ $enrollment->id }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-800">{{ $enrollment->user->name }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-800">{{ $enrollment->course->title }}</td>
-                            <td class="px-6 py-4 text-sm font-semibold text-gray-800">Rp {{ number_format($enrollment->paid_amount, 0, ',', '.') }}</td>
-                            <td class="px-6 py-4">
-                                @if($enrollment->status === 'paid')
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700">Lunas</span>
-                                @elseif($enrollment->status === 'completed')
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">Selesai</span>
-                                @else
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">Pending</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-600">{{ $enrollment->created_at->format('d M Y') }}</td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <div class="px-6 py-4">
-                {{ $enrollments->links() }}
-            </div>
-            @else
-            <!-- Empty State -->
-            <div class="flex flex-col items-center justify-center py-16 px-6">
-                <i class="fas fa-receipt text-6xl text-gray-300 mb-4"></i>
-                <p class="text-gray-500 text-lg font-semibold">Belum ada data transaksi</p>
-                <p class="text-gray-400 text-sm mt-2 text-center">Transaksi akan muncul di sini setelah ada pembelian kursus</p>
-            </div>
-            @endif
-        </div>
-    </div>
-
-    <!-- Pengguna Page -->
-    <div x-show="currentPage === 'pengguna'" x-transition class="p-8">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Kelola Pengguna</h2>
-        <div class="bg-white rounded-lg shadow-sm">
-            <!-- Page Header -->
-            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-3">
-                <div class="flex items-center space-x-3">
-                   <form method="GET" action="{{ route('admin.users.index') }}" class="flex items-center">
-                        <input type="text" name="search" placeholder="Cari pengguna..." 
-                               value="{{ request('search') }}"
-                               class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                        <select name="role" class="ml-2 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                            <option value="">Semua Role</option>
-                            <option value="admin" {{ request('role') === 'admin' ? 'selected' : '' }}>Admin</option>
-                            <option value="instructor" {{ request('role') === 'instructor' ? 'selected' : '' }}>Instruktur</option>
-                            <option value="user" {{ request('role') === 'user' ? 'selected' : '' }}>User</option>
-                        </select>
-                        <button type="submit" class="ml-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </form>
-                </div>
-                <a href="{{ route('admin.users.create') }}" class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 flex items-center">
-                    <i class="fas fa-user-plus mr-2"></i>
-                    Tambah Pengguna
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-800">Aktivitas Terbaru</h3>
+                <a href="{{ route('admin.transactions.index') }}" class="text-xs text-blue-600 hover:text-blue-700 font-semibold">
+                    Lihat Semua <i class="fas fa-arrow-right ml-1"></i>
                 </a>
             </div>
-
-            <!-- Users Table -->
-            @if(isset($users) && $users->count() > 0)
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pengguna</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bergabung</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @foreach($users as $user)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center">
-                                        <span class="text-white font-bold">{{ substr($user->name, 0, 2) }}</span>
-                                    </div>
-                                    <p class="font-medium text-gray-800">{{ $user->name }}</p>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-600">{{ $user->email }}</td>
-                            <td class="px-6 py-4">
-                                @if($user->role === 'admin')
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-700">Admin</span>
-                                @elseif($user->role === 'instructor')
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">Instruktur</span>
-                                @else
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">User</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-600">{{ $user->created_at->format('d M Y') }}</td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-2">
-                                    <a href="{{ route('admin.users.edit', $user->id) }}" class="text-blue-600 hover:text-blue-800">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    @if($user->id !== auth()->id())
-                                    <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline"
-                                          onsubmit="return confirm('Yakin ingin menghapus pengguna ini?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-800">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <div class="px-6 py-4">
-                {{ $users->links() }}
+            
+            @if($recentEnrollments->count() > 0)
+            <div class="space-y-1">
+                @foreach($recentEnrollments as $enrollment)
+                <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 px-3 -mx-3 rounded-lg transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-white font-bold text-sm">{{ substr($enrollment->user->name, 0, 1) }}</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-800">{{ $enrollment->user->name }}</p>
+                            <p class="text-xs text-gray-500">
+                                <i class="fas fa-book-open mr-1"></i>
+                                {{ Str::limit($enrollment->kursus->judul ?? $enrollment->kursus->title, 30) }}
+                            </p>
+                        </div>
+                    </div>
+                    <span class="text-xs text-gray-400 flex-shrink-0">
+                        {{ $enrollment->created_at->diffForHumans() }}
+                    </span>
+                </div>
+                @endforeach
             </div>
             @else
-            <!-- Empty State -->
-            <div class="flex flex-col items-center justify-center py-16 px-6">
-                <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
-                <p class="text-gray-500 text-lg font-semibold">Belum ada data pengguna</p>
-                <p class="text-gray-400 text-sm mt-2 text-center">Daftar pengguna akan ditampilkan di sini</p>
+            <div class="flex flex-col items-center justify-center py-12">
+                <i class="fas fa-history text-6xl text-gray-300 mb-3"></i>
+                <p class="text-gray-500 font-semibold">Belum ada aktivitas</p>
+                <p class="text-gray-400 text-sm mt-1">Aktivitas enrollment akan muncul di sini</p>
             </div>
             @endif
         </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="{{ route('admin.courses.create') }}" class="bg-white border-2 border-emerald-500 hover:bg-emerald-50 rounded-lg p-4 flex items-center gap-3 transition">
+            <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-plus text-emerald-600 text-xl"></i>
+            </div>
+            <div>
+                <p class="font-semibold text-gray-800">Tambah Kursus Baru</p>
+                <p class="text-xs text-gray-500">Buat kursus baru untuk platform</p>
+            </div>
+        </a>
+
+        <a href="{{ route('admin.users.create') }}" class="bg-white border-2 border-blue-500 hover:bg-blue-50 rounded-lg p-4 flex items-center gap-3 transition">
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-user-plus text-blue-600 text-xl"></i>
+            </div>
+            <div>
+                <p class="font-semibold text-gray-800">Tambah Pengguna</p>
+                <p class="text-xs text-gray-500">Daftarkan pengguna baru</p>
+            </div>
+        </a>
+
+        <a href="{{ route('admin.transactions.index') }}" class="bg-white border-2 border-purple-500 hover:bg-purple-50 rounded-lg p-4 flex items-center gap-3 transition">
+            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-receipt text-purple-600 text-xl"></i>
+            </div>
+            <div>
+                <p class="font-semibold text-gray-800">Kelola Transaksi</p>
+                <p class="text-xs text-gray-500">Lihat semua transaksi</p>
+            </div>
+        </a>
     </div>
 </div>
 @endsection
@@ -459,48 +317,45 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
 <script>
-    // Set currentPage from URL parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    const page = urlParams.get('page') || 'dashboard';
+document.addEventListener('DOMContentLoaded', function() {
     
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('dashboardData', () => ({
-            currentPage: page
-        }));
-    });
-
-    // Initialize charts when DOM is loaded
-    document.addEventListener('DOMContentLoaded', function() {
-        // Revenue Donut Chart
-        const revenueCtx = document.getElementById('revenueChart');
-        if (revenueCtx) {
+    // ==========================================
+    // Revenue Donut Chart
+    // ==========================================
+    const revenueCtx = document.getElementById('revenueChart');
+    if (revenueCtx) {
+        const categoryData = @json($categoryData);
+        
+        if (categoryData.length > 0) {
             new Chart(revenueCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Web Development', 'Mobile Development', 'Data Science', 'Design'],
+                    labels: categoryData.map(item => item.category),
                     datasets: [{
-                        data: [64.2, 15.3, 48.6, 8.6],
-                        backgroundColor: [
-                            '#F59E0B', // amber-500
-                            '#3B82F6', // blue-500
-                            '#06B6D4', // cyan-400
-                            '#EF4444'  // red-500
-                        ],
+                        data: categoryData.map(item => item.percentage),
+                        backgroundColor: ['#F59E0B', '#3B82F6', '#06B6D4', '#EF4444', '#10B981', '#8B5CF6'],
                         borderWidth: 0,
-                        cutout: '70%'
+                        cutout: '70%',
+                        hoverOffset: 8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: {
-                        legend: {
-                            display: false
-                        },
+                        legend: { display: false },
                         tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
                             callbacks: {
                                 label: function(context) {
-                                    return context.label + ': ' + context.parsed + '%';
+                                    const item = categoryData[context.dataIndex];
+                                    return [
+                                        context.label + ': ' + context.parsed + '%',
+                                        'Total: Rp ' + new Intl.NumberFormat('id-ID').format(item.total)
+                                    ];
                                 }
                             }
                         }
@@ -508,61 +363,161 @@
                 }
             });
         }
+    }
 
-        // Enrollment Line Chart
-        const enrollmentCtx = document.getElementById('enrollmentChart');
-        if (enrollmentCtx) {
-            new Chart(enrollmentCtx, {
-                type: 'line',
+    // ==========================================
+    // Monthly Transactions Line Chart
+    // ==========================================
+    const monthlyCtx = document.getElementById('monthlyChart');
+    if (monthlyCtx) {
+        const monthlyData = @json($monthlyData->values());
+        
+        new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'],
+                datasets: [{
+                    label: 'Transaksi',
+                    data: monthlyData,
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#10B981',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointHoverBackgroundColor: '#059669',
+                    pointHoverBorderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return 'Transaksi: ' + context.parsed.y;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false }
+                    },
+                    x: {
+                        grid: { display: false, drawBorder: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // ==========================================
+    // Gender Distribution Pie Chart
+    // ==========================================
+    const genderCtx = document.getElementById('genderChart');
+    if (genderCtx) {
+        const genderData = @json($genderData);
+        
+        if (genderData.length > 0) {
+            new Chart(genderCtx, {
+                type: 'pie',
                 data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'],
+                    labels: genderData.map(item => item.gender),
                     datasets: [{
-                        label: 'Pendaftaran',
-                        data: [45, 52, 48, 65, 72, 68, 85, 92, 88, 95, 108, 115],
-                        borderColor: '#10B981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        pointBackgroundColor: '#10B981',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
+                        data: genderData.map(item => item.count),
+                        backgroundColor: ['#3B82F6', '#EC4899', '#8B5CF6'],
+                        borderWidth: 0,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            callbacks: {
+                                label: function(context) {
+                                    const item = genderData[context.dataIndex];
+                                    return [
+                                        context.label + ': ' + item.count + ' pengguna',
+                                        'Persentase: ' + item.percentage + '%'
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // ==========================================
+    // Profession Bar Chart
+    // ==========================================
+    const profesiCtx = document.getElementById('profesiChart');
+    if (profesiCtx) {
+        const profesiData = @json($profesiData);
+        
+        if (profesiData.length > 0) {
+            new Chart(profesiCtx, {
+                type: 'bar',
+                data: {
+                    labels: profesiData.map(item => item.profesi),
+                    datasets: [{
+                        label: 'Jumlah Pengguna',
+                        data: profesiData.map(item => item.count),
+                        backgroundColor: '#3B82F6',
+                        borderRadius: 6,
+                        hoverBackgroundColor: '#2563EB'
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    indexAxis: 'y',
                     plugins: {
-                        legend: {
-                            display: false
-                        },
+                        legend: { display: false },
                         tooltip: {
-                            mode: 'index',
-                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Jumlah: ' + context.parsed.x + ' pengguna';
+                                }
+                            }
                         }
                     },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                borderDash: [5, 5]
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return value;
-                                }
-                            }
-                        },
                         x: {
-                            grid: {
-                                display: false
-                            }
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        },
+                        y: {
+                            grid: { display: false }
                         }
                     }
                 }
             });
         }
-    });
+    }
+});
 </script>
 @endpush

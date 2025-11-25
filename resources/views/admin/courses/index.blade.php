@@ -159,6 +159,8 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center gap-3">
 
+                                   
+
                                     {{-- EDIT --}}
                                     <a href="{{ route('admin.courses.edit', $course) }}"
                                        class="text-emerald-600 hover:text-emerald-800"

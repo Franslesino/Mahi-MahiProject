@@ -134,4 +134,10 @@ class Kursus extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    // assignments/quiz
+    public function assignments()
+    {
+        return $this->hasMany(Assignment::class, 'kursus_id');
+    }
 }

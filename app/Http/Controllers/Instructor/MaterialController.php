@@ -18,10 +18,13 @@ class MaterialController extends Controller
 {
     $instructorId = Auth::id();
     
-    $courses = Kursus::where('pembuat', $instructorId)
-                    ->withCount('materi')
-                    ->latest()
-                    ->get();
+    $courses = Kursus::where(function($query) use ($instructorId) {
+                    $query->where('instructor_id', $instructorId)
+                          ->orWhere('pembuat', $instructorId);
+                })
+                ->withCount('materi')
+                ->latest()
+                ->get();
     
     return view('instructor.courses', compact('courses'));
 }
@@ -32,13 +35,27 @@ class MaterialController extends Controller
     public function show(Kursus $course)
     {
         // Pastikan instructor hanya bisa akses kursus miliknya
-        if ($course->pembuat !== Auth::id()) {
+        $instructorId = Auth::id();
+        if ($course->instructor_id !== $instructorId && $course->pembuat !== $instructorId) {
             abort(403, 'Unauthorized action.');
         }
 
         $materials = $course->materi()->orderBy('urutan')->latest()->get();
+        
+        // Load assignments dengan relasi
+        $assignments = $course->assignments()
+            ->withCount('questions')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        return view('instructor.course-detail', compact('course', 'materials'));
+        // Stats untuk course detail
+        $stats = [
+            'totalStudents' => $course->enrollments()->count(),
+            'totalMaterials' => $materials->count(),
+            'totalAssignments' => $assignments->count(),
+        ];
+
+        return view('instructor.course-detail', compact('course', 'materials', 'assignments', 'stats'));
     }
 
     /**
@@ -46,7 +63,8 @@ class MaterialController extends Controller
      */
     public function create(Kursus $course)
     {
-        if ($course->pembuat !== Auth::id()) {
+        $instructorId = Auth::id();
+        if ($course->instructor_id !== $instructorId && $course->pembuat !== $instructorId) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -58,7 +76,8 @@ class MaterialController extends Controller
      */
     public function store(Request $request, Kursus $course)
     {
-        if ($course->pembuat !== Auth::id()) {
+        $instructorId = Auth::id();
+        if ($course->instructor_id !== $instructorId && $course->pembuat !== $instructorId) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -87,7 +106,8 @@ class MaterialController extends Controller
      */
     public function edit(Kursus $course, Materi $material)
     {
-        if ($course->pembuat !== Auth::id()) {
+        $instructorId = Auth::id();
+        if ($course->instructor_id !== $instructorId && $course->pembuat !== $instructorId) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -99,7 +119,8 @@ class MaterialController extends Controller
      */
     public function update(Request $request, Kursus $course, Materi $material)
     {
-        if ($course->pembuat !== Auth::id()) {
+        $instructorId = Auth::id();
+        if ($course->instructor_id !== $instructorId && $course->pembuat !== $instructorId) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -128,7 +149,8 @@ class MaterialController extends Controller
      */
     public function destroy(Kursus $course, Materi $material)
     {
-        if ($course->pembuat !== Auth::id()) {
+        $instructorId = Auth::id();
+        if ($course->instructor_id !== $instructorId && $course->pembuat !== $instructorId) {
             abort(403, 'Unauthorized action.');
         }
 

@@ -102,10 +102,10 @@
                                 <i class="fas fa-graduation-cap text-blue-600"></i>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <h4 class="font-semibold text-gray-800 mb-1 truncate">{{ $course->title }}</h4>
+                                <h4 class="font-semibold text-gray-800 mb-1 truncate">{{ $course->judul }}</h4>
                                 <div class="flex items-center gap-4 text-sm text-gray-500">
                                     <span><i class="fas fa-users mr-1"></i>{{ $course->students_count ?? 0 }} siswa</span>
-                                    <span><i class="fas fa-file-alt mr-1"></i>{{ $course->materials_count }} materi</span>
+                                    <span><i class="fas fa-file-alt mr-1"></i>{{ $course->materi_count ?? 0 }} materi</span>
                                 </div>
                             </div>
                         </div>
@@ -140,7 +140,7 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-gray-800">{{ $enrollment->user->name }}</p>
-                            <p class="text-xs text-gray-500 truncate">Mendaftar {{ Str::limit($enrollment->course->title, 25) }}</p>
+                            <p class="text-xs text-gray-500 truncate">Mendaftar {{ Str::limit($enrollment->kursus->judul, 25) }}</p>
                             <p class="text-xs text-gray-400 mt-1">
                                 <i class="fas fa-clock mr-1"></i>
                                 {{ $enrollment->created_at->diffForHumans() }}

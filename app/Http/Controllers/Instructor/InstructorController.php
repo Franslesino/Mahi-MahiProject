@@ -18,8 +18,11 @@ class InstructorController extends Controller
     {
         $instructorId = Auth::id();
 
-        // Get instructor's courses
-        $myCourses = Kursus::where('pembuat', $instructorId)
+        // Get instructor's courses (check both pembuat and instructor_id for backward compatibility)
+        $myCourses = Kursus::where(function($query) use ($instructorId) {
+                $query->where('instructor_id', $instructorId)
+                      ->orWhere('pembuat', $instructorId);
+            })
             ->withCount(['materi', 'enrollments' => function($q) {
                 $q->whereIn('status_pendaftaran', ['active', 'completed']);
             }])
@@ -69,7 +72,12 @@ class InstructorController extends Controller
      */
     public function courses()
     {
-        $courses = Kursus::where('pembuat', Auth::id())
+        $instructorId = Auth::id();
+        
+        $courses = Kursus::where(function($query) use ($instructorId) {
+                $query->where('instructor_id', $instructorId)
+                      ->orWhere('pembuat', $instructorId);
+            })
             ->withCount(['materi', 'enrollments' => function($q) {
                 $q->whereIn('status_pendaftaran', ['active', 'completed']);
             }])
@@ -85,19 +93,27 @@ class InstructorController extends Controller
     public function showCourse(Kursus $course)
     {
         // Ensure instructor can only view their own courses
-        if ($course->pembuat !== Auth::id()) {
+        $instructorId = Auth::id();
+        if ($course->instructor_id !== $instructorId && $course->pembuat !== $instructorId) {
             abort(403, 'Unauthorized action.');
         }
 
         $materials = $course->materi()->orderBy('urutan')->get();
         
+        // Get assignments for this course
+        $assignments = \App\Models\Assignment::where('kursus_id', $course->id)
+            ->withCount('questions')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
         $stats = [
             'totalMaterials' => $materials->count(),
+            'totalAssignments' => $assignments->count(),
             'totalStudents' => $course->enrollments()->whereIn('status_pendaftaran', ['active', 'completed'])->count(),
             'completionRate' => $this->calculateCompletionRate($course->id),
         ];
 
-        return view('instructor.courses.show', compact('course', 'materials', 'stats'));
+        return view('instructor.courses.show', compact('course', 'materials', 'assignments', 'stats'));
     }
 
     /**

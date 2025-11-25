@@ -118,6 +118,13 @@
                 <i class="fas fa-users w-5 text-center"></i>
                 <span class="font-medium">Pengguna</span>
             </a>
+
+            <!-- Voucher -->
+            <a href="{{ route('admin.vouchers.index') }}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('admin.vouchers*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                <i class="fas fa-ticket-alt w-5 text-center"></i>
+                <span class="font-medium">Voucher</span>
+            </a>
         </nav>
 
         <!-- Logout Button -->

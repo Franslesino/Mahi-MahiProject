@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -77,6 +78,14 @@ class ProfileController extends Controller
 
         // ✅ Refresh session user agar sidebar & navbar pakai data terbaru
         Auth::setUser($user);
+
+        // Create notification for successful profile update
+        Notification::create([
+            'user_id' => $user->id,
+            'title' => 'Profil Berhasil Diperbarui',
+            'message' => 'Perubahan profil Anda telah berhasil disimpan.',
+            'type' => 'success',
+        ]);
 
         return back()->with('success', 'Profil berhasil diperbarui!');
     }

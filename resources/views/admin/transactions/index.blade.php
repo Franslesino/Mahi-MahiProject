@@ -61,7 +61,9 @@
     </div>
 
     <!-- Revenue Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="grid grid-cols-1 gap-6 mb-8">
+
+
         <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-sm p-6 text-white">
             <div class="flex items-center justify-between">
                 <div>
@@ -72,15 +74,7 @@
             </div>
         </div>
 
-        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-sm p-6 text-white">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-purple-100 text-sm mb-1">Pendapatan Bulan Ini</p>
-                    <p class="text-3xl font-bold">Rp {{ number_format($stats['this_month_revenue'], 0, ',', '.') }}</p>
-                </div>
-                <i class="fas fa-calendar-alt text-4xl opacity-20"></i>
-            </div>
-        </div>
+        
     </div>
 
     <!-- Filters & Table -->
@@ -131,9 +125,7 @@
                     <i class="fas fa-search mr-2"></i>Filter
                 </button>
                 
-                <a href="{{ route('admin.transactions.index') }}" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">
-                    <i class="fas fa-redo mr-2"></i>Reset
-                </a>
+                
             </form>
         </div>
 

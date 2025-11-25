@@ -135,6 +135,18 @@
                     >
                 </div>
 
+                {{-- Profesi --}}
+<div>
+    <label class="block text-sm font-medium text-gray-700 mb-2">Profesi</label>
+    <input
+        type="text"
+        name="profesi"
+        value="{{ old('profesi', $user->profesi) }}"
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+        placeholder="Contoh: Mahasiswa, Dosen, Karyawan"
+    >
+</div>
+
                 {{-- Gender --}}
                 @php $g = old('gender', $user->gender); @endphp
                 <div>

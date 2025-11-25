@@ -40,6 +40,7 @@ class User extends Authenticatable
         'avatar',
         'google_id',
         'jenis_kelamin',
+        'profesi',
     ];
 
     protected $hidden = [
@@ -63,16 +64,68 @@ class User extends Authenticatable
         return $this->hasMany(PengajarKursus::class, 'pengajar_id');
     }
 
-    // --- Relasi ke Enrollments ---
+    public function instructorCourses()
+    {
+        return $this->hasMany(Kursus::class, 'instructor_id');
+    }
+
+    /**
+     * Relasi: courses yang dibuat (sebagai admin/creator)
+     */
+    public function createdCourses()
+    {
+        return $this->hasMany(Kursus::class, 'created_by');
+    }
+
+    /**
+     * Relasi: enrollments (pendaftaran course)
+     */
     public function enrollments()
     {
-        return $this->hasMany(Enrollment::class);
+        return $this->hasMany(Enrollment::class, 'user_id');
     }
-      // --- Relasi ke Transactions (NEW!) ---
+
+    /**
+     * Relasi: transactions
+     */
     public function transactions()
     {
-        return $this->hasMany(Transaction::class);
+        return $this->hasMany(Transaction::class, 'user_id');
     }
+
+    /**
+     * Get full name
+     */
+    public function getFullNameAttribute()
+    {
+        if ($this->first_name && $this->last_name) {
+            return $this->first_name . ' ' . $this->last_name;
+        }
+        return $this->name;
+    }
+
+    /**
+     * Get avatar URL
+     */
+    public function getAvatarUrlAttribute()
+    {
+        if ($this->avatar_path) {
+            return asset('storage/' . $this->avatar_path);
+        }
+        return null;
+    }
+
+    /**
+     * Get initials for avatar placeholder
+     */
+    public function getInitialsAttribute()
+    {
+        if ($this->first_name && $this->last_name) {
+            return strtoupper(substr($this->first_name, 0, 1) . substr($this->last_name, 0, 1));
+        }
+        return strtoupper(substr($this->name, 0, 2));
+    }
+
 
     // --- Relasi ke Materi ---
     public function materi()
@@ -91,6 +144,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(JawabanPeserta::class);
     }
+
+    
 
     // --- Role helper ---
     public function isAdmin()

@@ -44,7 +44,6 @@
                                     'paid' => ['class' => 'bg-green-100 text-green-700', 'icon' => 'check-circle', 'text' => 'Paid'],
                                     'expired' => ['class' => 'bg-gray-100 text-gray-700', 'icon' => 'times-circle', 'text' => 'Expired'],
                                     'cancelled' => ['class' => 'bg-red-100 text-red-700', 'icon' => 'ban', 'text' => 'Cancelled'],
-                                    'refunded' => ['class' => 'bg-purple-100 text-purple-700', 'icon' => 'undo', 'text' => 'Refunded'],
                                 ];
                                 $status = $statusConfig[$transaction->status] ?? ['class' => 'bg-gray-100 text-gray-700', 'icon' => 'question', 'text' => $transaction->status];
                             @endphp
@@ -262,13 +261,7 @@
                 <form action="{{ route('admin.transactions.updateStatus', $transaction) }}" method="POST" class="mt-3">
                     @csrf
                     @method('PATCH')
-                    <input type="hidden" name="status" value="refunded">
-                    <button type="submit" 
-                            onclick="return confirm('Kembalikan dana transaksi ini?')"
-                            class="w-full px-4 py-3 border-2 border-purple-500 text-purple-600 rounded-lg hover:bg-purple-50 transition font-semibold">
-                        <i class="fas fa-undo mr-2"></i>
-                        Refund
-                    </button>
+                   
                 </form>
                 @endif
 

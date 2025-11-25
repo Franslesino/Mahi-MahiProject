@@ -33,6 +33,7 @@ class ProfileController extends Controller
             'dob'        => ['nullable', 'date'],
             'gender'     => ['nullable', 'in:Pria,Wanita,Other'],
             'nim'        => ['nullable', 'string', 'max:50'],
+            'profesi'    => ['nullable', 'string', 'max:100'],
             'avatar'     => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
@@ -44,6 +45,8 @@ class ProfileController extends Controller
         $user->phone = $validated['phone'] ?? null;
         $user->dob   = $validated['dob'] ?? null;
         $user->gender = $validated['gender'] ?? null;
+                $user->profesi    = $validated['profesi'] ?? null;
+
 
         if (array_key_exists('nim', $validated)) {
             $user->nim = $validated['nim'];

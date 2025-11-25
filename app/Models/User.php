@@ -147,6 +147,17 @@ class User extends Authenticatable
 
     
 
+    // --- Relasi ke Notifications ---
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class)->orderBy('created_at', 'desc');
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->hasMany(Notification::class)->whereNull('read_at')->orderBy('created_at', 'desc');
+    }
+
     // --- Role helper ---
     public function isAdmin()
     {

@@ -8,6 +8,7 @@
         sidebarOpen: localStorage.getItem('sidebarOpen') === 'false' ? false : true
     }"
     x-init="$watch('sidebarOpen', value => localStorage.setItem('sidebarOpen', value))"
+    x-effect="document.body.classList.toggle('sidebar-open', sidebarOpen)"
 >
     
     <!-- Toggle Button (Desktop) -->

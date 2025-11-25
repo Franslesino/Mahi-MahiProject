@@ -1,6 +1,11 @@
 {{-- resources/views/student/my-courses.blade.php --}}
 @extends('layouts.app')
 
+@php
+    use App\Models\MaterialCompletion;
+    use Illuminate\Support\Facades\Auth;
+@endphp
+
 @section('title', 'Kursus Saya')
 
 @section('content')
@@ -28,12 +33,34 @@
 
         <!-- Filter Tabs -->
         <div class="flex gap-3 mb-6 overflow-x-auto pb-2">
-            <button class="filter-tab active px-6 py-2 bg-teal-700 text-white rounded-full font-semibold whitespace-nowrap transition hover:bg-teal-800" data-filter="all">
+            <button class="filter-tab active px-6 py-2 bg-teal-700 text-white rounded-full font-semibold whitespace-nowrap transition hover:bg-teal-800" data-filter="ongoing">
                 Berlangsung
             </button>
-            <button class="filter-tab px-6 py-2 bg-white text-gray-700 rounded-full font-semibold whitespace-nowrap border border-gray-300 transition hover:bg-gray-50" data-filter="ongoing">
+            <button class="filter-tab px-6 py-2 bg-white text-gray-700 rounded-full font-semibold whitespace-nowrap border border-gray-300 transition hover:bg-gray-50" data-filter="completed">
                 Selesai
             </button>
+        </div>
+
+        <!-- Stats Summary -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div class="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-4 text-white shadow-sm flex items-center gap-3">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-book text-xl"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold">{{ $enrollments->count() }}</div>
+                    <div class="text-sm opacity-90">Total Kursus</div>
+                </div>
+            </div>
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl p-4 text-white shadow-sm flex items-center gap-3">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-certificate text-xl"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold">0</div>
+                    <div class="text-sm opacity-90">Sertifikat</div>
+                </div>
+            </div>
         </div>
 
         @if($enrollments->isEmpty())
@@ -60,19 +87,23 @@
                         $course = $enrollment->kursus;
                         $judul = $course->judul ?? $course->title ?? 'Untitled';
                         $kategori = $course->kategori ?? 'General';
-                        $instructor = $course->pembuat ?? $course->instructor ?? null;
-                        $materiCount = $course->materi_count ?? $course->materi->count() ?? 0;
-                        
-                        // Calculate progress
-                        $progress = 0; // TODO: Implement actual progress tracking
+                        $materiCount = $course->materi_count ?? ($course->materi->count() ?? 0);
+
+                        // Hitung progres berdasarkan materi yang sudah selesai
+                        $materiIds = $course->materi ? $course->materi->pluck('id')->toArray() : [];
+                        $completedCount = (!empty($materiIds))
+                            ? MaterialCompletion::where('user_id', Auth::id())
+                                ->whereIn('materi_id', $materiIds)
+                                ->count()
+                            : 0;
+                        $progress = $materiCount > 0 ? round(($completedCount / $materiCount) * 100) : 0;
                         $isCompleted = $progress >= 100;
-                        
-                        
                     @endphp
 
-                    <div class="course-item bg-white rounded-2xl shadow-sm hover:shadow-md transition p-4" 
-                         data-status="{{ $isCompleted ? 'completed' : 'ongoing' }}"
-                         data-course-name="{{ strtolower($judul) }}">
+                    <a href="{{ route('student.course.learn', $course) }}"
+                       class="course-item block bg-white rounded-2xl shadow-sm hover:shadow-md transition p-4"
+                       data-status="{{ $isCompleted ? 'completed' : 'ongoing' }}"
+                       data-course-name="{{ strtolower($judul) }}">
                         
                         <div class="flex gap-4">
                             <!-- Course Thumbnail -->
@@ -110,9 +141,6 @@
                                     {{ $judul }}
                                 </h3>
 
-                              
-
-                                <!-- Download Certificate Button -->
                                 @if($isCompleted)
                                     <button class="inline-flex items-center text-sm font-semibold text-teal-700 hover:text-teal-800 transition">
                                         <i class="fas fa-download mr-1"></i>
@@ -128,45 +156,18 @@
                                 @endif
                             </div>
 
-                            <!-- Action Button -->
+                            <!-- Status Indicator -->
                             <div class="flex items-start">
-                                <a href="{{ route('student.course.learn', $course) }}" 
-                                   class="w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white transition shadow-lg">
-                                    <i class="fas fa-play text-sm"></i>
-                                </a>
+                                <span class="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-semibold shadow-md">Active</span>
                             </div>
                         </div>
 
-                    </div>
+                    </a>
                 @endforeach
             </div>
 
             <!-- Stats Cards -->
-            <div class="grid grid-cols-2 gap-4 mt-8">
-                <div class="bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl p-4 text-white">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
-                            <i class="fas fa-book-open text-xl"></i>
-                        </div>
-                        <div>
-                            <div class="text-2xl font-bold">{{ $enrollments->count() }}</div>
-                            <div class="text-sm opacity-90">Total Kursus</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
-                            <i class="fas fa-certificate text-xl"></i>
-                        </div>
-                        <div>
-                            <div class="text-2xl font-bold">0</div>
-                            <div class="text-sm opacity-90">Sertifikat</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div class="grid grid-cols-2 gap-4 mt-8"></div>
         @endif
 
     </div>
@@ -204,17 +205,17 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-300');
 
             // Filter courses
-            const filter = this.dataset.filter;
-            
-            courseItems.forEach(item => {
-                if (filter === 'all') {
-                    item.style.display = 'block';
-                } else {
-                    const status = item.dataset.status;
-                    item.style.display = status === filter ? 'block' : 'none';
-                }
+                    const filter = this.dataset.filter;
+                    courseItems.forEach(item => {
+                        const status = item.dataset.status;
+                        item.style.display = (status === filter) ? 'block' : 'none';
+                    });
             });
         });
+
+    // Set default filter to ongoing on load
+    courseItems.forEach(item => {
+        item.style.display = item.dataset.status === 'ongoing' ? 'block' : 'none';
     });
 
     // Search functionality

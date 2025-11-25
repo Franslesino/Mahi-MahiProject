@@ -18,16 +18,16 @@ class InstructorController extends Controller
     {
         $instructorId = Auth::id();
 
-        // Get instructor's courses (check both pembuat and instructor_id for backward compatibility)
-        $myCourses = Kursus::where(function($query) use ($instructorId) {
-                $query->where('instructor_id', $instructorId)
-                      ->orWhere('pembuat', $instructorId);
-            })
-            ->withCount(['materi', 'enrollments' => function($q) {
-                $q->whereIn('status_pendaftaran', ['active', 'completed']);
-            }])
-            ->latest()
-            ->get();
+       // ✅ PERBAIKAN: Get courses dari kedua kolom
+    $myCourses = Kursus::where(function($query) use ($instructorId) {
+            $query->where('pembuat', $instructorId)
+                  ->orWhere('instructor_id', $instructorId);
+        })
+        ->withCount(['materi', 'enrollments' => function($q) {
+            $q->whereIn('status_pendaftaran', ['active', 'completed']);
+        }])
+        ->latest()
+        ->get();
 
         // Calculate statistics
         $stats = [
@@ -54,10 +54,10 @@ class InstructorController extends Controller
 
         // Recent enrollments (last 10)
         $recentEnrollments = Enrollment::whereIn('kursus_id', $myCourses->pluck('id'))
-            ->with(['user', 'kursus'])
-            ->latest()
-            ->take(10)
-            ->get();
+        ->with(['user', 'kursus']) // Load relasi kursus
+        ->latest()
+        ->take(10)
+        ->get();
 
         return view('instructor.dashboard', compact(
             'stats',
@@ -72,17 +72,15 @@ class InstructorController extends Controller
      */
     public function courses()
     {
-        $instructorId = Auth::id();
-        
-        $courses = Kursus::where(function($query) use ($instructorId) {
-                $query->where('instructor_id', $instructorId)
-                      ->orWhere('pembuat', $instructorId);
-            })
-            ->withCount(['materi', 'enrollments' => function($q) {
-                $q->whereIn('status_pendaftaran', ['active', 'completed']);
-            }])
-            ->latest()
-            ->paginate(12);
+        $courses = Kursus::where(function($query) {
+            $query->where('pembuat', Auth::id())
+                  ->orWhere('instructor_id', Auth::id());
+        })
+        ->withCount(['materi', 'enrollments' => function($q) {
+            $q->whereIn('status_pendaftaran', ['active', 'completed']);
+        }])
+        ->latest()
+        ->paginate(12);
 
         return view('instructor.courses.index', compact('courses'));
     }
@@ -93,27 +91,19 @@ class InstructorController extends Controller
     public function showCourse(Kursus $course)
     {
         // Ensure instructor can only view their own courses
-        $instructorId = Auth::id();
-        if ($course->instructor_id !== $instructorId && $course->pembuat !== $instructorId) {
+        if ($course->pembuat !== Auth::id()) {
             abort(403, 'Unauthorized action.');
         }
 
         $materials = $course->materi()->orderBy('urutan')->get();
         
-        // Get assignments for this course
-        $assignments = \App\Models\Assignment::where('kursus_id', $course->id)
-            ->withCount('questions')
-            ->orderBy('created_at', 'desc')
-            ->get();
-        
         $stats = [
             'totalMaterials' => $materials->count(),
-            'totalAssignments' => $assignments->count(),
             'totalStudents' => $course->enrollments()->whereIn('status_pendaftaran', ['active', 'completed'])->count(),
             'completionRate' => $this->calculateCompletionRate($course->id),
         ];
 
-        return view('instructor.courses.show', compact('course', 'materials', 'assignments', 'stats'));
+        return view('instructor.courses.show', compact('course', 'materials', 'stats'));
     }
 
     /**

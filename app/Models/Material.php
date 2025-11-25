@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 
 /**
  * @property int $id
@@ -20,13 +22,21 @@ class Material extends Model
     protected $table = 'materi';
 
     protected $fillable = [
-        'kursus_id',
-        'judul',
-        'isi',
-        'url_konten',
-        'urutan',
-        'status_terkunci',
-    ];
+    'kursus_id',
+    'section_id',  // TAMBAHKAN INI
+    'judul',
+    'description',  // TAMBAHKAN INI
+    'isi',
+    'content',  // TAMBAHKAN INI
+    'type',
+    'url_konten',
+    'file_url',  // TAMBAHKAN INI
+    'duration',  // TAMBAHKAN INI
+    'urutan',
+    'status_terkunci',
+    'is_preview',  // TAMBAHKAN INI
+    'status',  // TAMBAHKAN INI
+];
 
     protected $casts = [
         'status_terkunci' => 'boolean',
@@ -36,6 +46,11 @@ class Material extends Model
     {
         return $this->belongsTo(Kursus::class, 'kursus_id');
     }
+
+    public function section(): BelongsTo
+{
+    return $this->belongsTo(CourseSection::class, 'section_id');
+}
 
     public function progress()
     {

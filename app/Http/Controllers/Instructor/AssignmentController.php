@@ -18,8 +18,10 @@ class AssignmentController extends Controller
      */
     public function index()
     {
-        $assignments = Assignment::whereHas('kursus', function($query) {
-                $query->where('instructor_id', Auth::id());
+        $instructorId = Auth::id();
+        $assignments = Assignment::whereHas('kursus', function($query) use ($instructorId) {
+                $query->where('instructor_id', $instructorId)
+                      ->orWhere('pembuat', $instructorId);
             })
             ->with(['kursus', 'materi'])
             ->withCount(['questions', 'submissions'])
@@ -34,14 +36,18 @@ class AssignmentController extends Controller
      */
     public function create(Request $request)
     {
-        $courses = Kursus::where('instructor_id', Auth::id())->get();
+        $instructorId = Auth::id();
+        $courses = Kursus::where(function($query) use ($instructorId) {
+                $query->where('instructor_id', $instructorId)
+                      ->orWhere('pembuat', $instructorId);
+            })->get();
         
         $selectedCourse = null;
         $materials = collect();
         
         if ($request->has('course_id')) {
             $selectedCourse = Kursus::find($request->course_id);
-            if ($selectedCourse && $selectedCourse->instructor_id == Auth::id()) {
+            if ($selectedCourse && ($selectedCourse->instructor_id == $instructorId || $selectedCourse->pembuat == $instructorId)) {
                 $materials = $selectedCourse->materi;
             }
         }
@@ -72,7 +78,7 @@ class AssignmentController extends Controller
 
         // Verify course ownership
         $course = Kursus::findOrFail($validated['kursus_id']);
-        if ($course->instructor_id !== Auth::id()) {
+        if ($course->instructor_id !== Auth::id() && $course->pembuat !== Auth::id()) {
             abort(403, 'Anda tidak memiliki akses ke kursus ini.');
         }
 
@@ -94,7 +100,7 @@ class AssignmentController extends Controller
     public function show(Assignment $assignment)
     {
         // Check authorization
-        if ($assignment->kursus->instructor_id !== Auth::id()) {
+        if ($assignment->kursus->instructor_id !== Auth::id() && $assignment->kursus->pembuat !== Auth::id()) {
             abort(403, 'Anda tidak memiliki akses ke assignment ini.');
         }
 
@@ -109,11 +115,11 @@ class AssignmentController extends Controller
     public function edit(Assignment $assignment)
     {
         // Check authorization
-        if ($assignment->kursus->instructor_id !== Auth::id()) {
+        if ($assignment->kursus->instructor_id !== Auth::id() && $assignment->kursus->pembuat !== Auth::id()) {
             abort(403, 'Anda tidak dapat mengedit assignment ini.');
         }
 
-        $courses = Kursus::where('instructor_id', Auth::id())->get();
+        $courses = Kursus::where(function($query) { $instructorId = Auth::id(); $query->where('instructor_id', $instructorId)->orWhere('pembuat', $instructorId); })->get();
         $materials = $assignment->kursus->materi;
 
         return view('instructor.assignments.edit', compact('assignment', 'courses', 'materials'));
@@ -125,7 +131,7 @@ class AssignmentController extends Controller
     public function update(Request $request, Assignment $assignment)
     {
         // Check authorization
-        if ($assignment->kursus->instructor_id !== Auth::id()) {
+        if ($assignment->kursus->instructor_id !== Auth::id() && $assignment->kursus->pembuat !== Auth::id()) {
             abort(403, 'Anda tidak dapat mengedit assignment ini.');
         }
 
@@ -147,7 +153,7 @@ class AssignmentController extends Controller
 
         // Verify course ownership
         $course = Kursus::findOrFail($validated['kursus_id']);
-        if ($course->instructor_id !== Auth::id()) {
+        if ($course->instructor_id !== Auth::id() && $course->pembuat !== Auth::id()) {
             abort(403, 'Anda tidak memiliki akses ke kursus ini.');
         }
 
@@ -168,7 +174,7 @@ class AssignmentController extends Controller
     public function destroy(Assignment $assignment)
     {
         // Check authorization
-        if ($assignment->kursus->instructor_id !== Auth::id()) {
+        if ($assignment->kursus->instructor_id !== Auth::id() && $assignment->kursus->pembuat !== Auth::id()) {
             abort(403, 'Anda tidak dapat menghapus assignment ini.');
         }
 
@@ -185,7 +191,7 @@ class AssignmentController extends Controller
     public function editQuestions(Assignment $assignment)
     {
         // Check authorization
-        if ($assignment->kursus->instructor_id !== Auth::id()) {
+        if ($assignment->kursus->instructor_id !== Auth::id() && $assignment->kursus->pembuat !== Auth::id()) {
             abort(403, 'Anda tidak dapat mengedit assignment ini.');
         }
 
@@ -206,7 +212,7 @@ class AssignmentController extends Controller
     public function addQuestions(Request $request, Assignment $assignment)
     {
         // Check authorization
-        if ($assignment->kursus->instructor_id !== Auth::id()) {
+        if ($assignment->kursus->instructor_id !== Auth::id() && $assignment->kursus->pembuat !== Auth::id()) {
             abort(403);
         }
 
@@ -246,7 +252,7 @@ class AssignmentController extends Controller
     public function removeQuestion(Assignment $assignment, Question $question)
     {
         // Check authorization
-        if ($assignment->kursus->instructor_id !== Auth::id()) {
+        if ($assignment->kursus->instructor_id !== Auth::id() && $assignment->kursus->pembuat !== Auth::id()) {
             abort(403);
         }
 
@@ -261,7 +267,7 @@ class AssignmentController extends Controller
     public function publish(Assignment $assignment)
     {
         // Check authorization
-        if ($assignment->kursus->instructor_id !== Auth::id()) {
+        if ($assignment->kursus->instructor_id !== Auth::id() && $assignment->kursus->pembuat !== Auth::id()) {
             abort(403);
         }
 
@@ -280,7 +286,7 @@ class AssignmentController extends Controller
     public function unpublish(Assignment $assignment)
     {
         // Check authorization
-        if ($assignment->kursus->instructor_id !== Auth::id()) {
+        if ($assignment->kursus->instructor_id !== Auth::id() && $assignment->kursus->pembuat !== Auth::id()) {
             abort(403);
         }
 

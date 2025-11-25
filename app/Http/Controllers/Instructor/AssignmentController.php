@@ -200,10 +200,13 @@ class AssignmentController extends Controller
         // Get available question banks
         $questionBanks = QuestionBank::where('created_by', Auth::id())
             ->orWhere('is_public', true)
+            ->with(['questions.options'])
             ->withCount('questions')
             ->get();
 
-        return view('instructor.assignments.edit-questions', compact('assignment', 'questionBanks'));
+        $ownedBanks = $questionBanks->where('created_by', Auth::id());
+
+        return view('instructor.assignments.edit-questions', compact('assignment', 'questionBanks', 'ownedBanks'));
     }
 
     /**
@@ -259,6 +262,206 @@ class AssignmentController extends Controller
         $assignment->questions()->detach($question->id);
 
         return back()->with('success', 'Soal berhasil dihapus dari assignment!');
+    }
+
+    /**
+     * Quick create quiz (assignment) from course page with optional bank import
+     */
+    public function quickCreateFromCourse(Request $request, Kursus $course)
+    {
+        if ($course->instructor_id !== Auth::id() && $course->pembuat !== Auth::id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'section_id' => 'nullable|exists:course_sections,id',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'question_bank_id' => 'nullable|exists:question_banks,id',
+            'duration_minutes' => 'nullable|integer|min:1',
+            'passing_score' => 'nullable|integer|min:0|max:100',
+            'randomize_questions' => 'nullable|in:0,1,true,false,on,off',
+        ]);
+
+        // Ensure section belongs to course if provided
+        if (!empty($validated['section_id']) && !$course->sections()->where('id', $validated['section_id'])->exists()) {
+            abort(422, 'Section tidak valid untuk kursus ini.');
+        }
+
+        $validated['randomize_questions'] = $request->boolean('randomize_questions');
+
+        DB::beginTransaction();
+        try {
+            // Create materi placeholder in selected section
+            $sectionId = $validated['section_id'] ?? null;
+            $urutan = $sectionId
+                ? ($course->materi()->where('section_id', $sectionId)->max('urutan') ?? 0) + 1
+                : ($course->materi()->max('urutan') ?? 0) + 1;
+
+            $material = $course->materi()->create([
+                'section_id' => $sectionId,
+                'judul' => $validated['title'],
+                'description' => $validated['description'] ?? null,
+                'type' => 'quiz',
+                'urutan' => $urutan,
+                'status' => 'draft',
+                'is_preview' => false,
+                'status_terkunci' => true,
+            ]);
+
+            // Create assignment (quiz)
+            $assignment = Assignment::create([
+                'kursus_id' => $course->id,
+                'materi_id' => $material->id,
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? null,
+                'type' => 'quiz',
+                'duration_minutes' => $validated['duration_minutes'] ?? null,
+                'passing_score' => $validated['passing_score'] ?? 60,
+                'start_date' => null,
+                'due_date' => null,
+                'show_results_immediately' => true,
+                'allow_multiple_attempts' => false,
+                'max_attempts' => null,
+                'randomize_questions' => $validated['randomize_questions'],
+                'is_published' => false,
+            ]);
+
+            // Optional: import all questions from selected bank
+            if (!empty($validated['question_bank_id'])) {
+                $bank = QuestionBank::where('id', $validated['question_bank_id'])
+                    ->where(function($q) {
+                        $q->where('created_by', Auth::id())
+                          ->orWhere('is_public', true);
+                    })->with('questions.options')
+                    ->firstOrFail();
+
+                $order = 0;
+                foreach ($bank->questions as $question) {
+                    $assignment->questions()->attach($question->id, [
+                        'order' => ++$order,
+                        'points' => $question->points,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('instructor.courses.show', $course)
+                ->with('success', 'Quiz berhasil dibuat! Tambahkan/atur soal di halaman ini atau lanjutkan di menu Assignment & Quiz.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal membuat quiz: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Store a newly created question directly from assignment page and attach it
+     */
+    public function storeQuestion(Request $request, Assignment $assignment)
+    {
+        if ($assignment->kursus->instructor_id !== Auth::id() && $assignment->kursus->pembuat !== Auth::id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'question_bank_id' => 'nullable|exists:question_banks,id',
+            'type' => 'required|in:multiple_choice,true_false,essay,short_answer',
+            'question_text' => 'required|string',
+            'explanation' => 'nullable|string',
+            'points' => 'required|integer|min:1',
+            'correct_answer' => 'nullable|string',
+            'options' => 'array',
+            'options.*.text' => 'required_with:options|string',
+            'options.*.is_correct' => 'nullable|boolean',
+        ]);
+
+        // Determine target bank (owned only). If none, create a course-scoped bank for this instructor.
+        $questionBank = null;
+        if (!empty($validated['question_bank_id'])) {
+            $questionBank = QuestionBank::where('id', $validated['question_bank_id'])
+                ->where('created_by', Auth::id())
+                ->firstOrFail();
+        } else {
+            $questionBank = QuestionBank::firstOrCreate(
+                [
+                    'created_by' => Auth::id(),
+                    'title' => 'Bank Kursus: ' . $assignment->kursus->judul,
+                ],
+                [
+                    'description' => 'Bank soal otomatis untuk kursus ' . $assignment->kursus->judul,
+                    'category' => $assignment->kursus->kategori ?? null,
+                    'is_public' => false,
+                ]
+            );
+        }
+
+        DB::beginTransaction();
+        try {
+            $maxOrder = $questionBank->questions()->max('order') ?? 0;
+
+            $question = $questionBank->questions()->create([
+                'type' => $validated['type'],
+                'question_text' => $validated['question_text'],
+                'explanation' => $validated['explanation'] ?? null,
+                'points' => $validated['points'],
+                'order' => $maxOrder + 1,
+                'correct_answer' => in_array($validated['type'], ['short_answer']) ? ($validated['correct_answer'] ?? null) : null,
+            ]);
+
+            // Handle options per type
+            if ($validated['type'] === 'multiple_choice') {
+                $options = collect($validated['options'] ?? [])
+                    ->filter(fn ($opt) => isset($opt['text']) && trim($opt['text']) !== '')
+                    ->values();
+
+                if ($options->count() < 2) {
+                    throw new \Exception('Minimal dua opsi untuk pilihan ganda.');
+                }
+
+                $hasCorrect = $options->contains(fn ($opt) => !empty($opt['is_correct']));
+                if (!$hasCorrect) {
+                    throw new \Exception('Pilih minimal satu jawaban benar.');
+                }
+
+                foreach ($options as $index => $optionData) {
+                    $question->options()->create([
+                        'option_text' => $optionData['text'],
+                        'is_correct' => !empty($optionData['is_correct']),
+                        'order' => $index + 1,
+                    ]);
+                }
+            } elseif ($validated['type'] === 'true_false') {
+                $correct = strtolower($validated['correct_answer'] ?? 'true');
+                $question->options()->createMany([
+                    [
+                        'option_text' => 'Benar',
+                        'is_correct' => in_array($correct, ['true', 'benar', '1']),
+                        'order' => 1,
+                    ],
+                    [
+                        'option_text' => 'Salah',
+                        'is_correct' => in_array($correct, ['false', 'salah', '0']),
+                        'order' => 2,
+                    ],
+                ]);
+            }
+
+            // Attach to assignment with next order
+            $nextOrder = ($assignment->questions()->max('assignment_questions.order') ?? 0) + 1;
+            $assignment->questions()->attach($question->id, [
+                'order' => $nextOrder,
+                'points' => $validated['points'],
+            ]);
+
+            DB::commit();
+
+            return back()->with('success', 'Soal baru berhasil dibuat dan ditambahkan ke quiz!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->with('error', 'Gagal membuat soal: ' . $e->getMessage());
+        }
     }
 
     /**

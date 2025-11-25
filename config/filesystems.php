@@ -15,6 +15,12 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
+    // TTL (menit) untuk temporary URL (S3/MinIO) jika bucket privat
+    'temporary_url_ttl' => env('FILESYSTEM_TEMP_URL_TTL', 60),
+
+    // Custom: disk untuk upload materi (pdf/video)
+    'materials_disk' => env('MATERIALS_DISK', 'public'),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks

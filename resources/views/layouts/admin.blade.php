@@ -65,7 +65,7 @@
         <!-- Header Sidebar -->
         <div class="flex-shrink-0 p-6 border-b border-gray-200">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-blue-900">EDUQUEST</h2>
+                <h2 class="text-2xl font-bold" style="color: var(--upgreen-primary);">UpGreenius</h2>
                 <button @click="sidebarOpen = false" class="lg:hidden text-gray-500 hover:text-gray-700 transition">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>

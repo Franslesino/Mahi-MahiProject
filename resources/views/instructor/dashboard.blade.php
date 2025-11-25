@@ -96,16 +96,17 @@
             @else
                 <div class="space-y-4">
                     @foreach($courseStats->take(5) as $course)
-                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <a href="{{ route('instructor.courses.show', $course) }}"
+                       class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition border border-transparent hover:border-blue-100">
                         <div class="flex items-center gap-4 flex-1">
                             <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                                 <i class="fas fa-graduation-cap text-blue-600"></i>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <h4 class="font-semibold text-gray-800 mb-1 truncate">{{ $course->judul }}</h4>
+                                <h4 class="font-semibold text-gray-800 mb-1 truncate">{{ $course->title ?? $course->judul }}</h4>
                                 <div class="flex items-center gap-4 text-sm text-gray-500">
                                     <span><i class="fas fa-users mr-1"></i>{{ $course->students_count ?? 0 }} siswa</span>
-                                    <span><i class="fas fa-file-alt mr-1"></i>{{ $course->materi_count ?? 0 }} materi</span>
+                                    <span><i class="fas fa-file-alt mr-1"></i>{{ $course->materials_count }} materi</span>
                                 </div>
                             </div>
                         </div>
@@ -113,7 +114,7 @@
                             <p class="text-lg font-bold text-emerald-600">Rp {{ number_format($course->total_revenue ?? 0, 0, ',', '.') }}</p>
                             <p class="text-xs text-gray-500">Revenue</p>
                         </div>
-                    </div>
+                    </a>
                     @endforeach
                 </div>
             @endif
@@ -139,13 +140,16 @@
                             <span class="text-white text-sm font-bold">{{ substr($enrollment->user->name, 0, 1) }}</span>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-800">{{ $enrollment->user->name }}</p>
-                            <p class="text-xs text-gray-500 truncate">Mendaftar {{ Str::limit($enrollment->kursus->judul, 25) }}</p>
-                            <p class="text-xs text-gray-400 mt-1">
-                                <i class="fas fa-clock mr-1"></i>
-                                {{ $enrollment->created_at->diffForHumans() }}
-                            </p>
-                        </div>
+    <p class="text-sm font-medium text-gray-800">{{ $enrollment->user->name }}</p>
+    {{-- ✅ PERBAIKAN: Cek dulu apakah kursus ada --}}
+    <p class="text-xs text-gray-500 truncate">
+        Mendaftar {{ $enrollment->kursus ? Str::limit($enrollment->kursus->judul, 25) : 'Kursus tidak ditemukan' }}
+    </p>
+    <p class="text-xs text-gray-400 mt-1">
+        <i class="fas fa-clock mr-1"></i>
+        {{ $enrollment->created_at->diffForHumans() }}
+    </p>
+</div>
                         @if($enrollment->status === 'paid' || $enrollment->status === 'completed')
                         <span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full font-medium flex-shrink-0">Lunas</span>
                         @endif

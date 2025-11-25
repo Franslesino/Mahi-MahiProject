@@ -153,8 +153,29 @@ class CourseController extends Controller
 
     public function show(Kursus $course)
     {
-        $course->load(['pembuat', 'materi', 'instructor']);
+        $course->load([
+            'pembuat', 
+            'materi' => function($query) {
+                $query->orderBy('urutan');
+            }, 
+            'instructor',
+            'enrollments.user'
+        ]);
 
-        return view('admin.courses.show', compact('course'));
+        // Get assignments for this course
+        $assignments = \App\Models\Assignment::where('course_id', $course->id)
+            ->withCount('questions')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Statistics
+        $stats = [
+            'total_enrollments' => $course->enrollments->count(),
+            'total_materials' => $course->materi->count(),
+            'total_assignments' => $assignments->count(),
+            'active_students' => $course->enrollments->where('status', 'active')->count(),
+        ];
+
+        return view('admin.courses.show', compact('course', 'assignments', 'stats'));
     }
 }

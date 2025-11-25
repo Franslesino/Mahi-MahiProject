@@ -20,35 +20,51 @@ class DashboardController extends Controller
         $totalStudents = User::where('role', 'student')->count();
         $totalInstructors = User::where('role', 'instructor')->count();
         
-        // Transaction Stats
-        $totalTransactions = Transaction::count();
-        $pendingTransactions = Transaction::where('status', 'pending')->count();
-        $paidTransactions = Transaction::where('status', 'paid')->count();
-        $totalRevenue = Transaction::where('status', 'paid')->sum('total_bayar');
+        // Transaction Stats (with error handling)
+        try {
+            $totalTransactions = Transaction::count();
+            $pendingTransactions = Transaction::where('status', 'pending')->count();
+            $paidTransactions = Transaction::where('status', 'paid')->count();
+            $totalRevenue = Transaction::where('status', 'paid')->sum('total_bayar') ?? 0;
+        } catch (\Exception $e) {
+            $totalTransactions = 0;
+            $pendingTransactions = 0;
+            $paidTransactions = 0;
+            $totalRevenue = 0;
+        }
         
-        // Today & This Month Revenue
-        $todayRevenue = Transaction::where('status', 'paid')
-            ->whereDate('paid_at', today())
-            ->sum('total_bayar');
-            
-        $thisMonthRevenue = Transaction::where('status', 'paid')
-            ->whereMonth('paid_at', now()->month)
-            ->whereYear('paid_at', now()->year)
-            ->sum('total_bayar');
+        // Today & This Month Revenue (with error handling)
+        try {
+            $todayRevenue = Transaction::where('status', 'paid')
+                ->whereDate('paid_at', today())
+                ->sum('total_bayar') ?? 0;
+                
+            $thisMonthRevenue = Transaction::where('status', 'paid')
+                ->whereMonth('paid_at', now()->month)
+                ->whereYear('paid_at', now()->year)
+                ->sum('total_bayar') ?? 0;
+        } catch (\Exception $e) {
+            $todayRevenue = 0;
+            $thisMonthRevenue = 0;
+        }
 
         // 📊 Revenue by Category (for Donut Chart)
-        $revenueByCategory = Transaction::where('transactions.status', 'paid')
-            ->join('kursus', 'transactions.kursus_id', '=', 'kursus.id')
-            ->select('kursus.kategori', DB::raw('SUM(transactions.total_bayar) as total'))
-            ->groupBy('kursus.kategori')
-            ->get();
+        try {
+            $revenueByCategory = Transaction::where('transactions.status', 'paid')
+                ->join('kursus', 'transactions.kursus_id', '=', 'kursus.id')
+                ->select('kursus.kategori', DB::raw('SUM(transactions.total_bayar) as total'))
+                ->groupBy('kursus.kategori')
+                ->get();
+        } catch (\Exception $e) {
+            $revenueByCategory = collect();
+        }
 
         // Calculate percentages for donut chart
         $totalCategoryRevenue = $revenueByCategory->sum('total');
         $categoryData = $revenueByCategory->map(function($item) use ($totalCategoryRevenue) {
             return [
-                'category' => $item->kategori,
-                'total' => $item->total,
+                'category' => $item->kategori ?? 'Unknown',
+                'total' => $item->total ?? 0,
                 'percentage' => $totalCategoryRevenue > 0 
                     ? round(($item->total / $totalCategoryRevenue) * 100, 1) 
                     : 0
@@ -56,15 +72,19 @@ class DashboardController extends Controller
         });
 
         // 📈 Monthly Transactions (for Line Chart)
-        $monthlyTransactions = Transaction::where('status', 'paid')
-            ->whereYear('paid_at', now()->year)
-            ->select(
-                DB::raw('EXTRACT(MONTH FROM paid_at) as month'),
-                DB::raw('COUNT(*) as count')
-            )
-            ->groupBy(DB::raw('EXTRACT(MONTH FROM paid_at)'))
-            ->orderBy('month')
-            ->get();
+        try {
+            $monthlyTransactions = Transaction::where('status', 'paid')
+                ->whereYear('paid_at', now()->year)
+                ->select(
+                    DB::raw('EXTRACT(MONTH FROM paid_at) as month'),
+                    DB::raw('COUNT(*) as count')
+                )
+                ->groupBy(DB::raw('EXTRACT(MONTH FROM paid_at)'))
+                ->orderBy('month')
+                ->get();
+        } catch (\Exception $e) {
+            $monthlyTransactions = collect();
+        }
 
         // Fill missing months with 0
         $monthlyData = collect(range(1, 12))->map(function($month) use ($monthlyTransactions) {

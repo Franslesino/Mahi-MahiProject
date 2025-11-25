@@ -157,9 +157,22 @@
 
                             {{-- AKSI --}}
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-2">
 
-                                   
+                                    {{-- KELOLA MATERI --}}
+                                    <a href="{{ route('admin.courses.materials.index', $course) }}"
+                                       class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition text-xs font-medium"
+                                       title="Kelola Materi">
+                                        <i class="fas fa-book-open mr-1"></i>
+                                        Materi
+                                    </a>
+
+                                    {{-- LIHAT DETAIL --}}
+                                    <a href="{{ route('admin.courses.show', $course) }}"
+                                       class="text-gray-600 hover:text-gray-800"
+                                       title="Lihat Detail">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
 
                                     {{-- EDIT --}}
                                     <a href="{{ route('admin.courses.edit', $course) }}"

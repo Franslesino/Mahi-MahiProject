@@ -47,7 +47,7 @@ Route::get('/', function (Request $request) {
 })->name('home');
 
 // Test Google Config (Public - untuk debugging)
-Route::get('/test-google-config', function() {
+Route::get('/test-google-config', function () {
     return [
         'socialite_installed' => class_exists('Laravel\Socialite\Facades\Socialite'),
         'client_id' => config('services.google.client_id'),
@@ -90,6 +90,30 @@ Route::middleware('auth')->group(function () {
     // ======================
     Route::middleware('role:student')->group(function () {
 
+
+
+        // List & detail course
+        Route::get('/courses', [StudentCourseController::class, 'index'])->name('courses.index');
+        Route::get('/courses/{course}', [StudentCourseController::class, 'show'])->name('courses.show');
+
+        // Transactions (NEW!)
+        Route::prefix('transactions')->name('transactions.')->group(function () {
+            Route::get('/checkout/{course}', [\App\Http\Controllers\Student\TransactionController::class, 'checkout'])->name('checkout');
+            Route::post('/process/{course}', [\App\Http\Controllers\Student\TransactionController::class, 'process'])->name('process');
+            Route::get('/{transaction}', [\App\Http\Controllers\Student\TransactionController::class, 'show'])->name('show');
+            Route::post('/{transaction}/confirm', [\App\Http\Controllers\Student\TransactionController::class, 'confirm'])->name('confirm');
+            Route::post('/{transaction}/cancel', [\App\Http\Controllers\Student\TransactionController::class, 'cancel'])->name('cancel');
+        });
+
+        // My transactions
+        Route::get('/my-transactions', [\App\Http\Controllers\Student\TransactionController::class, 'myTransactions'])->name('my-transactions');
+
+        // Enroll (redirect to checkout)
+        Route::post('/courses/{course}/enroll', function (Kursus $course) {
+            return redirect()->route('transactions.checkout', $course);
+        })->name('courses.enroll');
+
+
         // Home student
         Route::get('/user', function (Request $request) {
             return redirect()->route('home', $request->only('search', 'category'));
@@ -107,6 +131,7 @@ Route::middleware('auth')->group(function () {
         // Learn Course
         Route::get('/courses/{course}/learn', [StudentController::class, 'learn'])->name('student.course.learn');
 
+
         // My Courses
         Route::get('/my-courses', [StudentController::class, 'myCourses'])->name('my-courses');
 
@@ -122,11 +147,21 @@ Route::middleware('auth')->group(function () {
         // My Transactions
         Route::get('/my-transactions', [StudentTransactionController::class, 'myTransactions'])->name('my-transactions');
 
+
         // Profile
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
         Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
         Route::delete('/profile/avatar', [ProfileController::class, 'deleteAvatar'])->name('profile.avatar.delete');
+
+
+        // Notifications
+        Route::post('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+        Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+
+        // My courses
+        Route::get('/my-courses', [StudentController::class, 'myCourses'])->name('my-courses');
     });
 
     // ======================
@@ -140,6 +175,33 @@ Route::middleware('auth')->group(function () {
             // Dashboard (using controller)
             Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
+            Route::get('/dashboard', function () {
+                $totalCourses     = Kursus::count();
+                $activeCourses    = Kursus::where('status_diterbitkan', true)->count();
+                $totalStudents    = \App\Models\User::where('role', 'student')->count();
+                $totalInstructors = \App\Models\User::where('role', 'instructor')->count();
+                
+                // Total Users (semua pengguna)
+                $totalUsers = \App\Models\User::count();
+                
+                // Total Transaksi (enrollments atau transactions)
+                $totalEnrollments = \App\Models\Transaction::count();
+                
+                // Total Pendapatan (dari transaksi yang sudah paid)
+                $totalRevenue = \App\Models\Transaction::where('status', 'paid')
+                    ->sum('total_bayar');
+
+                return view('admin.dashboard', compact(
+                    'totalCourses',
+                    'activeCourses',
+                    'totalStudents',
+                    'totalInstructors',
+                    'totalUsers',
+                    'totalEnrollments',
+                    'totalRevenue'
+                ));
+            })->name('dashboard');
+
             // Users management
             Route::resource('users', UserController::class);
 
@@ -147,11 +209,29 @@ Route::middleware('auth')->group(function () {
             Route::resource('courses', AdminCourseController::class);
 
             // Transactions management
+
             Route::get('transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
             Route::get('transactions/{transaction}', [AdminTransactionController::class, 'show'])->name('transactions.show');
             Route::patch('transactions/{transaction}/status', [AdminTransactionController::class, 'updateStatus'])->name('transactions.updateStatus');
             Route::delete('transactions/{transaction}', [AdminTransactionController::class, 'destroy'])->name('transactions.destroy');
             Route::get('transactions-export', [AdminTransactionController::class, 'export'])->name('transactions.export');
+
+            Route::get('transactions', [\App\Http\Controllers\Admin\TransactionController::class, 'index'])
+                ->name('transactions.index');
+            Route::get('transactions/{transaction}', [\App\Http\Controllers\Admin\TransactionController::class, 'show'])
+                ->name('transactions.show');
+            Route::patch('transactions/{transaction}/status', [\App\Http\Controllers\Admin\TransactionController::class, 'updateStatus'])
+                ->name('transactions.updateStatus');
+            Route::delete('transactions/{transaction}', [\App\Http\Controllers\Admin\TransactionController::class, 'destroy'])
+                ->name('transactions.destroy');
+            Route::get('transactions/export', [\App\Http\Controllers\Admin\TransactionController::class, 'export'])
+                ->name('transactions.export');
+
+            // Vouchers management
+            Route::resource('vouchers', \App\Http\Controllers\Admin\VoucherController::class);
+            Route::patch('vouchers/{voucher}/toggle', [\App\Http\Controllers\Admin\VoucherController::class, 'toggleStatus'])
+                ->name('vouchers.toggle');
+
         });
 
     // ======================
@@ -176,3 +256,4 @@ Route::middleware('auth')->group(function () {
             Route::delete('/courses/{course}/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
         });
 });
+    

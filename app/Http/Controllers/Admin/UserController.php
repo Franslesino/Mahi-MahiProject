@@ -38,9 +38,7 @@ class UserController extends Controller
 
     public function create()
     {
-        // tambahin ini supaya $instructors ada di view create.blade.php
         $instructors = User::where('role', 'instructor')->get();
-
         return view('admin.users.create', compact('instructors'));
     }
 
@@ -62,9 +60,57 @@ class UserController extends Controller
             ->with('success', 'Pengguna berhasil ditambahkan!');
     }
 
+    /**
+     * Display the specified user with role-specific information
+     */
     public function show(User $user)
     {
-        return view('admin.users.show', compact('user'));
+        // Load relasi berdasarkan role
+        if ($user->role === 'instructor') {
+            // Untuk instructor: ambil courses yang dia ampu beserta jumlah peserta
+            $user->load([
+                'instructorCourses' => function($query) {
+                    $query->withCount('enrollments')
+                          ->orderBy('created_at', 'desc');
+                }
+            ]);
+
+            // Hitung statistik - total revenue dari kursus yang diajar
+            $totalRevenue = \DB::table('transactions')
+                ->whereIn('kursus_id', $user->instructorCourses->pluck('id'))
+                ->where('status', 'paid')
+                ->sum('total_bayar');
+
+            $stats = [
+                'total_courses' => $user->instructorCourses->count(),
+                'total_students' => $user->instructorCourses->sum('enrollments_count'),
+                'active_courses' => $user->instructorCourses->where('status_diterbitkan', true)->count(),
+                'total_revenue' => $totalRevenue
+            ];
+
+        } elseif ($user->role === 'student' || $user->role === 'user') {
+            // Untuk student/user: ambil courses yang diikuti dan transaksi
+            $user->load([
+                'enrollments.kursus.instructor',
+                'transactions' => function($query) {
+                    $query->latest()->limit(10);
+                }
+            ]);
+
+            // Hitung statistik
+            $stats = [
+                'total_enrolled' => $user->enrollments->count(),
+                'completed_courses' => $user->enrollments->where('status', 'selesai')->count(),
+                'in_progress' => $user->enrollments->where('status', 'aktif')->count(),
+                'total_spent' => $user->transactions()->where('status', 'paid')->sum('total_bayar')
+            ];
+
+        } else {
+            // Untuk admin atau role lainnya
+            $stats = null;
+        }
+
+        return view('admin.users.show', compact('user', 'stats'));
     }
 
     public function edit(User $user)
@@ -96,12 +142,6 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        // kalau nanti mau larang hapus akun sendiri, tinggal aktifin lagi pengecekan di bawah
-        // if ($user->getKey() === optional(auth()->user())->getKey()) {
-        //     return redirect()->route('admin.users.index')
-        //         ->with('error', 'Anda tidak dapat menghapus akun sendiri!');
-        // }
-
         $user->delete();
 
         return redirect()

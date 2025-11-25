@@ -173,35 +173,7 @@ Route::middleware('auth')->group(function () {
         ->group(function () {
 
             // Dashboard (using controller)
-            Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-
-            Route::get('/dashboard', function () {
-                $totalCourses     = Kursus::count();
-                $activeCourses    = Kursus::where('status_diterbitkan', true)->count();
-                $totalStudents    = \App\Models\User::where('role', 'student')->count();
-                $totalInstructors = \App\Models\User::where('role', 'instructor')->count();
-                
-                // Total Users (semua pengguna)
-                $totalUsers = \App\Models\User::count();
-                
-                // Total Transaksi (enrollments atau transactions)
-                $totalEnrollments = \App\Models\Transaction::count();
-                
-                // Total Pendapatan (dari transaksi yang sudah paid)
-                $totalRevenue = \App\Models\Transaction::where('status', 'paid')
-                    ->sum('total_bayar');
-
-                return view('admin.dashboard', compact(
-                    'totalCourses',
-                    'activeCourses',
-                    'totalStudents',
-                    'totalInstructors',
-                    'totalUsers',
-                    'totalEnrollments',
-                    'totalRevenue'
-                ));
-            })->name('dashboard');
-
+           Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
             // Users management
             Route::resource('users', UserController::class);
 
@@ -232,6 +204,41 @@ Route::middleware('auth')->group(function () {
             Route::patch('vouchers/{voucher}/toggle', [\App\Http\Controllers\Admin\VoucherController::class, 'toggleStatus'])
                 ->name('vouchers.toggle');
 
+            // Course Materials Management
+            Route::prefix('courses/{course}')->name('courses.')->group(function () {
+                Route::get('materials', [\App\Http\Controllers\Admin\MaterialController::class, 'index'])->name('materials.index');
+                Route::get('materials/create', [\App\Http\Controllers\Admin\MaterialController::class, 'create'])->name('materials.create');
+                Route::post('materials', [\App\Http\Controllers\Admin\MaterialController::class, 'store'])->name('materials.store');
+                Route::get('materials/{material}/edit', [\App\Http\Controllers\Admin\MaterialController::class, 'edit'])->name('materials.edit');
+                Route::put('materials/{material}', [\App\Http\Controllers\Admin\MaterialController::class, 'update'])->name('materials.update');
+                Route::delete('materials/{material}', [\App\Http\Controllers\Admin\MaterialController::class, 'destroy'])->name('materials.destroy');
+            });
+
+            // Question Bank Management
+            Route::resource('question-banks', \App\Http\Controllers\Admin\QuestionBankController::class);
+            Route::get('/question-banks/{questionBank}/create-question', [\App\Http\Controllers\Admin\QuestionBankController::class, 'createQuestion'])->name('question-banks.create-question');
+            Route::post('/question-banks/{questionBank}/questions', [\App\Http\Controllers\Admin\QuestionBankController::class, 'storeQuestion'])->name('question-banks.questions.store');
+            Route::delete('/question-banks/{questionBank}/questions/{question}', [\App\Http\Controllers\Admin\QuestionBankController::class, 'destroyQuestion'])->name('question-banks.questions.destroy');
+            
+            // Question Import/Export
+            Route::get('/question-banks/export/template', [\App\Http\Controllers\Admin\QuestionBankController::class, 'exportTemplate'])->name('question-banks.export-template');
+            Route::post('/question-banks/{questionBank}/import', [\App\Http\Controllers\Admin\QuestionBankController::class, 'importQuestions'])->name('question-banks.import-questions');
+            Route::get('/question-banks/{questionBank}/export', [\App\Http\Controllers\Admin\QuestionBankController::class, 'exportQuestions'])->name('question-banks.export-questions');
+
+            // Assignment Management
+            Route::get('/assignments', [\App\Http\Controllers\Admin\AssignmentController::class, 'index'])->name('assignments.index');
+            Route::get('/assignments/create', [\App\Http\Controllers\Admin\AssignmentController::class, 'create'])->name('assignments.create');
+            Route::post('/assignments', [\App\Http\Controllers\Admin\AssignmentController::class, 'store'])->name('assignments.store');
+            Route::get('/assignments/{assignment}', [\App\Http\Controllers\Admin\AssignmentController::class, 'show'])->name('assignments.show');
+            Route::get('/assignments/{assignment}/edit', [\App\Http\Controllers\Admin\AssignmentController::class, 'edit'])->name('assignments.edit');
+            Route::put('/assignments/{assignment}', [\App\Http\Controllers\Admin\AssignmentController::class, 'update'])->name('assignments.update');
+            Route::delete('/assignments/{assignment}', [\App\Http\Controllers\Admin\AssignmentController::class, 'destroy'])->name('assignments.destroy');
+            Route::get('/assignments/{assignment}/questions', [\App\Http\Controllers\Admin\AssignmentController::class, 'editQuestions'])->name('assignments.edit-questions');
+            Route::post('/assignments/{assignment}/questions', [\App\Http\Controllers\Admin\AssignmentController::class, 'addQuestions'])->name('assignments.add-questions');
+            Route::delete('/assignments/{assignment}/questions/{question}', [\App\Http\Controllers\Admin\AssignmentController::class, 'removeQuestion'])->name('assignments.remove-question');
+            Route::post('/assignments/{assignment}/publish', [\App\Http\Controllers\Admin\AssignmentController::class, 'publish'])->name('assignments.publish');
+            Route::post('/assignments/{assignment}/unpublish', [\App\Http\Controllers\Admin\AssignmentController::class, 'unpublish'])->name('assignments.unpublish');
+
         });
 
     // ======================
@@ -254,6 +261,31 @@ Route::middleware('auth')->group(function () {
             Route::get('/courses/{course}/materials/{material}/edit', [MaterialController::class, 'edit'])->name('materials.edit');
             Route::put('/courses/{course}/materials/{material}', [MaterialController::class, 'update'])->name('materials.update');
             Route::delete('/courses/{course}/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
+
+            // Question Bank Management
+            Route::resource('question-banks', \App\Http\Controllers\Instructor\QuestionBankController::class);
+            Route::get('/question-banks/{questionBank}/create-question', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'createQuestion'])->name('question-banks.create-question');
+            Route::post('/question-banks/{questionBank}/questions', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'storeQuestion'])->name('question-banks.questions.store');
+            Route::delete('/question-banks/{questionBank}/questions/{question}', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'destroyQuestion'])->name('question-banks.questions.destroy');
+            
+            // Question Import/Export
+            Route::get('/question-banks/export/template', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'exportTemplate'])->name('question-banks.export-template');
+            Route::post('/question-banks/{questionBank}/import', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'importQuestions'])->name('question-banks.import-questions');
+            Route::get('/question-banks/{questionBank}/export', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'exportQuestions'])->name('question-banks.export-questions');
+
+            // Assignment Management
+            Route::get('/assignments', [\App\Http\Controllers\Instructor\AssignmentController::class, 'index'])->name('assignments.index');
+            Route::get('/assignments/create', [\App\Http\Controllers\Instructor\AssignmentController::class, 'create'])->name('assignments.create');
+            Route::post('/assignments', [\App\Http\Controllers\Instructor\AssignmentController::class, 'store'])->name('assignments.store');
+            Route::get('/assignments/{assignment}', [\App\Http\Controllers\Instructor\AssignmentController::class, 'show'])->name('assignments.show');
+            Route::get('/assignments/{assignment}/edit', [\App\Http\Controllers\Instructor\AssignmentController::class, 'edit'])->name('assignments.edit');
+            Route::put('/assignments/{assignment}', [\App\Http\Controllers\Instructor\AssignmentController::class, 'update'])->name('assignments.update');
+            Route::delete('/assignments/{assignment}', [\App\Http\Controllers\Instructor\AssignmentController::class, 'destroy'])->name('assignments.destroy');
+            Route::get('/assignments/{assignment}/questions', [\App\Http\Controllers\Instructor\AssignmentController::class, 'editQuestions'])->name('assignments.edit-questions');
+            Route::post('/assignments/{assignment}/questions', [\App\Http\Controllers\Instructor\AssignmentController::class, 'addQuestions'])->name('assignments.add-questions');
+            Route::delete('/assignments/{assignment}/questions/{question}', [\App\Http\Controllers\Instructor\AssignmentController::class, 'removeQuestion'])->name('assignments.remove-question');
+            Route::post('/assignments/{assignment}/publish', [\App\Http\Controllers\Instructor\AssignmentController::class, 'publish'])->name('assignments.publish');
+            Route::post('/assignments/{assignment}/unpublish', [\App\Http\Controllers\Instructor\AssignmentController::class, 'unpublish'])->name('assignments.unpublish');
         });
 });
     

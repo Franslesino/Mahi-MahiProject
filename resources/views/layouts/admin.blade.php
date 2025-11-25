@@ -60,10 +60,10 @@
         x-transition:leave="transform transition ease-in duration-300"
         x-transition:leave-start="translate-x-0"
         x-transition:leave-end="-translate-x-full"
-        class="fixed top-0 left-0 z-40 h-screen w-80 bg-white shadow-xl overflow-y-auto lg:translate-x-0">
+        class="fixed top-0 left-0 z-40 h-screen w-80 bg-white shadow-xl flex flex-col lg:translate-x-0">
         
         <!-- Header Sidebar -->
-        <div class="p-6 border-b border-gray-200">
+        <div class="flex-shrink-0 p-6 border-b border-gray-200">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-bold text-blue-900">EDUQUEST</h2>
                 <button @click="sidebarOpen = false" class="lg:hidden text-gray-500 hover:text-gray-700 transition">
@@ -86,7 +86,7 @@
         </div>
 
         <!-- Navigation Menu -->
-        <nav class="p-4 space-y-2 pb-24">
+        <nav class="flex-1 overflow-y-auto p-4 space-y-2">
             <!-- Dashboard -->
             <a href="{{ route('admin.dashboard') }}" 
                class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('admin.dashboard') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
@@ -125,10 +125,24 @@
                 <i class="fas fa-ticket-alt w-5 text-center"></i>
                 <span class="font-medium">Voucher</span>
             </a>
+
+            <!-- Bank Soal -->
+            <a href="{{ route('admin.question-banks.index') }}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('admin.question-banks*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                <i class="fas fa-question-circle w-5 text-center"></i>
+                <span class="font-medium">Bank Soal</span>
+            </a>
+
+            <!-- Assignment & Quiz -->
+            <a href="{{ route('admin.assignments.index') }}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('admin.assignments*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                <i class="fas fa-clipboard-list w-5 text-center"></i>
+                <span class="font-medium">Assignment & Quiz</span>
+            </a>
         </nav>
 
         <!-- Logout Button -->
-        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+        <div class="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button 

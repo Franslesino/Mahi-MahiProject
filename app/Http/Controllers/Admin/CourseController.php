@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Kursus;
 use App\Models\User;
 use App\Models\Notification;
+use App\Services\SupabaseStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -67,10 +68,9 @@ class CourseController extends Controller
         ];
 
         if ($request->hasFile('image')) {
-            $file     = $request->file('image');
-            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $path     = $file->storeAs('courses', $filename, 'public');
-            $data['image'] = $path;
+            $storage = app(SupabaseStorageService::class);
+            $upload = $storage->upload($request->file('image'), 'courses');
+            $data['image'] = $upload['public_url'] ?? $upload['path'];
         }
 
         $course = Kursus::create($data);
@@ -132,14 +132,17 @@ class CourseController extends Controller
         ];
 
         if ($request->hasFile('image')) {
-            if ($course->image && Storage::disk('public')->exists($course->image)) {
-                Storage::disk('public')->delete($course->image);
+            $storage = app(SupabaseStorageService::class);
+            // Hapus file lama
+            if ($course->image) {
+                $storage->delete($course->image);
+                if (!str_starts_with($course->image, 'http') && Storage::disk('public')->exists($course->image)) {
+                    Storage::disk('public')->delete($course->image);
+                }
             }
 
-            $file     = $request->file('image');
-            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $path     = $file->storeAs('courses', $filename, 'public');
-            $data['image'] = $path;
+            $upload = $storage->upload($request->file('image'), 'courses');
+            $data['image'] = $upload['public_url'] ?? $upload['path'];
         }
 
         $course->update($data);
@@ -151,8 +154,12 @@ class CourseController extends Controller
 
     public function destroy(Kursus $course)
     {
-        if ($course->image && Storage::disk('public')->exists($course->image)) {
-            Storage::disk('public')->delete($course->image);
+        if ($course->image) {
+            $storage = app(SupabaseStorageService::class);
+            $storage->delete($course->image);
+            if (!str_starts_with($course->image, 'http') && Storage::disk('public')->exists($course->image)) {
+                Storage::disk('public')->delete($course->image);
+            }
         }
 
         $course->delete();

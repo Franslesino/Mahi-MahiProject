@@ -58,12 +58,18 @@ class Materi extends Model
     {
         if ($this->type === 'video') {
             if (!empty($this->file_url)) {
+                if (str_starts_with($this->file_url, 'http')) {
+                    return $this->file_url;
+                }
                 $generated = $this->generateUrl($this->file_url);
                 if ($generated) {
                     return $generated;
                 }
             }
             if (!empty($this->url_konten)) {
+                if (str_starts_with($this->url_konten, 'http')) {
+                    return $this->url_konten;
+                }
                 return $this->normalizeLocalUrl($this->url_konten);
             }
         }
@@ -75,12 +81,15 @@ class Materi extends Model
     {
         if ($this->type === 'pdf') {
             if (!empty($this->file_url)) {
-                if (str_starts_with($this->file_url, 'storage/')) {
+                if (str_starts_with($this->file_url, 'http')) {
                     return $this->file_url;
                 }
                 return $this->file_url;
             }
             if (!empty($this->url_konten)) {
+                if (str_starts_with($this->url_konten, 'http')) {
+                    return $this->url_konten;
+                }
                 return str_replace('/storage/', '', $this->url_konten);
             }
         }
@@ -90,12 +99,18 @@ class Materi extends Model
     public function getFileUrlFullAttribute()
     {
         if ($this->file_url) {
+            if (str_starts_with($this->file_url, 'http')) {
+                return $this->file_url;
+            }
             $generated = $this->generateUrl($this->file_url);
             if ($generated) {
                 return $generated;
             }
         }
         if (!empty($this->url_konten)) {
+            if (str_starts_with($this->url_konten, 'http')) {
+                return $this->url_konten;
+            }
             return $this->normalizeLocalUrl($this->url_konten);
         }
         return null;
@@ -155,6 +170,10 @@ class Materi extends Model
 
     protected function generateUrl(string $path): ?string
     {
+        if (str_starts_with($path, 'http')) {
+            return $path;
+        }
+
         $disk = $this->materialsDisk();
         try {
             $storage = Storage::disk($disk);

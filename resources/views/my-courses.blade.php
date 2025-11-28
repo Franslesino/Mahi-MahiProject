@@ -136,8 +136,8 @@
                             <!-- Course Thumbnail -->
                             <div class="flex-shrink-0">
                                 <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-gradient-to-br from-gray-700 to-gray-900">
-                                    @if($course->image)
-                                        <img src="{{ asset('storage/' . $course->image) }}" 
+                                    @if($course->image_url)
+                                        <img src="{{ $course->image_url }}" 
                                              alt="{{ $judul }}" 
                                              class="w-full h-full object-cover">
                                     @else

@@ -34,8 +34,8 @@
         <div class="lg:col-span-1">
             <div class="bg-white rounded-lg shadow-sm p-6">
                 <div class="text-center mb-6">
-                    @if($user->avatar_path)
-                        <img src="{{ asset('storage/' . $user->avatar_path) }}" alt="{{ $user->name }}" class="w-32 h-32 rounded-full mx-auto mb-4 object-cover">
+                    @if($user->avatar_url)
+                        <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-32 h-32 rounded-full mx-auto mb-4 object-cover">
                     @else
                         <div class="w-32 h-32 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
                             <span class="text-white font-bold text-4xl">{{ strtoupper(substr($user->name, 0, 2)) }}</span>

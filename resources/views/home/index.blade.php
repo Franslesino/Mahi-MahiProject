@@ -153,8 +153,8 @@
             
             <!-- Image -->
             <div class="relative h-40 bg-gray-900 overflow-hidden">
-                @if($course->image)
-                    <img src="{{ asset('storage/' . $course->image) }}"
+                @if($course->image_url)
+                    <img src="{{ $course->image_url }}"
                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                          alt="{{ $course->judul }}">
                 @else

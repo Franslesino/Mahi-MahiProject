@@ -118,8 +118,8 @@
                 </h3>
                 
                 <div class="flex gap-4">
-                    @if($transaction->kursus->image)
-                        <img src="{{ asset('storage/' . $transaction->kursus->image) }}" 
+                    @if($transaction->kursus->image_url)
+                        <img src="{{ $transaction->kursus->image_url }}" 
                              alt="{{ $transaction->kursus->judul ?? $transaction->kursus->title }}" 
                              class="w-32 h-24 object-cover rounded-lg flex-shrink-0">
                     @else

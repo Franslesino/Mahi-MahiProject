@@ -40,12 +40,26 @@ Route::get('/', function (Request $request) {
 
     $courses = $query
         ->with(['pembuat', 'instructor'])
-        ->withCount('materi')
+        ->withCount([
+            'materi',
+            'materi as videos_count' => function ($q) {
+                $q->where('type', 'video');
+            },
+            'enrollments as students_count' => function ($q) {
+                $q->whereIn('status_pendaftaran', ['active', 'completed', 'paid']);
+            },
+        ])
         ->latest()
         ->paginate(12)
         ->withQueryString();
 
-    return view('home.index', compact('courses'));
+    // Category counts for pills
+    $categoryCounts = Kursus::where('status_diterbitkan', true)
+        ->selectRaw('kategori, COUNT(*) as total')
+        ->groupBy('kategori')
+        ->pluck('total', 'kategori');
+
+    return view('home.index', compact('courses', 'categoryCounts'));
 })->name('home');
 
 // Terms & Conditions (public)
@@ -157,11 +171,14 @@ Route::middleware('auth')->group(function () {
                     ], 404);
                 }
                 
+                $issuedAt = $certificate->tanggal_terbit ?? $certificate->tanggal_diterbitkan ?? $certificate->created_at;
+                $certificateNumber = $certificate->kode_sertifikat ?? $certificate->nomor_sertifikat ?? 'N/A';
+                
                 return response()->json([
                     'success' => true,
                     'url' => asset($certificate->url_unduhan),
-                    'number' => $certificate->nomor_sertifikat,
-                    'issued_date' => $certificate->tanggal_terbit->format('d F Y')
+                    'number' => $certificateNumber,
+                    'issued_date' => $issuedAt ? $issuedAt->format('d F Y') : null
                 ]);
             })->name('certificate.preview');
         });

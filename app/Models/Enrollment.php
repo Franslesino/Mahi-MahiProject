@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * @property int $id
@@ -58,6 +59,51 @@ class Enrollment extends Model
 
     public function sertifikat()
     {
-        return $this->hasOne(Sertifikat::class);
+        $certificateFk = static::getCertificateForeignKey();
+
+        if (!$certificateFk) {
+            // Avoid error if schema is unknown; use neutral keys and always-false condition
+            return $this->hasOne(Sertifikat::class, 'id', 'id')->whereRaw('1=0');
+        }
+
+        return $this->hasOne(Sertifikat::class, $certificateFk);
+    }
+
+    public static function getCertificateForeignKey(): ?string
+    {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $cached = self::resolveCertificateForeignKey();
+        return $cached;
+    }
+
+    private static function resolveCertificateForeignKey(): ?string
+    {
+        try {
+            $table = (new Sertifikat)->getTable();
+            $columns = Schema::getColumnListing($table);
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        $candidates = [
+            'enrollment_id',
+            'enrollments_id',
+            'enrollmentid',
+            'enrollmentsid',
+            'enrollment',
+            'enroll_id',
+        ];
+
+        foreach ($candidates as $col) {
+            if (in_array($col, $columns, true)) {
+                return $col;
+            }
+        }
+
+        return null;
     }
 }

@@ -9,9 +9,11 @@ use Illuminate\Http\Request;
 use App\Models\MaterialCompletion;
 use App\Models\Materi;
 use App\Models\Assignment;
+use App\Models\Submission;
 use App\Models\Sertifikat;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 
 class StudentController extends Controller
 {
@@ -180,22 +182,32 @@ class StudentController extends Controller
             ->whereNotNull('answers_json')
             ->first();
 
+        $passingScore = $assignment->passing_score ?? 60;
+
         if ($completion) {
-            $answers = $completion->answers_json ?? [];
-            [$results, $score] = $this->computeQuizResults($assignment, $answers);
-            return view('student.quiz-result', [
-                'course' => $course,
-                'material' => $material,
-                'assignment' => $assignment,
-                'results' => $results,
-                'score' => $completion->score ?? $score,
-            ]);
+            // Jika tidak minta retake, tampilkan hasil sebelumnya
+            if (!$request->boolean('retake')) {
+                $answers = $completion->answers_json ?? [];
+                [$results, $score] = $this->computeQuizResults($assignment, $answers);
+                $canRetake = $passingScore ? (($completion->score ?? 0) < $passingScore) : false;
+
+                return view('student.quiz-result', [
+                    'course' => $course,
+                    'material' => $material,
+                    'assignment' => $assignment,
+                    'results' => $results,
+                    'score' => $completion->score ?? $score,
+                    'passingScore' => $passingScore,
+                    'canRetake' => $canRetake,
+                ]);
+            }
         }
 
         return view('student.quiz', [
             'course' => $course,
             'material' => $material,
             'assignment' => $assignment,
+            'passingScore' => $passingScore,
         ]);
     }
 
@@ -235,12 +247,35 @@ class StudentController extends Controller
             ]
         );
 
+        $passingScore = $assignment->passing_score ?? 60;
+        $canRetake = $passingScore ? ($score < $passingScore) : false;
+
+        // Catat submission agar terlihat di admin/instruktur
+        $attemptNumber = Submission::where('assignment_id', $assignment->id)
+            ->where('user_id', Auth::id())
+            ->count() + 1;
+
+        Submission::create([
+            'assignment_id' => $assignment->id,
+            'user_id' => Auth::id(),
+            'attempt_number' => $attemptNumber,
+            'answers' => $answers,
+            'score' => $score,
+            'percentage' => $score,
+            'status' => 'graded',
+            'started_at' => now(),
+            'submitted_at' => now(),
+            'graded_at' => now(),
+        ]);
+
         return view('student.quiz-result', [
             'course' => $course,
             'material' => $material,
             'assignment' => $assignment,
             'results' => $results,
             'score' => $score,
+            'passingScore' => $passingScore,
+            'canRetake' => $canRetake,
         ]);
     }
 
@@ -298,6 +333,8 @@ class StudentController extends Controller
      */
     public function myCourses()
     {
+        $certificateFk = Enrollment::getCertificateForeignKey();
+
         $enrollments = Enrollment::where('user_id', Auth::id())
             ->whereIn('status_pendaftaran', ['active', 'completed', 'paid'])
             ->with([
@@ -305,10 +342,26 @@ class StudentController extends Controller
                     $query->withCount('materi');
                 },
                 'kursus.pembuat',
-                'sertifikat',
+                // Load certificate only if FK is known to avoid invalid column errors
+                ...($certificateFk ? ['sertifikat'] : []),
             ])
             ->latest('tanggal_daftar')
             ->get();
+
+        // Pastikan kursus yang sudah selesai memiliki sertifikat (perbaikan data lama)
+        if ($certificateFk) {
+            foreach ($enrollments as $enrollment) {
+                if (in_array($enrollment->status_pendaftaran, ['completed']) && !$enrollment->sertifikat) {
+                    // Generate sertifikat jika belum ada
+                    try {
+                        $this->generateCertificateIfNeeded($enrollment, $enrollment->kursus);
+                        $enrollment->load('sertifikat');
+                    } catch (\Throwable $e) {
+                        // Jangan hentikan halaman; sertifikat akan tetap dianggap belum tersedia
+                    }
+                }
+            }
+        }
 
         return view('my-courses', compact('enrollments'));
     }
@@ -338,13 +391,8 @@ class StudentController extends Controller
             $instructorName
         );
 
-        // Create certificate record (sesuaikan dengan kolom tabel sertifikat)
-        Sertifikat::create([
-            'enrollment_id'      => $enrollment->id,
-            'kode_sertifikat'    => $certificateNumber,
-            'tanggal_diterbitkan'=> now(),
-            'url_unduhan'        => Storage::url($certificatePath),
-        ]);
+        // Create certificate record with flexible column detection
+        $this->storeCertificateRecord($enrollment->id, $certificateNumber, $certificatePath);
 
         // Update enrollment status to completed
         $enrollment->update(['status_pendaftaran' => 'completed']);
@@ -563,18 +611,75 @@ HTML;
             return redirect()->back()->with('error', 'Sertifikat belum tersedia.');
         }
 
+        $certificateNumber = $certificate->kode_sertifikat ?? $certificate->nomor_sertifikat ?? 'certificate';
+
+        // Jika sudah PDF tersimpan, langsung download
         $filePath = str_replace('/storage/', '', $certificate->url_unduhan);
-        
-        if (!Storage::disk('public')->exists($filePath)) {
+        if (str_ends_with(strtolower($certificate->url_unduhan), '.pdf') && Storage::disk('public')->exists($filePath)) {
+            return Storage::disk('public')->download($filePath, $certificateNumber . '.pdf');
+        }
+
+        // Ambil HTML sertifikat
+        $htmlContent = null;
+        if (Storage::disk('public')->exists($filePath)) {
+            $htmlContent = Storage::disk('public')->get($filePath);
+        } elseif (filter_var($certificate->url_unduhan, FILTER_VALIDATE_URL)) {
+            $htmlContent = @file_get_contents($certificate->url_unduhan);
+        }
+
+        if (!$htmlContent) {
             return redirect()->back()->with('error', 'File sertifikat tidak ditemukan.');
         }
 
-        // For HTML certificates, return the view directly
-        // In production, you'd convert this to PDF first
-        $htmlContent = Storage::disk('public')->get($filePath);
-        
-        return response($htmlContent)
-            ->header('Content-Type', 'text/html')
-            ->header('Content-Disposition', 'inline; filename="' . $certificate->nomor_sertifikat . '.html"');
+        // Render ke PDF dan unduh
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($htmlContent)->setPaper('a4', 'landscape');
+        return $pdf->download($certificateNumber . '.pdf');
+    }
+
+    /**
+     * Store certificate record adjusting to available columns
+     */
+    private function storeCertificateRecord(int $enrollmentId, string $certificateNumber, string $certificatePath): void
+    {
+        $table = (new Sertifikat())->getTable();
+        $data = [
+            'url_unduhan' => Storage::url($certificatePath),
+        ];
+
+        // Foreign key
+        $fkCandidates = [
+            'enrollment_id',
+            'enrollments_id',
+            'enrollmentid',
+            'enrollmentsid',
+            'enroll_id',
+            'enrollment',
+        ];
+
+        foreach ($fkCandidates as $col) {
+            if (Schema::hasColumn($table, $col)) {
+                $data[$col] = $enrollmentId;
+                break;
+            }
+        }
+
+        // Certificate number column fallback
+        if (Schema::hasColumn($table, 'nomor_sertifikat')) {
+            $data['nomor_sertifikat'] = $certificateNumber;
+        }
+        if (Schema::hasColumn($table, 'kode_sertifikat')) {
+            $data['kode_sertifikat'] = $certificateNumber;
+        }
+
+        // Issued date column fallback
+        $issuedAt = now();
+        if (Schema::hasColumn($table, 'tanggal_terbit')) {
+            $data['tanggal_terbit'] = $issuedAt;
+        }
+        if (Schema::hasColumn($table, 'tanggal_diterbitkan')) {
+            $data['tanggal_diterbitkan'] = $issuedAt;
+        }
+
+        Sertifikat::create($data);
     }
 }

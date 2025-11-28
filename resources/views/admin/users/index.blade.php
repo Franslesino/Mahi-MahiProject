@@ -107,6 +107,9 @@
             <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
             <p class="text-gray-500 text-lg font-semibold">Belum ada data pengguna</p>
             <p class="text-gray-400 text-sm mt-2 text-center">Daftar pengguna akan ditampilkan di sini</p>
+            <a href="{{ route('admin.users.create') }}" class="mt-4 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600">
+                Tambah Pengguna
+            </a>
         </div>
         @endif
     </div>

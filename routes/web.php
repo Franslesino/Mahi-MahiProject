@@ -15,6 +15,8 @@ use App\Http\Controllers\Student\TransactionController as StudentTransactionCont
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VoucherController;
 use App\Models\Kursus;
+use App\Models\Enrollment;
+use Illuminate\Support\Facades\Auth;
 
 // ==========================
 // Public Routes
@@ -45,6 +47,11 @@ Route::get('/', function (Request $request) {
 
     return view('home.index', compact('courses'));
 })->name('home');
+
+// Terms & Conditions (public)
+Route::get('/terms', function () {
+    return view('student.courses.terms');
+})->name('terms');
 
 // Test Google Config (Public - untuk debugging)
 Route::get('/test-google-config', function () {
@@ -88,56 +95,15 @@ Route::middleware('auth')->group(function () {
     // ======================
     // Student Routes
     // ======================
-        Route::middleware('role:student')->group(function () {
+    Route::middleware('role:student')->group(function () {
 
-
-
-            // List & detail course
-            Route::get('/courses', [StudentCourseController::class, 'index'])->name('courses.index');
-            Route::get('/courses/{course}', [StudentCourseController::class, 'show'])->name('courses.show');
-            Route::get('/courses/{course}/materials/{material}', [\App\Http\Controllers\Student\StudentController::class, 'viewMaterial'])->name('courses.materials.view');
-            Route::post('/courses/{course}/materials/{material}/complete', [\App\Http\Controllers\Student\StudentController::class, 'markMaterialComplete'])->name('courses.materials.complete');
-            Route::get('/courses/{course}/materials/{material}/quiz', [\App\Http\Controllers\Student\StudentController::class, 'quiz'])->name('courses.materials.quiz');
-            Route::post('/courses/{course}/materials/{material}/quiz/submit', [\App\Http\Controllers\Student\StudentController::class, 'quizSubmit'])->name('courses.materials.quiz.submit');
-
-        // Transactions (NEW!)
-        Route::prefix('transactions')->name('transactions.')->group(function () {
-            Route::get('/checkout/{course}', [\App\Http\Controllers\Student\TransactionController::class, 'checkout'])->name('checkout');
-            Route::post('/process/{course}', [\App\Http\Controllers\Student\TransactionController::class, 'process'])->name('process');
-            Route::get('/{transaction}', [\App\Http\Controllers\Student\TransactionController::class, 'show'])->name('show');
-            Route::post('/{transaction}/confirm', [\App\Http\Controllers\Student\TransactionController::class, 'confirm'])->name('confirm');
-            Route::post('/{transaction}/cancel', [\App\Http\Controllers\Student\TransactionController::class, 'cancel'])->name('cancel');
-        });
-
-        // My transactions
-        Route::get('/my-transactions', [\App\Http\Controllers\Student\TransactionController::class, 'myTransactions'])->name('my-transactions');
-
-        // Enroll (redirect to checkout)
-        Route::post('/courses/{course}/enroll', function (Kursus $course) {
-            return redirect()->route('transactions.checkout', $course);
-        })->name('courses.enroll');
-
-
-        // Home student
-        Route::get('/user', function (Request $request) {
-            return redirect()->route('home', $request->only('search', 'category'));
-        })->name('user.home');
-
-        // Course List & Detail
+        // List & detail course
         Route::get('/courses', [StudentCourseController::class, 'index'])->name('courses.index');
         Route::get('/courses/{course}', [StudentCourseController::class, 'show'])->name('courses.show');
-
-        // Enroll (redirect to checkout)
-        Route::post('/courses/{course}/enroll', function(Kursus $course) {
-            return redirect()->route('transactions.checkout', $course);
-        })->name('courses.enroll');
-
-        // Learn Course
-        Route::get('/courses/{course}/learn', [StudentController::class, 'learn'])->name('student.course.learn');
-
-
-        // My Courses
-        Route::get('/my-courses', [StudentController::class, 'myCourses'])->name('my-courses');
+        Route::get('/courses/{course}/materials/{material}', [StudentController::class, 'viewMaterial'])->name('courses.materials.view');
+        Route::post('/courses/{course}/materials/{material}/complete', [StudentController::class, 'markMaterialComplete'])->name('courses.materials.complete');
+        Route::get('/courses/{course}/materials/{material}/quiz', [StudentController::class, 'quiz'])->name('courses.materials.quiz');
+        Route::post('/courses/{course}/materials/{material}/quiz/submit', [StudentController::class, 'quizSubmit'])->name('courses.materials.quiz.submit');
 
         // Transactions
         Route::prefix('transactions')->name('transactions.')->group(function () {
@@ -148,24 +114,67 @@ Route::middleware('auth')->group(function () {
             Route::post('/{transaction}/cancel', [StudentTransactionController::class, 'cancel'])->name('cancel');
         });
 
-        // My Transactions
+        // My transactions
         Route::get('/my-transactions', [StudentTransactionController::class, 'myTransactions'])->name('my-transactions');
 
+        // Enroll (redirect to checkout)
+        Route::post('/courses/{course}/enroll', function (Kursus $course) {
+            return redirect()->route('transactions.checkout', $course);
+        })->name('courses.enroll');
+
+        // Home student
+        Route::get('/user', function (Request $request) {
+            return redirect()->route('home', $request->only('search', 'category'));
+        })->name('user.home');
+
+        // Learn Course
+        Route::get('/courses/{course}/learn', [StudentController::class, 'learn'])->name('student.course.learn');
+
+        // My Courses
+        Route::get('/my-courses', [StudentController::class, 'myCourses'])->name('my-courses');
+
+        // ========================================
+        // Certificate Routes (NEW!)
+        // ========================================
+        Route::prefix('student')->name('student.')->group(function () {
+            // Download Certificate
+            Route::get('/enrollment/{enrollment}/certificate/download', [StudentController::class, 'downloadCertificate'])
+                ->name('certificate.download');
+            
+            // Preview Certificate (AJAX)
+            Route::get('/enrollment/{enrollment}/certificate-preview', function (Enrollment $enrollment) {
+                // Verify ownership
+                if ($enrollment->user_id !== Auth::id()) {
+                    return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+                }
+                
+                $certificate = $enrollment->sertifikat;
+                
+                if (!$certificate) {
+                    return response()->json([
+                        'success' => false, 
+                        'message' => 'Sertifikat belum tersedia'
+                    ], 404);
+                }
+                
+                return response()->json([
+                    'success' => true,
+                    'url' => asset($certificate->url_unduhan),
+                    'number' => $certificate->nomor_sertifikat,
+                    'issued_date' => $certificate->tanggal_terbit->format('d F Y')
+                ]);
+            })->name('certificate.preview');
+        });
 
         // Profile
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
         Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
-
         Route::delete('/profile/avatar', [ProfileController::class, 'deleteAvatar'])->name('profile.avatar.delete');
-
 
         // Notifications
         Route::post('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
         Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
-
-        // My courses
-        Route::get('/my-courses', [StudentController::class, 'myCourses'])->name('my-courses');
     });
 
     // ======================
@@ -177,7 +186,8 @@ Route::middleware('auth')->group(function () {
         ->group(function () {
 
             // Dashboard (using controller)
-           Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+            Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+            
             // Users management
             Route::resource('users', UserController::class);
 
@@ -185,23 +195,11 @@ Route::middleware('auth')->group(function () {
             Route::resource('courses', AdminCourseController::class);
 
             // Transactions management
-
             Route::get('transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
             Route::get('transactions/{transaction}', [AdminTransactionController::class, 'show'])->name('transactions.show');
             Route::patch('transactions/{transaction}/status', [AdminTransactionController::class, 'updateStatus'])->name('transactions.updateStatus');
             Route::delete('transactions/{transaction}', [AdminTransactionController::class, 'destroy'])->name('transactions.destroy');
             Route::get('transactions-export', [AdminTransactionController::class, 'export'])->name('transactions.export');
-
-            Route::get('transactions', [\App\Http\Controllers\Admin\TransactionController::class, 'index'])
-                ->name('transactions.index');
-            Route::get('transactions/{transaction}', [\App\Http\Controllers\Admin\TransactionController::class, 'show'])
-                ->name('transactions.show');
-            Route::patch('transactions/{transaction}/status', [\App\Http\Controllers\Admin\TransactionController::class, 'updateStatus'])
-                ->name('transactions.updateStatus');
-            Route::delete('transactions/{transaction}', [\App\Http\Controllers\Admin\TransactionController::class, 'destroy'])
-                ->name('transactions.destroy');
-            Route::get('transactions/export', [\App\Http\Controllers\Admin\TransactionController::class, 'export'])
-                ->name('transactions.export');
 
             // Vouchers management
             Route::resource('vouchers', \App\Http\Controllers\Admin\VoucherController::class);
@@ -242,7 +240,6 @@ Route::middleware('auth')->group(function () {
             Route::delete('/assignments/{assignment}/questions/{question}', [\App\Http\Controllers\Admin\AssignmentController::class, 'removeQuestion'])->name('assignments.remove-question');
             Route::post('/assignments/{assignment}/publish', [\App\Http\Controllers\Admin\AssignmentController::class, 'publish'])->name('assignments.publish');
             Route::post('/assignments/{assignment}/unpublish', [\App\Http\Controllers\Admin\AssignmentController::class, 'unpublish'])->name('assignments.unpublish');
-
         });
 
     // ======================
@@ -262,10 +259,8 @@ Route::middleware('auth')->group(function () {
             // Material Management
             Route::get('/courses/{course}/materials/create', [MaterialController::class, 'create'])->name('materials.create');
             Route::post('/courses/{course}/materials', [MaterialController::class, 'store'])->name('materials.store');
-             // Route preview materi (fix error)
             Route::post('/', [MaterialController::class, 'store'])->name('store');
             Route::get('/courses/{course}/materials/{material}/preview', [MaterialController::class, 'preview'])->name('materials.preview');
-
             Route::get('/courses/{course}/materials/{material}/edit', [MaterialController::class, 'edit'])->name('materials.edit');
             Route::put('/courses/{course}/materials/{material}', [MaterialController::class, 'update'])->name('materials.update');
             Route::delete('/courses/{course}/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
@@ -275,7 +270,31 @@ Route::middleware('auth')->group(function () {
             Route::get('/question-banks/{questionBank}/create-question', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'createQuestion'])->name('question-banks.create-question');
             Route::post('/question-banks/{questionBank}/questions', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'storeQuestion'])->name('question-banks.questions.store');
             Route::delete('/question-banks/{questionBank}/questions/{question}', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'destroyQuestion'])->name('question-banks.questions.destroy');
-            
+
+            // Bantuan (static)
+            Route::get('/help', function () {
+                return view('instructor.help');
+            })->name('help');
+
+            // Notifikasi (polling JSON)
+            Route::get('/notifications/poll', function () {
+                $user = \Illuminate\Support\Facades\Auth::user();
+                $items = $user->notifications()->latest()->take(10)->get()->map(function ($n) {
+                    return [
+                        'id' => $n->id,
+                        'title' => $n->title,
+                        'message' => $n->message,
+                        'type' => $n->type,
+                        'unread' => $n->isUnread(),
+                        'time' => $n->created_at?->diffForHumans(),
+                    ];
+                });
+                return [
+                    'unread' => $user->unreadNotifications()->count(),
+                    'items' => $items,
+                ];
+            })->name('notifications.poll');
+
             // Question Import/Export
             Route::get('/question-banks/export/template', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'exportTemplate'])->name('question-banks.export-template');
             Route::post('/question-banks/{questionBank}/import', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'importQuestions'])->name('question-banks.import-questions');

@@ -9,7 +9,9 @@ use Illuminate\Http\Request;
 use App\Models\MaterialCompletion;
 use App\Models\Materi;
 use App\Models\Assignment;
+use App\Models\Sertifikat;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class StudentController extends Controller
 {
@@ -55,6 +57,11 @@ class StudentController extends Controller
             ->toArray();
         $totalMaterials = $materials->count();
         $progress = $totalMaterials > 0 ? min(100, round((count($completedIds) / $totalMaterials) * 100)) : 0;
+
+        // Auto-generate certificate if course is completed
+        if ($progress >= 100) {
+            $this->generateCertificateIfNeeded($enrollment, $course);
+        }
 
         $materialId = $request->query('material');
         $currentMaterial = null;
@@ -126,6 +133,24 @@ class StudentController extends Controller
             ]
         );
 
+        // Check if all materials are completed
+        $course->load('sections.materials');
+        $materials = $course->sections
+            ->flatMap(function ($section) {
+                return $section->materials;
+            })
+            ->values();
+
+        $materialIds = $materials->pluck('id')->toArray();
+        $completedCount = MaterialCompletion::where('user_id', Auth::id())
+            ->whereIn('materi_id', $materialIds)
+            ->count();
+
+        // If all materials completed, generate certificate
+        if ($completedCount >= count($materialIds) && count($materialIds) > 0) {
+            $this->generateCertificateIfNeeded($enrollment, $course);
+        }
+
         return back()->with('success', 'Materi ditandai selesai.');
     }
 
@@ -150,7 +175,6 @@ class StudentController extends Controller
                 ->with('error', 'Quiz belum memiliki soal.');
         }
 
-        // Jika sudah pernah dikerjakan dan tersimpan, langsung tampilkan hasil
         $completion = MaterialCompletion::where('user_id', Auth::id())
             ->where('materi_id', $material->id)
             ->whereNotNull('answers_json')
@@ -234,7 +258,6 @@ class StudentController extends Controller
             $userText = null;
 
             if ($question->options->count() > 0) {
-                // Objective
                 $correctOption = $question->options->firstWhere('is_correct', true);
                 $correctText = $correctOption?->option_text;
                 $selectedOption = $question->options->firstWhere('id', $userAnswer);
@@ -244,7 +267,6 @@ class StudentController extends Controller
                     $correctCount++;
                 }
             } else {
-                // Essay/short answer
                 $userText = $userAnswer;
                 $correctText = $question->correct_answer;
                 if ($correctText !== null && $userText !== null) {
@@ -253,7 +275,7 @@ class StudentController extends Controller
                         $correctCount++;
                     }
                 } else {
-                    $isCorrect = null; // manual grading/pending
+                    $isCorrect = null;
                 }
             }
 
@@ -283,10 +305,276 @@ class StudentController extends Controller
                     $query->withCount('materi');
                 },
                 'kursus.pembuat',
+                'sertifikat',
             ])
             ->latest('tanggal_daftar')
             ->get();
 
         return view('my-courses', compact('enrollments'));
+    }
+
+    /**
+     * Generate certificate if needed
+     */
+    private function generateCertificateIfNeeded($enrollment, $course)
+    {
+        // Check if certificate already exists
+        if ($enrollment->sertifikat) {
+            return;
+        }
+
+        $user = Auth::user();
+        $certificateNumber = 'CERT-' . strtoupper(uniqid());
+        
+        // Get instructor name
+        $instructorName = $course->pembuat->name ?? $course->instructor->name ?? 'Bagus Fransislino';
+
+        // Generate certificate image
+        $certificatePath = $this->generateCertificateImage(
+            $user->name,
+            $course->judul ?? $course->title,
+            $certificateNumber,
+            now()->format('F d, Y'),
+            $instructorName
+        );
+
+        // Create certificate record (sesuaikan dengan kolom tabel sertifikat)
+        Sertifikat::create([
+            'enrollment_id'      => $enrollment->id,
+            'kode_sertifikat'    => $certificateNumber,
+            'tanggal_diterbitkan'=> now(),
+            'url_unduhan'        => Storage::url($certificatePath),
+        ]);
+
+        // Update enrollment status to completed
+        $enrollment->update(['status_pendaftaran' => 'completed']);
+    }
+
+    /**
+     * Generate certificate HTML (for now, just save path reference)
+     * In production, you would use a service like Puppeteer or wkhtmltopdf
+     */
+    private function generateCertificateImage($studentName, $courseName, $certificateNumber, $date, $instructorName)
+    {
+        // For now, we'll just create a path reference
+        // In a real application, you'd generate an actual image/PDF here
+        // using tools like: Puppeteer, wkhtmltopdf, or Intervention Image
+        
+        $filename = 'certificates/' . $certificateNumber . '.html';
+        
+        // Create certificates directory if it doesn't exist
+        $certificatesPath = storage_path('app/public/certificates');
+        if (!file_exists($certificatesPath)) {
+            mkdir($certificatesPath, 0755, true);
+        }
+
+        // Generate certificate HTML
+        $html = $this->getCertificateHtml($studentName, $courseName, $certificateNumber, $date, $instructorName);
+        
+        // Save HTML file (in production, convert this to PDF/PNG)
+        file_put_contents(storage_path('app/public/' . $filename), $html);
+
+        return $filename;
+    }
+
+    /**
+     * Get certificate HTML template
+     */
+    private function getCertificateHtml($studentName, $courseName, $certificateNumber, $date, $instructorName)
+    {
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Certificate - {$certificateNumber}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Georgia', serif;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .certificate {
+            width: 842px;
+            height: 595px;
+            background: white;
+            border: 8px solid #1e40af;
+            position: relative;
+            padding: 40px 60px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.1);
+        }
+        .inner-border {
+            border: 2px solid #3b82f6;
+            height: 100%;
+            padding: 30px;
+            position: relative;
+        }
+        .circle-left {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: #f59e0b;
+            border-radius: 50%;
+            top: 120px;
+            left: 40px;
+            opacity: 0.8;
+        }
+        .circle-right {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: #f59e0b;
+            border-radius: 50%;
+            bottom: 80px;
+            right: 40px;
+            opacity: 0.8;
+        }
+        .ellipse-top {
+            position: absolute;
+            width: 220px;
+            height: 120px;
+            background: #5b7fc7;
+            border-radius: 50%;
+            top: 50px;
+            right: 80px;
+            opacity: 0.8;
+        }
+        .content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .title {
+            font-size: 48px;
+            color: #1e3a8a;
+            font-weight: bold;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+        .subtitle {
+            font-size: 18px;
+            color: #374151;
+            margin-bottom: 15px;
+        }
+        .name {
+            font-size: 42px;
+            color: #5b7fc7;
+            font-weight: bold;
+            margin: 15px 0 20px;
+            font-style: italic;
+        }
+        .description {
+            font-size: 15px;
+            color: #374151;
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        .course-name {
+            font-size: 26px;
+            color: #1e3a8a;
+            font-weight: bold;
+            margin: 20px 0 10px;
+        }
+        .date {
+            font-size: 13px;
+            color: #6b7280;
+            margin: 8px 0 25px;
+        }
+        .certificate-number {
+            font-size: 11px;
+            color: #9ca3af;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+        .signature-section {
+            margin-top: 25px;
+        }
+        .signature {
+            font-size: 28px;
+            color: #5b7fc7;
+            font-style: italic;
+            margin-bottom: 3px;
+            font-weight: 600;
+        }
+        .signature-name {
+            font-size: 15px;
+            color: #1e3a8a;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        .signature-date {
+            font-size: 12px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="certificate">
+        <div class="circle-left"></div>
+        <div class="circle-right"></div>
+        <div class="ellipse-top"></div>
+        <div class="inner-border">
+            <div class="content">
+                <div class="title">CERTIFICATE OF<br>COMPLETION</div>
+                <div class="subtitle">This Certifies that</div>
+                <div class="name">{$studentName}</div>
+                <div class="description">
+                    Has Successfully Completed the Webace Training<br>
+                    Program, Entitled
+                </div>
+                <div class="course-name">{$courseName}</div>
+                <div class="date">on {$date}</div>
+                <div class="certificate-number">{$certificateNumber}</div>
+                <div class="signature-section">
+                    <div class="signature">{$instructorName}</div>
+                    <div class="signature-name">Mr. {$instructorName}</div>
+                    <div class="signature-date">on {$date}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    /**
+     * Download certificate
+     */
+    public function downloadCertificate(Enrollment $enrollment)
+    {
+        if ($enrollment->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized');
+        }
+
+        $certificate = $enrollment->sertifikat;
+
+        if (!$certificate) {
+            return redirect()->back()->with('error', 'Sertifikat belum tersedia.');
+        }
+
+        $filePath = str_replace('/storage/', '', $certificate->url_unduhan);
+        
+        if (!Storage::disk('public')->exists($filePath)) {
+            return redirect()->back()->with('error', 'File sertifikat tidak ditemukan.');
+        }
+
+        // For HTML certificates, return the view directly
+        // In production, you'd convert this to PDF first
+        $htmlContent = Storage::disk('public')->get($filePath);
+        
+        return response($htmlContent)
+            ->header('Content-Type', 'text/html')
+            ->header('Content-Disposition', 'inline; filename="' . $certificate->nomor_sertifikat . '.html"');
     }
 }

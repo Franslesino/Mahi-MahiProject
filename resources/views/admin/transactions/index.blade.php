@@ -225,7 +225,7 @@
                                 <form action="{{ route('admin.transactions.destroy', $transaction) }}" 
                                       method="POST" 
                                       class="inline"
-                                      onsubmit="return confirm('Yakin ingin menghapus transaksi ini?')">
+                                      data-confirm="Yakin ingin menghapus transaksi ini?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" 

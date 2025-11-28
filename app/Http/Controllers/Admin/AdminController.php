@@ -16,7 +16,7 @@ class CourseController extends Controller
         $query = Kursus::with(['pembuat', 'instructor'])
             ->withCount('materi');
 
-        // 🔍 SEARCH (judul / deskripsi)
+        // SEARCH (judul / deskripsi)
         if ($request->filled('search')) {
             $search = $request->search;
 

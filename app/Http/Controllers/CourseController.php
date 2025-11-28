@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Kursus;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // ✅ WAJIB ADA
+use Illuminate\Support\Facades\Auth; //
 
 class CourseController extends Controller
 {

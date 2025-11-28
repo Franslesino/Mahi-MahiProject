@@ -42,13 +42,27 @@ class MaterialController extends Controller
             ->orderBy('order')
             ->get();
 
+        // Stats
         $totalMaterials = $course->materi()->count();
+        $totalVideos = $course->materi()->where('type', 'video')->count();
+        $studentsCount = $course->enrollments()
+            ->whereIn('status_pendaftaran', ['active', 'completed', 'paid'])
+            ->distinct('user_id')
+            ->count('user_id');
+
         $questionBanks = QuestionBank::where('created_by', Auth::id())
             ->orWhere('is_public', true)
             ->withCount('questions')
             ->get();
 
-        return view('instructor.course-detail', compact('course', 'sections', 'totalMaterials', 'questionBanks'));
+        return view('instructor.course-detail', compact(
+            'course',
+            'sections',
+            'totalMaterials',
+            'totalVideos',
+            'studentsCount',
+            'questionBanks'
+        ));
     }
 
     public function preview(Kursus $course, Materi $material)

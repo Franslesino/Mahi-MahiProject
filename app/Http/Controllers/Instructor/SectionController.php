@@ -12,7 +12,8 @@ class SectionController extends Controller
 {
     public function store(Request $request, Kursus $course)
     {
-        if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
+        $ownerIds = array_filter([$course->instructor_id, $course->pembuat]);
+        if (!in_array(Auth::id(), $ownerIds, true)) {
             abort(403);
         }
 
@@ -35,7 +36,8 @@ class SectionController extends Controller
 
     public function update(Request $request, Kursus $course, CourseSection $section)
     {
-        if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
+        $ownerIds = array_filter([$course->instructor_id, $course->pembuat]);
+        if (!in_array(Auth::id(), $ownerIds, true)) {
             abort(403);
         }
 
@@ -52,9 +54,12 @@ class SectionController extends Controller
             ->with('success', 'Modul berhasil diperbarui.');
     }
 
-    public function destroy(Kursus $course, CourseSection $section)
+    public function destroy(CourseSection $section)
     {
-        if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
+        $course = $section->course;
+        $ownerIds = array_filter([$course?->instructor_id, $course?->pembuat]);
+
+        if (!in_array(Auth::id(), $ownerIds, true)) {
             abort(403);
         }
 

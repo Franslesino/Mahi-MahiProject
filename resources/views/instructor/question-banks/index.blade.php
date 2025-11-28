@@ -74,7 +74,7 @@
                         </a>
                         <form action="{{ route('instructor.question-banks.destroy', $bank) }}" 
                               method="POST" 
-                              onsubmit="return confirm('Yakin ingin menghapus bank soal ini?')">
+                              data-confirm="Yakin ingin menghapus bank soal ini?">
                             @csrf
                             @method('DELETE')
                             <button type="submit" 

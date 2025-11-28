@@ -219,8 +219,8 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         Gambar Kursus
                     </label>
-                    @if($course->image)
-                        <img src="{{ asset('storage/' . $course->image) }}"
+                    @if($course->image_url)
+                        <img src="{{ $course->image_url }}"
                              alt="Current Image"
                              class="w-32 h-32 object-cover rounded-lg mb-2">
                     @endif

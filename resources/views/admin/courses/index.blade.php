@@ -88,8 +88,8 @@
 
                             {{-- IMAGE --}}
                             <td class="px-6 py-4">
-                                @if($course->image && Storage::disk('public')->exists($course->image))
-                                    <img src="{{ Storage::url($course->image) }}"
+                                @if($course->image_url)
+                                    <img src="{{ $course->image_url }}"
                                          class="w-16 h-16 rounded-lg object-cover">
                                 @else
                                     <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Kursus;
 use App\Models\Materi;
 use Illuminate\Http\Request;
+use App\Services\SupabaseStorageService;
 use Illuminate\Support\Facades\Storage;
 
 class MaterialController extends Controller
@@ -32,6 +33,8 @@ class MaterialController extends Controller
             'status_terkunci' => 'nullable|boolean',
         ]);
 
+        $storage = app(SupabaseStorageService::class);
+
         // Get next order number if not provided
         if (!isset($validated['urutan'])) {
             $validated['urutan'] = $course->materi()->max('urutan') + 1;
@@ -40,8 +43,9 @@ class MaterialController extends Controller
         // Handle file upload
         if ($request->hasFile('file')) {
             $file = $request->file('file');
-            $path = $file->store('materials', 'public');
-            $validated['url_konten'] = $path;
+            $upload = $storage->upload($file, 'materials');
+            $validated['url_konten'] = $upload['public_url'] ?? $upload['path'];
+            $validated['file_url'] = $upload['path'];
         }
 
         $validated['kursus_id'] = $course->id;
@@ -80,16 +84,19 @@ class MaterialController extends Controller
             'status_terkunci' => 'nullable|boolean',
         ]);
 
+        $storage = app(SupabaseStorageService::class);
+
         // Handle file upload
         if ($request->hasFile('file')) {
             // Delete old file if exists
-            if ($material->url_konten && Storage::disk('public')->exists($material->url_konten)) {
+            $storage->delete($material->file_url ?: $material->url_konten);
+            if ($material->url_konten && !str_starts_with($material->url_konten, 'http') && Storage::disk('public')->exists($material->url_konten)) {
                 Storage::disk('public')->delete($material->url_konten);
             }
 
-            $file = $request->file('file');
-            $path = $file->store('materials', 'public');
-            $validated['url_konten'] = $path;
+            $upload = $storage->upload($request->file('file'), 'materials');
+            $validated['url_konten'] = $upload['public_url'] ?? $upload['path'];
+            $validated['file_url'] = $upload['path'];
         }
 
         $validated['status_terkunci'] = $request->has('status_terkunci');
@@ -109,7 +116,9 @@ class MaterialController extends Controller
         }
 
         // Delete file if exists
-        if ($material->url_konten && Storage::disk('public')->exists($material->url_konten)) {
+        $storage = app(SupabaseStorageService::class);
+        $storage->delete($material->file_url ?: $material->url_konten);
+        if ($material->url_konten && !str_starts_with($material->url_konten, 'http') && Storage::disk('public')->exists($material->url_konten)) {
             Storage::disk('public')->delete($material->url_konten);
         }
 

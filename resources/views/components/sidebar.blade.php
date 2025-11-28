@@ -71,10 +71,10 @@
                 {{-- Foto Profil --}}
                 <div class="w-14 h-14 rounded-full overflow-hidden ring-2 ring-teal-500/20 bg-gray-100 flex-shrink-0">
 
-                    @if(Auth::user()->avatar_path && Storage::disk('public')->exists(Auth::user()->avatar_path))
+                    @if(Auth::user()->avatar_url)
                         <!-- Jika user punya foto profil -->
                         <img 
-                            src="{{ asset('storage/' . Auth::user()->avatar_path) }}"
+                            src="{{ Auth::user()->avatar_url }}"
                             alt="Avatar"
                             class="w-full h-full object-cover"
                         >

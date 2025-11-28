@@ -19,8 +19,8 @@
             @foreach($courses as $course)
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
                     <div class="h-48 bg-gradient-to-br from-blue-500 to-blue-600 relative">
-                        @if($course->image && Storage::disk('public')->exists($course->image))
-                            <img src="{{ Storage::url($course->image) }}" alt="{{ $course->judul }}" class="w-full h-full object-cover">
+                        @if($course->image_url)
+                            <img src="{{ $course->image_url }}" alt="{{ $course->judul }}" class="w-full h-full object-cover">
                         @else
                             <div class="absolute inset-0 flex items-center justify-center">
                                 <i class="fas fa-graduation-cap text-white text-6xl opacity-20"></i>

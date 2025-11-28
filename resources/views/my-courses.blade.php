@@ -401,8 +401,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeBtn = document.getElementById('closeCompleteModal');
     const downloadBtn = document.getElementById('downloadCertificateBtn');
 
-    if (completedItem && overlay) {
-        // Cari link sertifikat bila ada
+    // Jangan tampilkan otomatis di halaman "My Courses" agar tidak mengganggu.
+    // Jika suatu saat ingin memicu manual, bisa pakai query ?show_complete=1.
+    const params = new URLSearchParams(window.location.search);
+    const showComplete = params.has('show_complete');
+
+    if (showComplete && completedItem && overlay) {
         const certBtn = completedItem.querySelector('a[href*="http"]');
         if (certBtn && downloadBtn) {
             downloadBtn.classList.remove('hidden');
@@ -427,11 +431,19 @@ function viewCertificate(enrollmentId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                preview.innerHTML = `
-                    <img src="${data.url}" 
-                         alt="Certificate" 
-                         class="max-w-full h-auto rounded-lg shadow-lg border-4 border-blue-100">
-                `;
+                const url = data.url || '';
+                const isHtml = url.toLowerCase().endsWith('.html');
+                if (isHtml) {
+                    preview.innerHTML = `
+                        <iframe src="${url}" class="w-full h-[70vh] rounded-lg border-4 border-blue-100 shadow-lg" title="Certificate"></iframe>
+                    `;
+                } else {
+                    preview.innerHTML = `
+                        <img src="${url}" 
+                             alt="Certificate" 
+                             class="max-w-full h-auto rounded-lg shadow-lg border-4 border-blue-100">
+                    `;
+                }
             } else {
                 preview.innerHTML = `
                     <div class="text-center text-red-600">

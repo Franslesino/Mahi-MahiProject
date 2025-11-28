@@ -30,12 +30,13 @@
         <form method="GET" action="{{ route('admin.courses.index') }}"
               class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
 
-            {{-- SEARCH BAR --}}
+            {{-- SEARCH BAR (client debounce filter + server submit) --}}
             <div class="flex-1">
                 <div class="relative">
                     <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                     <input type="text"
                            name="search"
+                           id="coursesQuickSearch"
                            placeholder="Cari kursus..."
                            value="{{ request('search') }}"
                            class="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm
@@ -157,7 +158,7 @@
 
                             {{-- AKSI --}}
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2">
 
                                     {{-- KELOLA MATERI --}}
                                     <a href="{{ route('admin.courses.materials.index', $course) }}"
@@ -177,17 +178,17 @@
                                     {{-- EDIT --}}
                                     <a href="{{ route('admin.courses.edit', $course) }}"
                                        class="text-emerald-600 hover:text-emerald-800"
-                                       title="Edit">
+                                       title="Edit kursus">
                                         <i class="fas fa-edit"></i>
                                     </a>
 
                                     {{-- DELETE --}}
                                     <form method="POST"
                                           action="{{ route('admin.courses.destroy', $course) }}"
-                                          onsubmit="return confirm('Yakin ingin menghapus kursus ini?')">
+                                          data-confirm="Yakin ingin menghapus kursus ini? Tindakan tidak bisa dibatalkan.">
                                         @csrf
                                         @method('DELETE')
-                                        <button class="text-red-600 hover:text-red-800" title="Hapus">
+                                        <button type="submit" class="text-red-600 hover:text-red-800" title="Hapus kursus">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -218,3 +219,30 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+const debounce = (fn, delay = 250) => {
+    let t;
+    return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), delay);
+    };
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('coursesQuickSearch');
+    const rows = document.querySelectorAll('table tbody tr');
+    if (searchInput && rows.length) {
+        const filterRows = debounce(() => {
+            const q = searchInput.value.trim().toLowerCase();
+            rows.forEach(row => {
+                const haystack = row.innerText.toLowerCase();
+                row.style.display = haystack.includes(q) ? '' : 'none';
+            });
+        }, 200);
+        searchInput.addEventListener('input', filterRows);
+    }
+});
+</script>
+@endpush

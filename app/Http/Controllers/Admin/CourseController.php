@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Kursus;
 use App\Models\User;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -72,7 +73,17 @@ class CourseController extends Controller
             $data['image'] = $path;
         }
 
-        Kursus::create($data);
+        $course = Kursus::create($data);
+
+        // Notifikasi ke instruktur
+        if (!empty($validated['instructor_id'])) {
+            Notification::create([
+                'user_id' => $validated['instructor_id'],
+                'title'   => 'Kursus baru ditugaskan',
+                'message' => 'Anda ditugaskan sebagai instruktur untuk kursus "' . $validated['title'] . '".',
+                'type'    => 'info',
+            ]);
+        }
 
         return redirect()
             ->route('admin.courses.index')
@@ -163,7 +174,7 @@ class CourseController extends Controller
         ]);
 
         // Get assignments for this course
-        $assignments = \App\Models\Assignment::where('course_id', $course->id)
+        $assignments = \App\Models\Assignment::where('kursus_id', $course->id)
             ->withCount('questions')
             ->orderBy('created_at', 'desc')
             ->get();

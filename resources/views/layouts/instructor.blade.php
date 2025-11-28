@@ -120,8 +120,8 @@
             </div>
 
             <!-- Bantuan -->
-            <a href="#" 
-               class="flex items-center gap-3 px-4 py-3 rounded-lg transition text-gray-700 hover:bg-gray-50">
+            <a href="{{ route('instructor.help') }}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('instructor.help') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
@@ -156,12 +156,30 @@
             <div class="flex items-center justify-between">
                 <h1 class="text-xl font-semibold text-gray-800">Instructor Panel</h1>
                 <div class="flex items-center gap-4">
-                    <!-- Notifications (Optional) -->
-                    <button class="p-2 hover:bg-gray-100 rounded-lg transition relative">
-                        <i class="fas fa-bell text-gray-600"></i>
-                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                    </button>
-                    
+                    <!-- Notifications -->
+                    <div class="relative" x-data="{ openNotif: false }" @keydown.escape.window="openNotif=false">
+                        <button @click="openNotif = !openNotif" class="p-2 hover:bg-gray-100 rounded-lg transition relative">
+                            <i class="fas fa-bell text-gray-600"></i>
+                            <span id="notif-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-4 px-1 bg-red-500 text-white text-[11px] rounded-full flex items-center justify-center"></span>
+                        </button>
+                        <div x-show="openNotif" x-transition @click.away="openNotif=false"
+                             class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-30">
+                            <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-bell text-blue-600"></i>
+                                    <span class="font-semibold text-gray-800 text-sm">Notifikasi</span>
+                                </div>
+                                <form action="{{ route('notifications.mark-all-read') }}" method="POST" id="notif-mark-all-form" class="hidden">
+                                    @csrf
+                                    <button type="submit" class="text-xs text-blue-600 hover:text-blue-800 font-semibold">Tandai semua</button>
+                                </form>
+                            </div>
+                            <div class="max-h-96 overflow-y-auto" id="notif-list">
+                                <div class="px-4 py-6 text-center text-sm text-gray-500">Memuat notifikasi...</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- User Avatar Mobile -->
                     <div class="lg:hidden flex items-center gap-2">
                         <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
@@ -232,6 +250,78 @@
         @yield('content')
     </main>
 
+    @stack('scripts')
+    <script>
+        (function() {
+            const badge = document.getElementById('notif-badge');
+            const list = document.getElementById('notif-list');
+            const markAllForm = document.getElementById('notif-mark-all-form');
+            const endpoint = "{{ route('instructor.notifications.poll') }}";
+
+            const escapeHtml = (str) => {
+                if (!str) return '';
+                return str.replace(/[&<>"']/g, m => ({
+                    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+                }[m]));
+            };
+
+            const render = (data) => {
+                if (!badge || !list) return;
+                if (data.unread > 0) {
+                    badge.textContent = data.unread;
+                    badge.classList.remove('hidden');
+                    markAllForm?.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                    markAllForm?.classList.add('hidden');
+                }
+
+                if (!data.items || data.items.length === 0) {
+                    list.innerHTML = '<div class="px-4 py-6 text-center text-sm text-gray-500">Belum ada notifikasi.</div>';
+                    return;
+                }
+
+                list.innerHTML = data.items.map(item => {
+                    const typeClass = item.type === 'success'
+                        ? 'bg-emerald-100 text-emerald-600'
+                        : item.type === 'warning'
+                            ? 'bg-amber-100 text-amber-600'
+                            : 'bg-blue-100 text-blue-600';
+                    const unreadClass = item.unread ? 'bg-blue-50' : '';
+                    return `
+                        <div class="px-4 py-3 border-b border-gray-100 ${unreadClass}">
+                            <div class="flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-full flex items-center justify-center ${typeClass}">
+                                    <i class="fas fa-bell"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-semibold text-gray-900">${escapeHtml(item.title)}</p>
+                                    <p class="text-xs text-gray-600 leading-relaxed">${escapeHtml(item.message)}</p>
+                                    <p class="text-[11px] text-gray-400 mt-1">${escapeHtml(item.time)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            };
+
+            const poll = async () => {
+                try {
+                    const res = await fetch(endpoint, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    render(data);
+                } catch (e) {
+                    // silent fail
+                }
+            };
+
+            poll();
+            setInterval(poll, 15000);
+        })();
+    </script>
+
+    @include('components.delete-modal')
     @stack('scripts')
 </body>
 </html>

@@ -9,6 +9,8 @@ class VoucherUsage extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $fillable = [
         'voucher_id',
         'user_id',

@@ -27,6 +27,8 @@ class Transaction extends Model
         'expired_at',
         'notes',
         'invoice_url',
+        'snap_token',
+        'voucher_discount_amount',
     ];
 
     protected $casts = [
@@ -97,6 +99,38 @@ class Transaction extends Model
             'status' => 'expired',
             'expired_at' => now(),
         ]);
+    }
+
+    /**
+     * Generate Midtrans Snap Token
+     */
+    public function generateSnapToken()
+    {
+        try {
+            if ($this->snap_token && $this->status === 'pending') {
+                return $this->snap_token;
+            }
+
+            $midtransService = new \App\Services\MidtransService();
+            $snapToken = $midtransService->generateSnapToken($this);
+
+            // Save token to database
+            $this->update(['snap_token' => $snapToken]);
+
+            return $snapToken;
+        } catch (\Exception $e) {
+            \Log::error('Failed to generate snap token: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Update transaction status berdasarkan notifikasi Midtrans
+     */
+    public function handleMidtransNotification($notification)
+    {
+        $midtransService = new \App\Services\MidtransService();
+        return $midtransService->handleNotification($notification);
     }
 
     public function getStatusBadgeAttribute()

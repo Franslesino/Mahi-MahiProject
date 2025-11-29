@@ -273,6 +273,7 @@
 
                         <!-- Action Buttons -->
                         <button type="submit" 
+                                id="payButton"
                                 class="w-full px-6 py-4 bg-blue-900 text-white rounded-lg font-semibold hover:bg-blue-800 transition shadow-lg mb-3">
                             <i class="fas fa-lock mr-2"></i>
                             Bayar Sekarang
@@ -300,6 +301,18 @@
             </div>
         </form>
 
+    </div>
+</div>
+
+<!-- Midtrans Snap Script -->
+<script src="https://app.sandbox.midtrans.com/snap/snap.js" 
+        data-client-key="{{ config('midtrans.client_key') }}"></script>
+
+<!-- Loading Modal -->
+<div id="loadingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-8 text-center">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-900 border-t-blue-400 mb-4"></div>
+        <p class="text-gray-700 font-semibold">Memproses pembayaran...</p>
     </div>
 </div>
 
@@ -463,6 +476,161 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function formatNumber(num) {
         return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    // Handle form submission untuk Midtrans payment
+    const checkoutForm = document.getElementById('checkoutForm');
+    const payButton = document.getElementById('payButton');
+
+    checkoutForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // Validasi form
+        const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+        const paymentChannel = document.querySelector('input[name="payment_channel"]:checked');
+
+        if (!paymentMethod) {
+            alert('Silakan pilih metode pembayaran');
+            return;
+        }
+
+        if (!paymentChannel) {
+            alert('Silakan pilih channel pembayaran');
+            return;
+        }
+
+        // Show loading
+        showLoading(true);
+        payButton.disabled = true;
+
+        // Submit form untuk create transaction
+        const formData = new FormData(this);
+
+        fetch('{{ route("transactions.process", $course) }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            showLoading(false);
+
+            if (data.success && data.snap_token) {
+                // Show Midtrans popup
+                showMidtransPopup(data.snap_token, data.transaction_id, data.transaction_code);
+            } else {
+                alert(data.message || 'Terjadi kesalahan saat membuat transaksi');
+                payButton.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showLoading(false);
+            alert('Terjadi kesalahan. Silakan coba lagi.');
+            payButton.disabled = false;
+        });
+    });
+
+    function showLoading(show) {
+        const modal = document.getElementById('loadingModal');
+        if (show) {
+            modal.classList.remove('hidden');
+        } else {
+            modal.classList.add('hidden');
+        }
+    }
+
+    function showMidtransPopup(snapToken, transactionId, transactionCode) {
+        snap.pay(snapToken, {
+            onSuccess: function(result) {
+                console.log('Payment Success:', result);
+                handlePaymentSuccess(transactionId, transactionCode);
+            },
+            onPending: function(result) {
+                console.log('Payment Pending:', result);
+                showLoading(true);
+                // Check status setiap 2 detik
+                setTimeout(() => {
+                    checkPaymentStatus(transactionCode);
+                }, 2000);
+            },
+            onError: function(result) {
+                console.log('Payment Error:', result);
+                alert('Terjadi kesalahan pada proses pembayaran.');
+                payButton.disabled = false;
+            },
+            onClose: function() {
+                console.log('Customer closed the popup');
+                payButton.disabled = false;
+            }
+        });
+    }
+
+    function handlePaymentSuccess(transactionId, transactionCode) {
+        showLoading(true);
+
+        // Call backend to complete enrollment
+        fetch('{{ route("transactions.complete-payment") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                transaction_id: transactionId,
+                transaction_code: transactionCode
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            showLoading(false);
+
+            if (data.success) {
+                // Show success message dan redirect
+                alert('Pembayaran berhasil! Anda sekarang terdaftar di kursus ini.');
+                window.location.href = data.redirect_url;
+            } else {
+                alert(data.message || 'Pembayaran berhasil tapi ada kesalahan saat mendaftarkan kursus');
+                window.location.href = window.location.href;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showLoading(false);
+            alert('Pembayaran berhasil! Silakan tunggu, sistem sedang memproses...');
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        });
+    }
+
+    function checkPaymentStatus(transactionCode) {
+        fetch('{{ route("transactions.check-status") }}?code=' + transactionCode, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'paid') {
+                handlePaymentSuccess(data.transaction_id, transactionCode);
+            } else if (data.status === 'pending') {
+                setTimeout(() => {
+                    checkPaymentStatus(transactionCode);
+                }, 2000);
+            } else {
+                showLoading(false);
+                alert('Pembayaran gagal atau dibatalkan');
+                payButton.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error checking status:', error);
+            showLoading(false);
+        });
     }
 });
 </script>

@@ -52,8 +52,5 @@ class Material extends Model
     return $this->belongsTo(CourseSection::class, 'section_id');
 }
 
-    public function progress()
-    {
-        return $this->hasMany(Progress::class, 'materi_id');
-    }
+
 }

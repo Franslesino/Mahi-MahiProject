@@ -12,6 +12,7 @@ use App\Http\Controllers\Instructor\MaterialController;
 use App\Http\Controllers\Student\CourseController as StudentCourseController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Controllers\Student\TransactionController as StudentTransactionController;
+use App\Http\Controllers\MidtransNotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VoucherController;
 use App\Models\Kursus;
@@ -78,6 +79,9 @@ Route::get('/test-google-config', function () {
     ];
 });
 
+// Midtrans Webhook Notification (Public - no authentication)
+Route::post('/api/midtrans/notification', [App\Http\Controllers\MidtransNotificationController::class, 'handleNotification'])->name('midtrans.notification');
+
 // ==========================
 // Authentication Routes
 // ==========================
@@ -123,9 +127,15 @@ Route::middleware('auth')->group(function () {
         Route::prefix('transactions')->name('transactions.')->group(function () {
             Route::get('/checkout/{course}', [StudentTransactionController::class, 'checkout'])->name('checkout');
             Route::post('/process/{course}', [StudentTransactionController::class, 'process'])->name('process');
+            Route::post('/complete-payment', [StudentTransactionController::class, 'completePayment'])->name('complete-payment');
+            Route::get('/check-status', [StudentTransactionController::class, 'checkStatus'])->name('check-status');
             Route::get('/{transaction}', [StudentTransactionController::class, 'show'])->name('show');
             Route::post('/{transaction}/confirm', [StudentTransactionController::class, 'confirm'])->name('confirm');
             Route::post('/{transaction}/cancel', [StudentTransactionController::class, 'cancel'])->name('cancel');
+            // Midtrans callbacks
+            Route::get('/finish', [StudentTransactionController::class, 'finish'])->name('finish');
+            Route::get('/unfinish', [StudentTransactionController::class, 'unfinish'])->name('unfinish');
+            Route::get('/error', [StudentTransactionController::class, 'error'])->name('error');
         });
 
         // My transactions

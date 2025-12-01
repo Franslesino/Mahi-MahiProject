@@ -104,101 +104,7 @@
                         </div> --}}
                     </div>
 
-                    <!-- Payment Method Selection -->
-                    <div class="bg-white rounded-xl shadow-sm p-6">
-                        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                            <i class="fas fa-credit-card text-blue-600 mr-2"></i>
-                            Metode Pembayaran
-                        </h2>
 
-                        <!-- Bank Transfer -->
-                        <div class="mb-4">
-                            <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition payment-option">
-                                <input type="radio" name="payment_method" value="bank_transfer" class="mr-3" required>
-                                <div class="flex-1">
-                                    <div class="font-semibold text-gray-900">Transfer Bank</div>
-                                    <div class="text-sm text-gray-600">BCA, Mandiri, BNI, BRI</div>
-                                </div>
-                                <i class="fas fa-university text-blue-600 text-2xl"></i>
-                            </label>
-                            
-                            <!-- Bank Options -->
-                            <div id="bank-options" class="hidden mt-3 ml-7 space-y-2">
-                                <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50 transition">
-                                    <input type="radio" name="payment_channel" value="BCA" class="mr-3">
-                                    <span class="font-medium">Bank BCA</span>
-                                </label>
-                                <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50 transition">
-                                    <input type="radio" name="payment_channel" value="Mandiri" class="mr-3">
-                                    <span class="font-medium">Bank Mandiri</span>
-                                </label>
-                                <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50 transition">
-                                    <input type="radio" name="payment_channel" value="BNI" class="mr-3">
-                                    <span class="font-medium">Bank BNI</span>
-                                </label>
-                                <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50 transition">
-                                    <input type="radio" name="payment_channel" value="BRI" class="mr-3">
-                                    <span class="font-medium">Bank BRI</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- E-Wallet -->
-                        <div class="mb-4">
-                            <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition payment-option">
-                                <input type="radio" name="payment_method" value="e_wallet" class="mr-3" required>
-                                <div class="flex-1">
-                                    <div class="font-semibold text-gray-900">E-Wallet</div>
-                                    <div class="text-sm text-gray-600">GoPay, OVO, Dana, ShopeePay</div>
-                                </div>
-                                <i class="fas fa-mobile-alt text-green-600 text-2xl"></i>
-                            </label>
-                            
-                            <!-- E-Wallet Options -->
-                            <div id="ewallet-options" class="hidden mt-3 ml-7 space-y-2">
-                                <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50 transition">
-                                    <input type="radio" name="payment_channel" value="GoPay" class="mr-3">
-                                    <span class="font-medium">GoPay</span>
-                                </label>
-                                <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50 transition">
-                                    <input type="radio" name="payment_channel" value="OVO" class="mr-3">
-                                    <span class="font-medium">OVO</span>
-                                </label>
-                                <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50 transition">
-                                    <input type="radio" name="payment_channel" value="Dana" class="mr-3">
-                                    <span class="font-medium">Dana</span>
-                                </label>
-                                <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50 transition">
-                                    <input type="radio" name="payment_channel" value="ShopeePay" class="mr-3">
-                                    <span class="font-medium">ShopeePay</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Virtual Account -->
-                        <div class="mb-4">
-                            <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition payment-option">
-                                <input type="radio" name="payment_method" value="virtual_account" class="mr-3" required>
-                                <div class="flex-1">
-                                    <div class="font-semibold text-gray-900">Virtual Account</div>
-                                    <div class="text-sm text-gray-600">Nomor VA otomatis</div>
-                                </div>
-                                <i class="fas fa-receipt text-purple-600 text-2xl"></i>
-                            </label>
-                            
-                            <!-- VA Options -->
-                            <div id="va-options" class="hidden mt-3 ml-7 space-y-2">
-                                <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50 transition">
-                                    <input type="radio" name="payment_channel" value="BCA VA" class="mr-3">
-                                    <span class="font-medium">BCA Virtual Account</span>
-                                </label>
-                                <label class="flex items-center p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50 transition">
-                                    <input type="radio" name="payment_channel" value="Mandiri VA" class="mr-3">
-                                    <span class="font-medium">Mandiri Virtual Account</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
 
                 </div>
 
@@ -318,41 +224,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Payment method toggle
-    const paymentOptions = document.querySelectorAll('input[name="payment_method"]');
-    
-    paymentOptions.forEach(option => {
-        option.addEventListener('change', function() {
-            document.getElementById('bank-options').classList.add('hidden');
-            document.getElementById('ewallet-options').classList.add('hidden');
-            document.getElementById('va-options').classList.add('hidden');
-            
-            document.querySelectorAll('input[name="payment_channel"]').forEach(ch => ch.checked = false);
-            
-            if (this.value === 'bank_transfer') {
-                document.getElementById('bank-options').classList.remove('hidden');
-            } else if (this.value === 'e_wallet') {
-                document.getElementById('ewallet-options').classList.remove('hidden');
-            } else if (this.value === 'virtual_account') {
-                document.getElementById('va-options').classList.remove('hidden');
-            }
-        });
-    });
-    
-    document.querySelectorAll('.payment-option').forEach(option => {
-        option.addEventListener('click', function() {
-            document.querySelectorAll('.payment-option').forEach(opt => {
-                opt.classList.remove('border-blue-500', 'bg-blue-50');
-                opt.classList.add('border-gray-200');
-            });
-            if (this.querySelector('input[type="radio"]').checked) {
-                this.classList.add('border-blue-500', 'bg-blue-50');
-                this.classList.remove('border-gray-200');
-            }
-        });
-    });
 
-    // Voucher functionality
+        // Voucher functionality
     const originalPrice = {{ $hargaDiskon ?? $hargaAsli }};
     let voucherDiscount = 0;
     let appliedVoucherData = null;
@@ -485,20 +358,6 @@ document.addEventListener('DOMContentLoaded', function() {
     checkoutForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        // Validasi form
-        const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
-        const paymentChannel = document.querySelector('input[name="payment_channel"]:checked');
-
-        if (!paymentMethod) {
-            alert('Silakan pilih metode pembayaran');
-            return;
-        }
-
-        if (!paymentChannel) {
-            alert('Silakan pilih channel pembayaran');
-            return;
-        }
-
         // Show loading
         showLoading(true);
         payButton.disabled = true;
@@ -571,17 +430,33 @@ document.addEventListener('DOMContentLoaded', function() {
     function handlePaymentSuccess(transactionId, transactionCode) {
         showLoading(true);
 
-        // Call backend to complete enrollment
-        fetch('{{ route("transactions.complete-payment") }}', {
+        // First, get payment details from Midtrans
+        fetch('{{ route("transactions.get-payment-details") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
             body: JSON.stringify({
-                transaction_id: transactionId,
                 transaction_code: transactionCode
             })
+        })
+        .then(response => response.json())
+        .then(paymentData => {
+            console.log('Payment Details from Midtrans:', paymentData);
+            
+            // Then call backend to complete enrollment
+            return fetch('{{ route("transactions.complete-payment") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    transaction_id: transactionId,
+                    transaction_code: transactionCode
+                })
+            });
         })
         .then(response => response.json())
         .then(data => {

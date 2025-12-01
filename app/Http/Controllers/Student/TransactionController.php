@@ -73,8 +73,8 @@ class TransactionController extends Controller
     public function process(Request $request, Kursus $course)
     {
         $request->validate([
-            'payment_method' => 'required|in:bank_transfer,e_wallet,virtual_account',
-            'payment_channel' => 'required|string',
+            'payment_method' => 'nullable|in:bank_transfer,e_wallet,virtual_account',
+            'payment_channel' => 'nullable|string',
             'notes' => 'nullable|string|max:500',
             'voucher_id' => 'nullable|exists:vouchers,id',
             'voucher_discount' => 'nullable|numeric|min:0',
@@ -402,5 +402,103 @@ class TransactionController extends Controller
             ->paginate(10);
 
         return view('student.transactions.index', compact('transactions'));
+    }
+
+    /**
+     * Get payment details from Midtrans (payment method and channel)
+     * Called after Midtrans payment to retrieve actual payment method used
+     */
+    public function getPaymentDetails(Request $request)
+    {
+        $request->validate([
+            'transaction_code' => 'required|string',
+        ]);
+
+        try {
+            $transaction = Transaction::where('transaction_code', $request->transaction_code)
+                ->where('user_id', Auth::id())
+                ->first();
+
+            if (!$transaction) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transaksi tidak ditemukan',
+                ], 404);
+            }
+
+            // Get transaction details from Midtrans
+            $midtransService = new MidtransService();
+            $paymentDetails = $midtransService->getTransactionDetails($request->transaction_code);
+
+            \Log::info('Payment Details Retrieved:', [
+                'payment_type' => $paymentDetails['payment_type'],
+                'payment_channel' => $paymentDetails['payment_channel'],
+                'full_response' => $paymentDetails['full_details'],
+            ]);
+
+            // Update transaction with actual payment details from Midtrans
+            $transaction->update([
+                'payment_method' => $paymentDetails['payment_type'],
+                'payment_channel' => $paymentDetails['payment_channel'],
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'payment_method' => $paymentDetails['payment_type'],
+                'payment_channel' => $paymentDetails['payment_channel'],
+                'transaction_status' => $paymentDetails['transaction_status'],
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Get Payment Details Error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil detail pembayaran: ' . $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Debug endpoint - Get full Midtrans response for a transaction
+     * Used for debugging payment channel extraction
+     * Access: GET /debug/transactions/{transaction_code}/midtrans-response
+     */
+    public function debugMidtransResponse($transactionCode)
+    {
+        try {
+            $transaction = Transaction::where('transaction_code', $transactionCode)
+                ->where('user_id', Auth::id())
+                ->first();
+
+            if (!$transaction) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transaksi tidak ditemukan',
+                ], 404);
+            }
+
+            // Get raw Midtrans response
+            $midtransService = new MidtransService();
+            $midtransStatus = $midtransService->getTransactionStatus($transactionCode);
+
+            // Convert to array for better viewing
+            $response = json_decode(json_encode($midtransStatus), true);
+
+            return response()->json([
+                'success' => true,
+                'transaction_code' => $transactionCode,
+                'payment_method' => $response['payment_type'] ?? null,
+                'midtrans_full_response' => $response,
+                'all_keys' => array_keys($response),
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ], 500);
+        }
     }
 }

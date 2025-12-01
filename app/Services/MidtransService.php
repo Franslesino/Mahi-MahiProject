@@ -147,8 +147,21 @@ class MidtransService
                 throw new Exception('Transaction not found: ' . $orderId);
             }
 
+            // Extract payment channel from notification
+            $paymentChannel = null;
+            if ($paymentType === 'bank_transfer' && isset($notification['bank'])) {
+                $paymentChannel = strtoupper($notification['bank']);
+            } elseif ($paymentType === 'echannel' && isset($notification['bank'])) {
+                $paymentChannel = strtoupper($notification['bank']);
+            } elseif (in_array($paymentType, ['gopay', 'ovo', 'dana', 'shopeepay', 'qris'])) {
+                $paymentChannel = strtoupper($paymentType);
+            } elseif ($paymentType === 'credit_card' && isset($notification['issuer'])) {
+                $paymentChannel = strtoupper($notification['issuer']);
+            }
+
             // Update payment details
             $transaction->payment_method = $paymentType;
+            $transaction->payment_channel = $paymentChannel;
             $transaction->payment_details = $notification;
             $transaction->snap_token = null;
 
@@ -193,5 +206,43 @@ class MidtransService
     {
         $signature = hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
         return $signature;
+    }
+
+    /**
+     * Get transaction details from Midtrans (payment method and channel info)
+     */
+    public function getTransactionDetails($orderId)
+    {
+        try {
+            $status = \Midtrans\Transaction::status($orderId);
+            
+            // Convert object to array
+            $statusArray = json_decode(json_encode($status), true);
+            
+            $paymentType = $statusArray['payment_type'] ?? null;
+            $paymentChannel = null;
+            
+            // Extract payment channel based on payment type
+            if ($paymentType === 'bank_transfer' && isset($statusArray['bank'])) {
+                $paymentChannel = strtoupper($statusArray['bank']);
+            } elseif ($paymentType === 'echannel' && isset($statusArray['bank'])) {
+                $paymentChannel = strtoupper($statusArray['bank']);
+            } elseif (in_array($paymentType, ['gopay', 'ovo', 'dana', 'shopeepay', 'qris'])) {
+                $paymentChannel = strtoupper($paymentType);
+            } elseif ($paymentType === 'credit_card' && isset($statusArray['issuer'])) {
+                $paymentChannel = strtoupper($statusArray['issuer']);
+            }
+
+            return [
+                'payment_type' => $paymentType,
+                'payment_channel' => $paymentChannel,
+                'transaction_status' => $statusArray['transaction_status'] ?? null,
+                'full_details' => $status,
+            ];
+
+        } catch (Exception $e) {
+            \Log::error('Midtrans Get Transaction Details Error: ' . $e->getMessage());
+            throw new Exception('Gagal mengambil detail transaksi dari Midtrans: ' . $e->getMessage());
+        }
     }
 }

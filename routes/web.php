@@ -128,7 +128,9 @@ Route::middleware('auth')->group(function () {
             Route::get('/checkout/{course}', [StudentTransactionController::class, 'checkout'])->name('checkout');
             Route::post('/process/{course}', [StudentTransactionController::class, 'process'])->name('process');
             Route::post('/complete-payment', [StudentTransactionController::class, 'completePayment'])->name('complete-payment');
+            Route::post('/get-payment-details', [StudentTransactionController::class, 'getPaymentDetails'])->name('get-payment-details');
             Route::get('/check-status', [StudentTransactionController::class, 'checkStatus'])->name('check-status');
+            Route::get('/debug/{transactionCode}/midtrans-response', [StudentTransactionController::class, 'debugMidtransResponse'])->name('debug-midtrans');
             Route::get('/{transaction}', [StudentTransactionController::class, 'show'])->name('show');
             Route::post('/{transaction}/confirm', [StudentTransactionController::class, 'confirm'])->name('confirm');
             Route::post('/{transaction}/cancel', [StudentTransactionController::class, 'cancel'])->name('cancel');

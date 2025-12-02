@@ -57,11 +57,20 @@ class Materi extends Model
     public function getVideoUrlAttribute()
     {
         if ($this->type === 'video') {
-            if (!empty($this->url_konten)) {
-                return $this->url_konten;
-            }
             if (!empty($this->file_url)) {
-                return $this->generateUrl($this->file_url);
+                if (str_starts_with($this->file_url, 'http')) {
+                    return $this->file_url;
+                }
+                $generated = $this->generateUrl($this->file_url);
+                if ($generated) {
+                    return $generated;
+                }
+            }
+            if (!empty($this->url_konten)) {
+                if (str_starts_with($this->url_konten, 'http')) {
+                    return $this->url_konten;
+                }
+                return $this->normalizeLocalUrl($this->url_konten);
             }
         }
         return null;
@@ -72,12 +81,15 @@ class Materi extends Model
     {
         if ($this->type === 'pdf') {
             if (!empty($this->file_url)) {
-                if (str_starts_with($this->file_url, 'storage/')) {
+                if (str_starts_with($this->file_url, 'http')) {
                     return $this->file_url;
                 }
                 return $this->file_url;
             }
             if (!empty($this->url_konten)) {
+                if (str_starts_with($this->url_konten, 'http')) {
+                    return $this->url_konten;
+                }
                 return str_replace('/storage/', '', $this->url_konten);
             }
         }
@@ -86,13 +98,53 @@ class Materi extends Model
 
     public function getFileUrlFullAttribute()
     {
-        if (!empty($this->url_konten)) {
-            return $this->url_konten;
-        }
         if ($this->file_url) {
-            return $this->generateUrl($this->file_url);
+            if (str_starts_with($this->file_url, 'http')) {
+                return $this->file_url;
+            }
+            $generated = $this->generateUrl($this->file_url);
+            if ($generated) {
+                return $generated;
+            }
+        }
+        if (!empty($this->url_konten)) {
+            if (str_starts_with($this->url_konten, 'http')) {
+                return $this->url_konten;
+            }
+            return $this->normalizeLocalUrl($this->url_konten);
         }
         return null;
+    }
+
+    /**
+     * Jika URL tersimpan masih mengarah ke localhost/port default, ganti host+port
+     * dengan APP_URL agar iframe/video tidak gagal koneksi.
+     */
+    protected function normalizeLocalUrl(?string $url): ?string
+    {
+        if (!$url) {
+            return null;
+        }
+
+        $parsed = parse_url($url);
+        if (empty($parsed['host']) || !in_array($parsed['host'], ['localhost', '127.0.0.1'])) {
+            return $url;
+        }
+
+        $appUrl = config('app.url');
+        $appParsed = $appUrl ? parse_url($appUrl) : null;
+        if (!$appParsed || empty($appParsed['host'])) {
+            return $url;
+        }
+
+        $scheme = $appParsed['scheme'] ?? $parsed['scheme'] ?? 'http';
+        $host = $appParsed['host'];
+        $port = $appParsed['port'] ?? null;
+        $path = $parsed['path'] ?? '';
+        $query = isset($parsed['query']) ? '?' . $parsed['query'] : '';
+        $fragment = isset($parsed['fragment']) ? '#' . $parsed['fragment'] : '';
+
+        return $scheme . '://' . $host . ($port ? ':' . $port : '') . $path . $query . $fragment;
     }
 
     // Relationships
@@ -118,6 +170,10 @@ class Materi extends Model
 
     protected function generateUrl(string $path): ?string
     {
+        if (str_starts_with($path, 'http')) {
+            return $path;
+        }
+
         $disk = $this->materialsDisk();
         try {
             $storage = Storage::disk($disk);
@@ -154,4 +210,3 @@ class Materi extends Model
         };
     }
 }
-

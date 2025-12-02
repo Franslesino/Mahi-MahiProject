@@ -38,8 +38,8 @@
         <!-- Course Card -->
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
             <!-- Course Image -->
-            @if($course->image)
-                <img src="{{ asset('storage/' . $course->image) }}" alt="{{ $judul }}" 
+            @if($course->image_url)
+                <img src="{{ $course->image_url }}" alt="{{ $judul }}" 
                      class="w-full h-80 object-cover">
             @else
                 <div class="w-full h-80 bg-gradient-to-br from-teal-400 via-blue-500 to-purple-600 flex items-center justify-center">

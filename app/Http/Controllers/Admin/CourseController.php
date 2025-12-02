@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Kursus;
 use App\Models\User;
+use App\Models\Notification;
+use App\Services\SupabaseStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -66,13 +68,22 @@ class CourseController extends Controller
         ];
 
         if ($request->hasFile('image')) {
-            $file     = $request->file('image');
-            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $path     = $file->storeAs('courses', $filename, 'public');
-            $data['image'] = $path;
+            $storage = app(SupabaseStorageService::class);
+            $upload = $storage->upload($request->file('image'), 'courses');
+            $data['image'] = $upload['public_url'] ?? $upload['path'];
         }
 
-        Kursus::create($data);
+        $course = Kursus::create($data);
+
+        // Notifikasi ke instruktur
+        if (!empty($validated['instructor_id'])) {
+            Notification::create([
+                'user_id' => $validated['instructor_id'],
+                'title'   => 'Kursus baru ditugaskan',
+                'message' => 'Anda ditugaskan sebagai instruktur untuk kursus "' . $validated['title'] . '".',
+                'type'    => 'info',
+            ]);
+        }
 
         return redirect()
             ->route('admin.courses.index')
@@ -121,14 +132,17 @@ class CourseController extends Controller
         ];
 
         if ($request->hasFile('image')) {
-            if ($course->image && Storage::disk('public')->exists($course->image)) {
-                Storage::disk('public')->delete($course->image);
+            $storage = app(SupabaseStorageService::class);
+            // Hapus file lama
+            if ($course->image) {
+                $storage->delete($course->image);
+                if (!str_starts_with($course->image, 'http') && Storage::disk('public')->exists($course->image)) {
+                    Storage::disk('public')->delete($course->image);
+                }
             }
 
-            $file     = $request->file('image');
-            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $path     = $file->storeAs('courses', $filename, 'public');
-            $data['image'] = $path;
+            $upload = $storage->upload($request->file('image'), 'courses');
+            $data['image'] = $upload['public_url'] ?? $upload['path'];
         }
 
         $course->update($data);
@@ -140,8 +154,12 @@ class CourseController extends Controller
 
     public function destroy(Kursus $course)
     {
-        if ($course->image && Storage::disk('public')->exists($course->image)) {
-            Storage::disk('public')->delete($course->image);
+        if ($course->image) {
+            $storage = app(SupabaseStorageService::class);
+            $storage->delete($course->image);
+            if (!str_starts_with($course->image, 'http') && Storage::disk('public')->exists($course->image)) {
+                Storage::disk('public')->delete($course->image);
+            }
         }
 
         $course->delete();
@@ -163,7 +181,7 @@ class CourseController extends Controller
         ]);
 
         // Get assignments for this course
-        $assignments = \App\Models\Assignment::where('course_id', $course->id)
+        $assignments = \App\Models\Assignment::where('kursus_id', $course->id)
             ->withCount('questions')
             ->orderBy('created_at', 'desc')
             ->get();

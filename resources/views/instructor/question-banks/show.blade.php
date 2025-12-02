@@ -162,7 +162,7 @@
                         @if($questionBank->created_by == auth()->id())
                         <form action="{{ route('instructor.question-banks.questions.destroy', [$questionBank, $question]) }}" 
                               method="POST"
-                              onsubmit="return confirm('Yakin ingin menghapus soal ini?')">
+                              data-confirm="Yakin ingin menghapus soal ini?">
                             @csrf
                             @method('DELETE')
                             <button type="submit" 

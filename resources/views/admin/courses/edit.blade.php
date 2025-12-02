@@ -66,19 +66,46 @@
                     @enderror
                 </div>
 
-                {{-- Kategori --}}
+                {{-- Kategori (dropdown) --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         Kategori <span class="text-red-500">*</span>
                     </label>
-                    <input
-                        type="text"
+                    @php
+                        $kategoriValue = old('category', $course->kategori);
+                        $kategoriGroups = [
+                            'Teknologi & IT' => [
+                                'Web Development',
+                                'Mobile Development',
+                                'Data Science',
+                                'Design UI/UX',
+                                'Cyber Security',
+                                'AI / Machine Learning',
+                                'Database',
+                            ],
+                            'Bisnis' => [
+                                'Marketing',
+                                'Financial Literacy',
+                                'Entrepreneurship',
+                                'Business Management',
+                            ],
+                        ];
+                    @endphp
+                    <select
                         name="category"
-                        value="{{ old('category', $course->kategori) }}"
                         required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white
                                focus:outline-none focus:ring-2 focus:ring-emerald-500
                                @error('category') border-red-500 @enderror">
+                        <option value="" {{ $kategoriValue ? '' : 'selected' }}>Pilih kategori</option>
+                        @foreach($kategoriGroups as $group => $options)
+                            <optgroup label="{{ $group }}">
+                                @foreach($options as $opt)
+                                    <option value="{{ $opt }}" {{ $kategoriValue === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    </select>
                     @error('category')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                     @enderror
@@ -192,8 +219,8 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         Gambar Kursus
                     </label>
-                    @if($course->image)
-                        <img src="{{ asset('storage/' . $course->image) }}"
+                    @if($course->image_url)
+                        <img src="{{ $course->image_url }}"
                              alt="Current Image"
                              class="w-32 h-32 object-cover rounded-lg mb-2">
                     @endif

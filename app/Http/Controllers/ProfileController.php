@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\SupabaseStorageService;
 use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
@@ -57,20 +58,20 @@ class ProfileController extends Controller
          * Upload Avatar (Foto Profil)
          */
         if ($request->hasFile('avatar')) {
+            $storage = app(SupabaseStorageService::class);
+
             // Hapus avatar lama jika ada
-            if ($user->avatar_path && Storage::disk('public')->exists($user->avatar_path)) {
-                Storage::disk('public')->delete($user->avatar_path);
+            if ($user->avatar_path) {
+                $storage->delete($user->avatar_path);
+                if (!str_starts_with($user->avatar_path, 'http') && Storage::disk('public')->exists($user->avatar_path)) {
+                    Storage::disk('public')->delete($user->avatar_path);
+                }
             }
 
-            // Buat nama file unik: user_ID_timestamp.ext
-            $ext = $request->file('avatar')->getClientOriginalExtension();
-            $filename = 'user_' . $user->id . '_' . time() . '.' . $ext;
+            $upload = $storage->upload($request->file('avatar'), 'profile_photos');
 
-            // Simpan file ke storage/app/public/profile_photos
-            $path = $request->file('avatar')->storeAs('profile_photos', $filename, 'public');
-
-            // Simpan path ke database
-            $user->avatar_path = $path;
+            // Simpan path/public URL ke database
+            $user->avatar_path = $upload['public_url'] ?? $upload['path'];
         }
 
         // Simpan perubahan ke database

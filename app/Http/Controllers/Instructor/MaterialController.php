@@ -8,6 +8,7 @@ use App\Models\Kursus;
 use App\Models\Materi;
 use App\Models\CourseSection; // ← TAMBAHKAN INI
 use App\Models\QuestionBank;
+use App\Services\SupabaseStorageService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 
@@ -42,13 +43,27 @@ class MaterialController extends Controller
             ->orderBy('order')
             ->get();
 
+        // Stats
         $totalMaterials = $course->materi()->count();
+        $totalVideos = $course->materi()->where('type', 'video')->count();
+        $studentsCount = $course->enrollments()
+            ->whereIn('status_pendaftaran', ['active', 'completed', 'paid'])
+            ->distinct('user_id')
+            ->count('user_id');
+
         $questionBanks = QuestionBank::where('created_by', Auth::id())
             ->orWhere('is_public', true)
             ->withCount('questions')
             ->get();
 
-        return view('instructor.course-detail', compact('course', 'sections', 'totalMaterials', 'questionBanks'));
+        return view('instructor.course-detail', compact(
+            'course',
+            'sections',
+            'totalMaterials',
+            'totalVideos',
+            'studentsCount',
+            'questionBanks'
+        ));
     }
 
     public function preview(Kursus $course, Materi $material)
@@ -98,7 +113,7 @@ class MaterialController extends Controller
             abort(403);
         }
 
-        $disk = config('filesystems.materials_disk', 'public');
+        $storage = app(SupabaseStorageService::class);
 
         $request->validate([
             'section_id' => 'nullable|exists:course_sections,id',
@@ -115,10 +130,12 @@ class MaterialController extends Controller
         ]);
 
         $fileUrl = null;
+        $filePublicUrl = null;
 
         if ($request->hasFile('file')) {
-            $path = $request->file('file')->store('materials', $disk);
-            $fileUrl = $path;
+            $upload = $storage->upload($request->file('file'), 'materials');
+            $fileUrl = $upload['path'];
+            $filePublicUrl = $upload['public_url'] ?? $upload['path'];
         }
 
         // Tentukan urutan
@@ -140,7 +157,7 @@ class MaterialController extends Controller
             'isi' => $request->content ?? $request->isi,
             'type' => $request->type,
             'file_url' => $fileUrl,
-            'url_konten' => $fileUrl ? Storage::disk($disk)->url($fileUrl) : null,
+            'url_konten' => $filePublicUrl ?? null,
             'content' => $request->content,
             'duration' => $request->duration,
             'urutan' => $urutan,
@@ -171,7 +188,7 @@ class MaterialController extends Controller
             abort(403);
         }
 
-        $disk = config('filesystems.materials_disk', 'public');
+        $storage = app(SupabaseStorageService::class);
 
         $request->validate([
             'section_id' => 'nullable|exists:course_sections,id',
@@ -205,19 +222,19 @@ class MaterialController extends Controller
         if ($request->hasFile('file')) {
             // Hapus file lama
             if ($material->file_url) {
-                Storage::disk($disk)->delete($material->file_url);
+                $storage->delete($material->file_url);
             }
             // Hapus file lama dari url_konten juga (untuk backward compatibility)
             if ($material->url_konten) {
                 $oldPath = str_replace('/storage/', '', $material->url_konten);
                 if (!str_starts_with($material->url_konten, 'http')) {
-                    Storage::disk($disk)->delete($oldPath);
+                    Storage::delete($oldPath);
                 }
             }
 
-            $path = $request->file('file')->store('materials', $disk);
-            $updateData['file_url'] = $path;
-            $updateData['url_konten'] = Storage::disk($disk)->url($path);
+            $upload = $storage->upload($request->file('file'), 'materials');
+            $updateData['file_url'] = $upload['path'];
+            $updateData['url_konten'] = $upload['public_url'] ?? $upload['path'];
         }
 
         $material->update($updateData);
@@ -232,18 +249,18 @@ class MaterialController extends Controller
             abort(403);
         }
 
-        $disk = config('filesystems.materials_disk', 'public');
+        $storage = app(SupabaseStorageService::class);
 
         // Hapus file jika ada
         if ($material->file_url) {
-            Storage::disk($disk)->delete($material->file_url);
+            $storage->delete($material->file_url);
         }
         
         // Backward compatibility - hapus dari url_konten juga
         if ($material->url_konten) {
             $oldPath = str_replace('/storage/', '', $material->url_konten);
             if (!str_starts_with($material->url_konten, 'http')) {
-                Storage::disk($disk)->delete($oldPath);
+                Storage::delete($oldPath);
             }
         }
 

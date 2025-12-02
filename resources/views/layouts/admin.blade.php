@@ -193,6 +193,9 @@
         </div>
         @endif
 
+        <!-- Quick Actions Bar -->
+       
+
         <!-- Content -->
         @yield('content')
     </main>
@@ -216,6 +219,7 @@
         });
     </script>
 
+    @include('components.delete-modal')
     @stack('scripts')
 </body>
 </html>

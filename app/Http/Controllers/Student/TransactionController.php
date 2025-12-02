@@ -203,6 +203,20 @@ class TransactionController extends Controller
                 'tanggal_daftar' => now(),
             ]);
 
+            // Notify instructor/pembuat tentang pendaftaran baru
+            $course = $transaction->kursus;
+            if ($course) {
+                $instructorId = $course->instructor_id ?? $course->pembuat;
+                if ($instructorId) {
+                    Notification::create([
+                        'user_id' => $instructorId,
+                        'title'   => 'Pendaftar baru',
+                        'message' => 'Pengguna ' . Auth::user()->name . ' mendaftar kursus "' . ($course->judul ?? $course->title) . '".',
+                        'type'    => 'info',
+                    ]);
+                }
+            }
+
             // Create notification for successful payment
             Notification::create([
                 'user_id' => $transaction->user_id,

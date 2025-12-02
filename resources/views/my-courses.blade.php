@@ -1,4 +1,4 @@
-{{-- resources/views/student/my-courses.blade.php --}}
+{{-- resources/views/my-courses.blade.php --}}
 @extends('layouts.app')
 
 @php
@@ -9,6 +9,41 @@
 @section('title', 'Kursus Saya')
 
 @section('content')
+@php
+    $courseProgressMap = [];
+    $certificateEligibleCount = 0;
+    $ongoingCount = 0;
+    $completedCount = 0;
+
+    foreach ($enrollments as $enrollment) {
+        $course = $enrollment->kursus;
+        $materiIds = $course->materi ? $course->materi->pluck('id')->toArray() : [];
+        $materiCount = count($materiIds);
+        $completedMaterialCount = (!empty($materiIds))
+            ? MaterialCompletion::where('user_id', Auth::id())
+                ->whereIn('materi_id', $materiIds)
+                ->count()
+            : 0;
+        $progress = $materiCount > 0 ? round(($completedMaterialCount / $materiCount) * 100) : 0;
+        $isCompleted = $materiCount > 0 && $completedMaterialCount >= $materiCount;
+
+        $courseProgressMap[$course->id] = [
+            'materiCount' => $materiCount,
+            'completedCount' => $completedMaterialCount,
+            'progress' => $progress,
+            'isCompleted' => $isCompleted,
+        ];
+
+        if ($isCompleted) {
+            $completedCount++;
+            if ($enrollment->sertifikat) {
+                $certificateEligibleCount++;
+            }
+        } else {
+            $ongoingCount++;
+        }
+    }
+@endphp
 <div class="bg-gray-50 min-h-screen">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
@@ -34,10 +69,10 @@
         <!-- Filter Tabs -->
         <div class="flex gap-3 mb-6 overflow-x-auto pb-2">
             <button class="filter-tab active px-6 py-2 bg-teal-700 text-white rounded-full font-semibold whitespace-nowrap transition hover:bg-teal-800" data-filter="ongoing">
-                Berlangsung
+                Berlangsung <span class="ml-1 px-2 py-0.5 bg-white/20 rounded-full text-xs">{{ $ongoingCount }}</span>
             </button>
             <button class="filter-tab px-6 py-2 bg-white text-gray-700 rounded-full font-semibold whitespace-nowrap border border-gray-300 transition hover:bg-gray-50" data-filter="completed">
-                Selesai
+                Selesai <span class="ml-1 px-2 py-0.5 bg-gray-200 rounded-full text-xs">{{ $completedCount }}</span>
             </button>
         </div>
 
@@ -57,8 +92,8 @@
                     <i class="fas fa-certificate text-xl"></i>
                 </div>
                 <div>
-                    <div class="text-2xl font-bold">0</div>
-                    <div class="text-sm opacity-90">Sertifikat</div>
+                    <div class="text-2xl font-bold">{{ $certificateEligibleCount }}</div>
+                    <div class="text-sm opacity-90">Sertifikat Tersedia</div>
                 </div>
             </div>
         </div>
@@ -87,30 +122,22 @@
                         $course = $enrollment->kursus;
                         $judul = $course->judul ?? $course->title ?? 'Untitled';
                         $kategori = $course->kategori ?? 'General';
-                        $materiCount = $course->materi_count ?? ($course->materi->count() ?? 0);
-
-                        // Hitung progres berdasarkan materi yang sudah selesai
-                        $materiIds = $course->materi ? $course->materi->pluck('id')->toArray() : [];
-                        $completedCount = (!empty($materiIds))
-                            ? MaterialCompletion::where('user_id', Auth::id())
-                                ->whereIn('materi_id', $materiIds)
-                                ->count()
-                            : 0;
-                        $progress = $materiCount > 0 ? round(($completedCount / $materiCount) * 100) : 0;
-                        $isCompleted = $progress >= 100;
+                        $progressData = $courseProgressMap[$course->id] ?? ['materiCount' => 0, 'completedCount' => 0, 'progress' => 0, 'isCompleted' => false];
+                        $progress = $progressData['progress'];
+                        $isCompleted = $progressData['isCompleted'];
+                        $certificate = $enrollment->sertifikat;
                     @endphp
 
-                    <a href="{{ route('student.course.learn', $course) }}"
-                       class="course-item block bg-white rounded-2xl shadow-sm hover:shadow-md transition p-4"
-                       data-status="{{ $isCompleted ? 'completed' : 'ongoing' }}"
-                       data-course-name="{{ strtolower($judul) }}">
+                    <div class="course-item bg-white rounded-2xl shadow-sm hover:shadow-md transition p-4"
+                         data-status="{{ $isCompleted ? 'completed' : 'ongoing' }}"
+                         data-course-name="{{ strtolower($judul) }}">
                         
                         <div class="flex gap-4">
                             <!-- Course Thumbnail -->
                             <div class="flex-shrink-0">
                                 <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-gradient-to-br from-gray-700 to-gray-900">
-                                    @if($course->image)
-                                        <img src="{{ asset('storage/' . $course->image) }}" 
+                                    @if($course->image_url)
+                                        <img src="{{ $course->image_url }}" 
                                              alt="{{ $judul }}" 
                                              class="w-full h-full object-cover">
                                     @else
@@ -126,50 +153,154 @@
                                 <!-- Category Label -->
                                 <div class="mb-2">
                                     <span class="inline-block px-3 py-1 text-xs font-bold rounded-full
-                                        {{ $kategori === 'Graphic Design' ? 'bg-orange-100 text-orange-600' : '' }}
-                                        {{ $kategori === 'Digital Marketing' ? 'bg-orange-100 text-orange-600' : '' }}
-                                        {{ $kategori === 'Web Development' ? 'bg-blue-100 text-blue-600' : '' }}
+                                        {{ in_array($kategori, ['Graphic Design', 'Digital Marketing']) ? 'bg-orange-100 text-orange-600' : '' }}
+                                        {{ in_array($kategori, ['Web Development', 'Frontend', 'Backend']) ? 'bg-blue-100 text-blue-600' : '' }}
                                         {{ $kategori === 'Programming' ? 'bg-purple-100 text-purple-600' : '' }}
                                         {{ $kategori === 'business' ? 'bg-green-100 text-green-600' : '' }}
-                                        {{ !in_array($kategori, ['Graphic Design', 'Digital Marketing', 'Web Development', 'Programming', 'business']) ? 'bg-gray-100 text-gray-600' : '' }}">
+                                        {{ !in_array($kategori, ['Graphic Design', 'Digital Marketing', 'Web Development', 'Frontend', 'Backend', 'Programming', 'business']) ? 'bg-gray-100 text-gray-600' : '' }}">
                                         {{ ucwords($kategori) }}
                                     </span>
                                 </div>
 
                                 <!-- Course Title -->
-                                <h3 class="font-bold text-gray-900 text-base mb-1 line-clamp-2">
+                                <h3 class="font-bold text-gray-900 text-base mb-2 line-clamp-2">
                                     {{ $judul }}
                                 </h3>
 
                                 @if($isCompleted)
-                                    <button class="inline-flex items-center text-sm font-semibold text-teal-700 hover:text-teal-800 transition">
-                                        <i class="fas fa-download mr-1"></i>
-                                        UNDUH SERTIFIKAT
-                                    </button>
-                                @else
-                                    <div class="flex items-center gap-2">
-                                        <div class="flex-1 bg-gray-200 rounded-full h-2">
-                                            <div class="bg-teal-600 h-2 rounded-full transition-all" style="width: {{ $progress }}%"></div>
+                                    <!-- Completed Status -->
+                                    <div class="space-y-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold flex items-center gap-1">
+                                                <i class="fas fa-check-circle"></i>
+                                                Selesai
+                                            </span>
+                                            <span class="text-xs text-gray-500">
+                                                {{ $progressData['completedCount'] }}/{{ $progressData['materiCount'] }} Materi
+                                            </span>
                                         </div>
-                                        <span class="text-xs font-semibold text-gray-600">{{ $progress }}%</span>
+                                        
+                                        @if($certificate)
+                                            <!-- Certificate Available -->
+                                            <div class="flex items-center gap-2">
+                                                <button onclick="viewCertificate({{ $enrollment->id }})" 
+                                                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition shadow-sm">
+                                                    <i class="fas fa-eye mr-2"></i>
+                                                    Lihat Sertifikat
+                                                </button>
+                                                <a href="{{ route('student.certificate.download', $enrollment) }}" 
+                                                   class="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 transition shadow-sm">
+                                                    <i class="fas fa-download mr-2"></i>
+                                                    Unduh
+                                                </a>
+                                            </div>
+                                        @else
+                                            <!-- Certificate Processing -->
+                                            <div class="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+                                                <i class="fas fa-clock animate-pulse"></i>
+                                                <span class="font-medium">Sertifikat sedang diproses...</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @else
+                                    <!-- Progress Bar -->
+                                    <div class="space-y-2">
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex-1 bg-gray-200 rounded-full h-2.5">
+                                                <div class="bg-gradient-to-r from-teal-500 to-emerald-500 h-2.5 rounded-full transition-all duration-300" 
+                                                     style="width: {{ $progress }}%"></div>
+                                            </div>
+                                            <span class="text-sm font-bold text-gray-700 min-w-[45px]">{{ $progress }}%</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500">
+                                            {{ $progressData['completedCount'] }}/{{ $progressData['materiCount'] }} Materi Selesai
+                                        </p>
+                                        <a href="{{ route('student.course.learn', $course) }}" 
+                                           class="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 transition shadow-sm">
+                                            <i class="fas fa-play mr-2"></i>
+                                            Lanjutkan Belajar
+                                        </a>
                                     </div>
                                 @endif
                             </div>
 
-                            <!-- Status Indicator -->
+                            <!-- Status Badge -->
                             <div class="flex items-start">
-                                <span class="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-semibold shadow-md">Active</span>
+                                @if($isCompleted)
+                                    <span class="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-semibold shadow-md">
+                                        <i class="fas fa-check-circle mr-1"></i>Completed
+                                    </span>
+                                @else
+                                    <span class="px-3 py-1 bg-blue-500 text-white rounded-full text-xs font-semibold shadow-md">
+                                        <i class="fas fa-play-circle mr-1"></i>Active
+                                    </span>
+                                @endif
                             </div>
                         </div>
 
-                    </a>
+                    </div>
                 @endforeach
             </div>
 
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-2 gap-4 mt-8"></div>
+            <!-- Empty State for Filtered Results -->
+            <div id="emptyState" class="hidden bg-white rounded-2xl shadow-sm p-12 text-center">
+                <div class="max-w-sm mx-auto">
+                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-search text-gray-400 text-3xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Tidak Ada Kursus</h3>
+                    <p class="text-gray-600 text-sm">Tidak ada kursus yang sesuai dengan filter yang dipilih</p>
+                </div>
+            </div>
         @endif
 
+    </div>
+</div>
+
+<!-- Modal Kursus Selesai -->
+<div id="courseCompleteOverlay" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center relative overflow-hidden">
+        <div class="absolute -top-10 -left-6 w-24 h-24 bg-emerald-100 rounded-full opacity-60"></div>
+        <div class="absolute -bottom-8 -right-4 w-28 h-28 bg-blue-100 rounded-full opacity-60"></div>
+        <div class="relative z-10 space-y-4">
+            <div class="w-20 h-20 mx-auto bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <i class="fas fa-graduation-cap text-white text-3xl"></i>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-gray-900">Kursus Selesai</h3>
+                <p class="text-sm text-gray-600 mt-1">Silakan unduh sertifikat Anda.</p>
+            </div>
+            <div class="flex flex-col gap-3">
+                <a id="downloadCertificateBtn" href="#" class="hidden px-4 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition">
+                    Unduh Sertifikat
+                </a>
+                <button id="closeCompleteModal" class="px-4 py-3 bg-gray-100 text-gray-800 rounded-xl font-semibold hover:bg-gray-200 transition">
+                    Kembali
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Certificate Modal -->
+<div id="certificateModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+            <h3 class="text-lg font-bold text-gray-900">
+                <i class="fas fa-certificate text-blue-600 mr-2"></i>
+                Sertifikat Penyelesaian
+            </h3>
+            <button onclick="closeCertificateModal()" class="text-gray-400 hover:text-gray-600 transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+            <div id="certificatePreview" class="flex items-center justify-center">
+                <div class="animate-pulse text-gray-400">
+                    <i class="fas fa-spinner fa-spin text-4xl"></i>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -185,6 +316,21 @@
         background-color: #0f766e;
         color: white;
     }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .course-item {
+        animation: slideIn 0.3s ease-out;
+    }
 </style>
 
 <script>
@@ -192,44 +338,128 @@ document.addEventListener('DOMContentLoaded', function() {
     // Filter functionality
     const filterTabs = document.querySelectorAll('.filter-tab');
     const courseItems = document.querySelectorAll('.course-item');
+    const emptyState = document.getElementById('emptyState');
+    const searchInput = document.getElementById('searchCourse');
+
+    const applyFilter = (filter) => {
+        filterTabs.forEach(t => {
+            t.classList.remove('active', 'bg-teal-700', 'text-white');
+            t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+            if (t.dataset.filter === filter) {
+                t.classList.add('active', 'bg-teal-700', 'text-white');
+                t.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+            }
+        });
+
+        let visibleCount = 0;
+        const searchTerm = searchInput.value.toLowerCase();
+
+        courseItems.forEach(item => {
+            const status = item.dataset.status;
+            const courseName = item.dataset.courseName;
+            const matchesFilter = status === filter;
+            const matchesSearch = courseName.includes(searchTerm);
+            
+            if (matchesFilter && matchesSearch) {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Show/hide empty state
+        if (visibleCount === 0 && courseItems.length > 0) {
+            emptyState.classList.remove('hidden');
+        } else {
+            emptyState.classList.add('hidden');
+        }
+    };
 
     filterTabs.forEach(tab => {
         tab.addEventListener('click', function() {
-            // Update active state
-            filterTabs.forEach(t => {
-                t.classList.remove('active', 'bg-teal-700', 'text-white');
-                t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-300');
-            });
-            
-            this.classList.add('active', 'bg-teal-700', 'text-white');
-            this.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-300');
-
-            // Filter courses
-                    const filter = this.dataset.filter;
-                    courseItems.forEach(item => {
-                        const status = item.dataset.status;
-                        item.style.display = (status === filter) ? 'block' : 'none';
-                    });
-            });
+            const filter = this.dataset.filter;
+            applyFilter(filter);
         });
-
-    // Set default filter to ongoing on load
-    courseItems.forEach(item => {
-        item.style.display = item.dataset.status === 'ongoing' ? 'block' : 'none';
     });
 
     // Search functionality
-    const searchInput = document.getElementById('searchCourse');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            
-            courseItems.forEach(item => {
-                const courseName = item.dataset.courseName;
-                const matches = courseName.includes(searchTerm);
-                item.style.display = matches ? 'block' : 'none';
-            });
+            const activeFilter = document.querySelector('.filter-tab.active').dataset.filter;
+            applyFilter(activeFilter);
         });
+    }
+
+    // Set default filter
+    const hasOngoing = Array.from(courseItems).some(item => item.dataset.status === 'ongoing');
+    applyFilter(hasOngoing ? 'ongoing' : 'completed');
+
+    // Pop-up kursus selesai (muncul jika ada kursus completed)
+    const completedItem = document.querySelector('.course-item[data-status="completed"]');
+    const overlay = document.getElementById('courseCompleteOverlay');
+    const closeBtn = document.getElementById('closeCompleteModal');
+    const downloadBtn = document.getElementById('downloadCertificateBtn');
+
+    if (completedItem && overlay) {
+        // Cari link sertifikat bila ada
+        const certBtn = completedItem.querySelector('a[href*="http"]');
+        if (certBtn && downloadBtn) {
+            downloadBtn.classList.remove('hidden');
+            downloadBtn.setAttribute('href', certBtn.getAttribute('href'));
+            downloadBtn.setAttribute('target', '_blank');
+        }
+        overlay.classList.remove('hidden');
+    }
+
+    closeBtn?.addEventListener('click', () => overlay.classList.add('hidden'));
+});
+
+// Certificate modal functions
+function viewCertificate(enrollmentId) {
+    const modal = document.getElementById('certificateModal');
+    const preview = document.getElementById('certificatePreview');
+    
+    modal.classList.remove('hidden');
+    
+    // Fetch certificate
+    fetch(`/student/enrollment/${enrollmentId}/certificate-preview`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                preview.innerHTML = `
+                    <img src="${data.url}" 
+                         alt="Certificate" 
+                         class="max-w-full h-auto rounded-lg shadow-lg border-4 border-blue-100">
+                `;
+            } else {
+                preview.innerHTML = `
+                    <div class="text-center text-red-600">
+                        <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
+                        <p class="font-semibold">Gagal memuat sertifikat</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            preview.innerHTML = `
+                <div class="text-center text-red-600">
+                    <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
+                    <p class="font-semibold">Terjadi kesalahan</p>
+                </div>
+            `;
+        });
+}
+
+function closeCertificateModal() {
+    const modal = document.getElementById('certificateModal');
+    modal.classList.add('hidden');
+}
+
+// Close modal on backdrop click
+document.getElementById('certificateModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCertificateModal();
     }
 });
 </script>

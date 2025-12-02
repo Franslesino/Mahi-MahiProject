@@ -63,7 +63,7 @@
                         <ul class="text-sm space-y-1">
                             @foreach ($errors->all() as $error)
                                 <li class="flex items-start gap-2">
-                                    <span>•</span>
+                                    <span>�?�</span>
                                     <span>{{ $error }}</span>
                                 </li>
                             @endforeach
@@ -74,7 +74,7 @@
                 @if(session('success'))
                     <div class="mb-5 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl">
                         <div class="flex items-start gap-2">
-                            <span>✓</span>
+                            <span>�o"</span>
                             <span class="text-sm">{{ session('success') }}</span>
                         </div>
                     </div>
@@ -126,7 +126,7 @@
                                 type="password"
                                 name="password"
                                 id="password"
-                                placeholder="••••••••"
+                                placeholder="********"
                                 required
                                 class="w-full px-4 py-3.5 pr-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-ug focus:border-transparent outline-none transition bg-gray-50 text-sm">
                             <button
@@ -155,8 +155,13 @@
                     <!-- Tombol Submit -->
                     <button
                         type="submit"
-                        class="w-full bg-gradient-to-r from-ug to-ugDark text-white py-4 rounded-xl font-bold text-lg hover:opacity-95 transition shadow-lg mt-4">
-                        Masuk
+                        id="loginSubmit"
+                        class="w-full bg-gradient-to-r from-ug to-ugDark text-white py-4 rounded-xl font-bold text-lg hover:opacity-95 transition shadow-lg mt-4 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        <span id="loginSubmitText">Masuk</span>
+                        <svg id="loginSpinner" class="hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
                     </button>
 
                     <!-- Link Register -->
@@ -193,16 +198,27 @@
 
     <script>
         // toggle show/hide password
-        document.getElementById('togglePass').addEventListener('click', function () {
-            const input = document.getElementById('password');
-            if (input.type === 'password') {
-                input.type = 'text';
-                this.textContent = 'Sembunyikan';
-            } else {
-                input.type = 'password';
-                this.textContent = 'Lihat';
-            }
+        const togglePass = document.getElementById('togglePass');
+        const passInput = document.getElementById('password');
+        togglePass?.addEventListener('click', function () {
+            if (!passInput) return;
+            const isPassword = passInput.type === 'password';
+            passInput.type = isPassword ? 'text' : 'password';
+            this.textContent = isPassword ? 'Sembunyikan' : 'Lihat';
         });
+
+        // submit loading state
+        const loginForm = document.querySelector('form[action="{{ route('login.post') }}"]');
+        const loginSubmit = document.getElementById('loginSubmit');
+        const loginSpinner = document.getElementById('loginSpinner');
+        const loginSubmitText = document.getElementById('loginSubmitText');
+        if (loginForm && loginSubmit && loginSpinner && loginSubmitText) {
+            loginForm.addEventListener('submit', () => {
+                loginSubmit.disabled = true;
+                loginSpinner.classList.remove('hidden');
+                loginSubmitText.textContent = 'Memproses...';
+            });
+        }
     </script>
 </body>
 </html>

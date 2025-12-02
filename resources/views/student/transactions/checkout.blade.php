@@ -209,8 +209,8 @@
                         
                         <!-- Course Info -->
                         <div class="mb-6 pb-6 border-b">
-                            @if($course->image)
-                                <img src="{{ asset('storage/' . $course->image) }}" 
+                            @if($course->image_url)
+                                <img src="{{ $course->image_url }}" 
                                      alt="{{ $course->judul ?? $course->title }}" 
                                      class="w-full h-32 object-cover rounded-lg mb-3">
                             @else

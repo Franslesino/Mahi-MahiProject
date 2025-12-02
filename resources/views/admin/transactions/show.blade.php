@@ -118,8 +118,8 @@
                 </h3>
                 
                 <div class="flex gap-4">
-                    @if($transaction->kursus->image)
-                        <img src="{{ asset('storage/' . $transaction->kursus->image) }}" 
+                    @if($transaction->kursus->image_url)
+                        <img src="{{ $transaction->kursus->image_url }}" 
                              alt="{{ $transaction->kursus->judul ?? $transaction->kursus->title }}" 
                              class="w-32 h-24 object-cover rounded-lg flex-shrink-0">
                     @else
@@ -234,7 +234,7 @@
                     @method('PATCH')
                     <input type="hidden" name="status" value="paid">
                     <button type="submit" 
-                            onclick="return confirm('Konfirmasi pembayaran ini?')"
+                            data-confirm="Konfirmasi pembayaran ini?"
                             class="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold">
                         <i class="fas fa-check mr-2"></i>
                         Konfirmasi Pembayaran
@@ -246,7 +246,7 @@
                     @method('PATCH')
                     <input type="hidden" name="status" value="cancelled">
                     <button type="submit" 
-                            onclick="return confirm('Batalkan transaksi ini?')"
+                            data-confirm="Batalkan transaksi ini?"
                             class="w-full px-4 py-3 border-2 border-red-500 text-red-600 rounded-lg hover:bg-red-50 transition font-semibold">
                         <i class="fas fa-times mr-2"></i>
                         Batalkan Transaksi
@@ -270,7 +270,7 @@
                     @csrf
                     @method('DELETE')
                     <button type="submit" 
-                            onclick="return confirm('Hapus transaksi ini secara permanen?')"
+                            data-confirm="Hapus transaksi ini secara permanen?"
                             class="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">
                         <i class="fas fa-trash mr-2"></i>
                         Hapus Transaksi

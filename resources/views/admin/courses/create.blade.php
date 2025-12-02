@@ -41,9 +41,37 @@
                 <!-- Kategori -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Kategori *</label>
-                    <input type="text" name="category" value="{{ old('category') }}" required
-                           placeholder="Contoh: Programming, Design, Business"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 @error('category') border-red-500 @enderror">
+                    @php
+                        $kategoriValue = old('category');
+                        $kategoriGroups = [
+                            'Teknologi & IT' => [
+                                'Web Development',
+                                'Mobile Development',
+                                'Data Science',
+                                'Design UI/UX',
+                                'Cyber Security',
+                                'AI / Machine Learning',
+                                'Database',
+                            ],
+                            'Bisnis' => [
+                                'Marketing',
+                                'Financial Literacy',
+                                'Entrepreneurship',
+                                'Business Management',
+                            ],
+                        ];
+                    @endphp
+                    <select name="category" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 @error('category') border-red-500 @enderror">
+                        <option value="" {{ $kategoriValue ? '' : 'selected' }}>Pilih kategori</option>
+                        @foreach($kategoriGroups as $group => $options)
+                            <optgroup label="{{ $group }}">
+                                @foreach($options as $opt)
+                                    <option value="{{ $opt }}" {{ $kategoriValue === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    </select>
                     @error('category')
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                     @enderror
@@ -69,16 +97,6 @@
                     <input type="number" name="price" value="{{ old('price') }}" required min="0" step="0.01"
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 @error('price') border-red-500 @enderror">
                     @error('price')
-                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Harga Diskon -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Harga Diskon (Rp)</label>
-                    <input type="number" name="discount_price" value="{{ old('discount_price') }}" min="0" step="0.01"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 @error('discount_price') border-red-500 @enderror">
-                    @error('discount_price')
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                     @enderror
                 </div>
@@ -171,4 +189,3 @@
     </div>
 </div>
 @endsection
-

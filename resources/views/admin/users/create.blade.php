@@ -12,7 +12,7 @@
     <div class="bg-white rounded-lg shadow-sm p-6">
         <h2 class="text-2xl font-bold text-gray-800 mb-6">Tambah Pengguna Baru</h2>
 
-        <form action="{{ route('admin.users.store') }}" method="POST">
+        <form id="adminUserCreateForm" action="{{ route('admin.users.store') }}" method="POST">
             @csrf
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -66,9 +66,14 @@
 
             <div class="flex items-center gap-4 mt-8">
                 <button type="submit"
-                        class="px-6 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 font-medium">
-                    <i class="fas fa-save mr-2"></i>
-                    Simpan Pengguna
+                        id="adminUserCreateSubmit"
+                        class="px-6 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 font-medium flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+                    <i class="fas fa-save"></i>
+                    <span id="adminUserCreateText">Simpan Pengguna</span>
+                    <svg id="adminUserCreateSpinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
                 </button>
                 <a href="{{ route('admin.users.index') }}"
                    class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">
@@ -79,3 +84,21 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('adminUserCreateForm');
+    const submitBtn = document.getElementById('adminUserCreateSubmit');
+    const spinner = document.getElementById('adminUserCreateSpinner');
+    const text = document.getElementById('adminUserCreateText');
+    if (form && submitBtn && spinner && text) {
+        form.addEventListener('submit', () => {
+            submitBtn.disabled = true;
+            spinner.classList.remove('hidden');
+            text.textContent = 'Menyimpan...';
+        });
+    }
+});
+</script>
+@endpush

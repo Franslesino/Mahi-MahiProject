@@ -129,8 +129,8 @@
                     <!-- Course Item -->
                     <div class="pb-6 border-b border-gray-200">
                         <div class="flex gap-4">
-                            @if($course->image)
-                                <img src="{{ asset('storage/' . $course->image) }}" alt="{{ $judul }}" 
+                            @if($course->image_url)
+                                <img src="{{ $course->image_url }}" alt="{{ $judul }}" 
                                      class="w-16 h-16 object-cover rounded-lg">
                             @else
                                 <div class="w-16 h-16 bg-gradient-to-br from-gray-800 to-black rounded-lg flex items-center justify-center flex-shrink-0">

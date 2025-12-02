@@ -88,8 +88,8 @@
             
             {{-- COURSE DETAIL CARD --}}
             <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                @if($course->image && Storage::disk('public')->exists($course->image))
-                    <img src="{{ Storage::url($course->image) }}" 
+                @if($course->image_url)
+                    <img src="{{ $course->image_url }}" 
                          class="w-full h-64 object-cover"
                          alt="{{ $course->judul }}">
                 @else

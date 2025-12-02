@@ -59,7 +59,7 @@
                 </div>
                 <div>
                     <p class="text-gray-600 text-sm">Total Video</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ $course->videos }}</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $totalVideos }}</p>
                 </div>
             </div>
         </div>
@@ -71,7 +71,7 @@
                 </div>
                 <div>
                     <p class="text-gray-600 text-sm">Siswa</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ $course->enrollments_count ?? 0 }}</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $studentsCount ?? 0 }}</p>
                 </div>
             </div>
         </div>
@@ -219,7 +219,8 @@
                                                         </a>
                                                         <form action="{{ route('instructor.materials.destroy', [$course, $material]) }}" 
                                                               method="POST" 
-                                                              onsubmit="return confirm('Yakin ingin menghapus?')">
+                                                              class="instr-delete-form"
+                                                              data-confirm="Yakin ingin menghapus materi ini?">
                                                             @csrf
                                                             @method('DELETE')
                                                             <button type="submit" 
@@ -244,38 +245,49 @@
 </div>
 
 <!-- Modal Tambah/Edit Section -->
-<div id="sectionModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg max-w-md w-full p-6">
-        <h3 class="text-xl font-bold text-gray-800 mb-4" id="sectionModalTitle">Tambah Modul</h3>
+<div id="sectionModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative overflow-hidden">
+        <div class="absolute -top-12 -left-8 w-28 h-28 bg-purple-100 rounded-full opacity-60"></div>
+        <div class="absolute -bottom-12 -right-10 w-32 h-32 bg-indigo-100 rounded-full opacity-60"></div>
+        <h3 class="relative z-10 text-xl font-bold text-gray-800 mb-4 flex items-center gap-2" id="sectionModalTitle">
+            <i class="fas fa-folder-plus text-purple-600"></i>
+            <span>Tambah Modul</span>
+        </h3>
+        <div class="relative z-10 mb-4">
+            <div class="flex items-start gap-3 bg-purple-50 border border-purple-100 text-purple-800 rounded-xl px-3 py-2 text-sm">
+                <i class="fas fa-lightbulb text-yellow-500 mt-0.5"></i>
+                <div>Modul akan muncul sesuai urutan. Pastikan nama dan urutan unik.</div>
+            </div>
+        </div>
         <form id="sectionForm" method="POST">
             @csrf
             <input type="hidden" name="_method" id="sectionMethod" value="POST">
             
-            <div class="mb-4">
+            <div class="mb-4 relative z-10">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Judul Modul *</label>
                 <input type="text" name="title" id="sectionTitle" required
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm">
             </div>
 
-            <div class="mb-4">
+            <div class="mb-4 relative z-10">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
                 <textarea name="description" id="sectionDescription" rows="3"
-                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"></textarea>
+                          class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm"></textarea>
             </div>
 
-            <div class="mb-4">
+            <div class="mb-4 relative z-10">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Urutan</label>
                 <input type="number" name="order" id="sectionOrder" min="0"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm">
             </div>
 
-            <div class="flex gap-3 justify-end">
+            <div class="flex gap-3 justify-end relative z-10">
                 <button type="button" onclick="closeSectionModal()" 
                         class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                     Batal
                 </button>
                 <button type="submit" 
-                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 shadow-md">
                     Simpan
                 </button>
             </div>
@@ -284,51 +296,62 @@
 </div>
 
 <!-- Modal Tambah Materi -->
-<div id="materialModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">Tambah Materi</h3>
+<div id="materialModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto shadow-2xl relative">
+        <div class="absolute -top-12 -left-10 w-32 h-32 bg-blue-100 rounded-full opacity-50"></div>
+        <div class="absolute -bottom-12 -right-10 w-36 h-36 bg-teal-100 rounded-full opacity-50"></div>
+        <div class="relative z-10 mb-4">
+            <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-file-upload text-blue-600"></i>
+                <span>Tambah Materi</span>
+            </h3>
+        </div>
         <form action="{{ route('instructor.materials.store', $course) }}" method="POST" enctype="multipart/form-data">
             @csrf
             <input type="hidden" name="section_id" id="materialSectionId">
             <input type="hidden" name="type" id="materialType">
 
-            <div class="mb-4">
+            <div class="mb-4 relative z-10">
+                <div class="flex items-start gap-3 bg-blue-50 border border-blue-100 text-blue-800 rounded-xl px-3 py-2 text-sm mb-3">
+                    <i class="fas fa-info-circle mt-0.5"></i>
+                    <div>Unggah video (.mp4/.mov) atau PDF sesuai tipe materi. Untuk teks, isi konten tanpa unggah file.</div>
+                </div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Judul Materi *</label>
                 <input type="text" name="judul" required
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 shadow-sm">
             </div>
 
-            <div class="mb-4">
+            <div class="mb-4 relative z-10">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
                 <textarea name="description" rows="3"
-                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                          class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 shadow-sm"></textarea>
             </div>
 
-            <div class="mb-4" id="fileUploadSection">
+            <div class="mb-4 relative z-10" id="fileUploadSection">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Upload File</label>
                 <input type="file" name="file" accept=".pdf,.mp4,.avi,.mov"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                       class="w-full px-4 py-2 border border-gray-200 rounded-lg shadow-sm">
             </div>
 
-            <div class="mb-4" id="contentSection" style="display: none;">
+            <div class="mb-4 relative z-10" id="contentSection" style="display: none;">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Konten</label>
                 <textarea name="content" rows="6"
-                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                          class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 shadow-sm"></textarea>
             </div>
 
-            <div class="mb-4">
+            <div class="mb-4 relative z-10">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Durasi (menit)</label>
                 <input type="number" name="duration" min="0"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                       class="w-full px-4 py-2 border border-gray-200 rounded-lg shadow-sm">
             </div>
 
-            <div class="flex gap-3 justify-end">
+            <div class="flex gap-3 justify-end relative z-10">
                 <button type="button" onclick="closeMaterialModal()" 
                         class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                     Batal
                 </button>
                 <button type="submit" 
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md">
                     Simpan Materi
                 </button>
             </div>
@@ -337,28 +360,40 @@
 </div>
 
 <!-- Modal Buat Quiz -->
-<div id="quizModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg max-w-xl w-full p-6 max-h-[90vh] overflow-y-auto">
-        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <i class="fas fa-question-circle text-yellow-600"></i> Buat Quiz
-        </h3>
+<div id="quizModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 max-h-[90vh] overflow-y-auto shadow-2xl relative">
+        <div class="absolute -top-10 -left-8 w-24 h-24 bg-yellow-100 rounded-full opacity-60"></div>
+        <div class="absolute -bottom-12 -right-10 w-28 h-28 bg-orange-100 rounded-full opacity-50"></div>
+        <div class="relative z-10 mb-4 flex items-center gap-2">
+            <div class="w-12 h-12 rounded-2xl bg-yellow-100 text-yellow-600 flex items-center justify-center shadow">
+                <i class="fas fa-question-circle text-xl"></i>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-gray-800 leading-tight">Buat Quiz</h3>
+                <p class="text-sm text-gray-600">Hubungkan quiz ke modul dan isi detailnya.</p>
+            </div>
+        </div>
         <form action="{{ route('instructor.courses.quizzes.store', $course) }}" method="POST">
             @csrf
             <input type="hidden" name="section_id" id="quizSectionId">
 
-            <div class="mb-4">
+            <div class="mb-4 relative z-10">
+                <div class="flex items-start gap-3 bg-yellow-50 border border-yellow-100 text-yellow-800 rounded-xl px-3 py-2 text-sm mb-3">
+                    <i class="fas fa-lightbulb mt-0.5"></i>
+                    <div>Pastikan bank soal/assignment tersedia. Kelola soal setelah quiz dibuat.</div>
+                </div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Judul Quiz *</label>
-                <input type="text" name="title" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-500">
+                <input type="text" name="title" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 shadow-sm">
             </div>
 
-            <div class="mb-4">
+            <div class="mb-4 relative z-10">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
-                <textarea name="description" rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-500"></textarea>
+                <textarea name="description" rows="3" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 shadow-sm"></textarea>
             </div>
 
-            <div class="mb-4">
+            <div class="mb-4 relative z-10">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Bank Soal (opsional)</label>
-                <select name="question_bank_id" class="w-full px-4 py-2 border rounded-lg">
+                <select name="question_bank_id" class="w-full px-4 py-2 border border-gray-200 rounded-lg shadow-sm">
                     <option value="">Tanpa bank soal (buat kosong dulu)</option>
                     @foreach($questionBanks as $bank)
                         <option value="{{ $bank->id }}">{{ $bank->title }} ({{ $bank->questions_count }} soal)</option>
@@ -367,27 +402,27 @@
                 <p class="text-xs text-gray-500 mt-1">Jika dipilih, semua soal di bank ini akan ditambahkan ke quiz.</p>
             </div>
 
-            <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div class="grid md:grid-cols-2 gap-4 mb-4 relative z-10">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Passing Score</label>
-                    <input type="number" name="passing_score" value="60" min="0" max="100" class="w-full px-4 py-2 border rounded-lg">
+                    <input type="number" name="passing_score" value="60" min="0" max="100" class="w-full px-4 py-2 border border-gray-200 rounded-lg shadow-sm">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Durasi (menit)</label>
-                    <input type="number" name="duration_minutes" min="1" class="w-full px-4 py-2 border rounded-lg" placeholder="Opsional">
+                    <input type="number" name="duration_minutes" min="1" class="w-full px-4 py-2 border border-gray-200 rounded-lg shadow-sm" placeholder="Opsional">
                 </div>
             </div>
 
-            <label class="inline-flex items-center gap-2 mb-6">
+            <label class="inline-flex items-center gap-2 mb-6 relative z-10">
                 <input type="checkbox" name="randomize_questions" class="h-4 w-4 text-yellow-600">
                 <span class="text-sm text-gray-700">Acak urutan soal</span>
             </label>
 
-            <div class="flex gap-3 justify-end">
+            <div class="flex gap-3 justify-end relative z-10">
                 <button type="button" onclick="closeQuizModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                     Batal
                 </button>
-                <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700">
+                <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 shadow-md">
                     Simpan Quiz
                 </button>
             </div>
@@ -428,6 +463,34 @@ function closeSectionModal() {
     document.getElementById('sectionModal').classList.add('hidden');
 }
 
+// Data modul untuk edit
+@php
+    $sectionsJson = $sections->map(function ($s) {
+        return [
+            'id' => $s->id,
+            'title' => $s->title,
+            'description' => $s->description,
+            'order' => $s->order,
+        ];
+    })->values()->toJson();
+@endphp
+const sectionsData = {!! $sectionsJson !!};
+
+function editSection(id) {
+    const data = sectionsData.find(s => s.id === id);
+    if (!data) {
+        alert('Data modul tidak ditemukan.');
+        return;
+    }
+    document.getElementById('sectionModal').classList.remove('hidden');
+    document.getElementById('sectionModalTitle').textContent = 'Edit Modul';
+    document.getElementById('sectionForm').action = "{{ route('instructor.sections.update', '__ID__') }}".replace('__ID__', id);
+    document.getElementById('sectionMethod').value = 'PUT';
+    document.getElementById('sectionTitle').value = data.title || '';
+    document.getElementById('sectionDescription').value = data.description || '';
+    document.getElementById('sectionOrder').value = data.order ?? '';
+}
+
 function openMaterialModal(sectionId = null, type = 'video') {
     document.getElementById('materialModal').classList.remove('hidden');
     if (sectionId) {
@@ -459,26 +522,28 @@ function closeQuizModal() {
 }
 
 function deleteSection(sectionId) {
-    if (confirm('Yakin ingin menghapus modul ini? Semua materi di dalamnya akan ikut terhapus.')) {
-        // Submit delete form
+    const submitDelete = () => {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = "{{ route('instructor.sections.destroy', '__SECTION_ID__') }}".replace('__SECTION_ID__', sectionId);
-        
         const csrfToken = document.createElement('input');
         csrfToken.type = 'hidden';
         csrfToken.name = '_token';
         csrfToken.value = '{{ csrf_token() }}';
-        
         const methodField = document.createElement('input');
         methodField.type = 'hidden';
         methodField.name = '_method';
         methodField.value = 'DELETE';
-        
         form.appendChild(csrfToken);
         form.appendChild(methodField);
         document.body.appendChild(form);
         form.submit();
+    };
+    if (typeof window.showDeleteConfirm === 'function') {
+        window.showDeleteConfirm('Yakin ingin menghapus modul ini? Semua materi di dalamnya akan ikut terhapus.', submitDelete);
+    } else {
+        // Fallback native confirm
+        if (confirm('Yakin ingin menghapus modul ini? Semua materi di dalamnya akan ikut terhapus.')) submitDelete();
     }
 }
 </script>

@@ -89,31 +89,16 @@
         <form id="registerForm" action="{{ route('register.post') }}" method="POST" class="space-y-4">
           @csrf
 
-          <!-- Hidden full name -->
-          <input type="hidden" name="name" id="full_name_hidden" />
-
-          <!-- First Name -->
+          <!-- Full Name -->
           <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">Nama Depan</label>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Nama Lengkap</label>
             <input
               type="text"
-              name="first_name"
-              value="{{ old('first_name') }}"
+              name="name"
+              value="{{ old('name') }}"
               required
               class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-ug focus:border-ug outline-none text-sm"
-              placeholder="masukan Nama Depan"/>
-          </div>
-
-          <!-- Last Name -->
-          <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">Nama Belakang</label>
-            <input
-              type="text"
-              name="last_name"
-              value="{{ old('last_name') }}"
-              required
-              class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-ug focus:border-ug outline-none text-sm"
-              placeholder="masukan Nama Belakang"/>
+              placeholder="Masukkan nama lengkap"/>
           </div>
 
           <!-- Email -->
@@ -126,38 +111,6 @@
               required
               class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-ug focus:border-ug outline-none text-sm"
               placeholder="masukan email"/>
-          </div>
-
-          <!-- DOB -->
-          <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">Tanggal Lahir</label>
-            <div class="relative">
-              <input
-                type="date"
-                name="dob"
-                value="{{ old('dob') }}"
-                required
-                class="w-full rounded-md border border-gray-300 px-3 py-2 pr-9 focus:ring-ug focus:border-ug outline-none text-sm"/>
-              <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2h-1M6 5H5a2 2 0 00-2 2v12a2 2 0 002 2"/>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Phone -->
-          <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">Nomor Telepon</label>
-            <div class="flex">
-              <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-600 text-sm">+62</span>
-              <input
-                type="tel"
-                name="phone"
-                value="{{ old('phone') }}"
-                required
-                class="w-full rounded-r-md border border-gray-300 px-3 py-2 focus:ring-ug focus:border-ug outline-none text-sm"
-                placeholder="masukan nomor telepon"/>
-            </div>
           </div>
 
           <!-- Password -->
@@ -182,6 +135,12 @@
                         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                 </svg>
               </button>
+            </div>
+            <div class="mt-2 flex items-center gap-2 text-xs">
+              <div class="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
+                <div id="passwordStrengthBar" class="h-full w-1/4 bg-red-500 transition-all"></div>
+              </div>
+              <span id="passwordStrengthText" class="text-gray-500">Lemah</span>
             </div>
           </div>
 
@@ -210,19 +169,6 @@
             </div>
           </div>
 
-          <!-- Gender -->
-          <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">Gender</label>
-            <select
-              name="gender"
-              required
-              class="w-full rounded-md border border-gray-300 px-3 py-2 bg-white focus:ring-ug focus:border-ug outline-none text-sm">
-              <option value="" disabled {{ old('gender') ? '' : 'selected' }}>Pilih</option>
-              <option value="Pria"  {{ old('gender')==='Pria' ? 'selected':'' }}>Pria</option>
-              <option value="Wanita" {{ old('gender')==='Wanita' ? 'selected':'' }}>Wanita</option>
-            </select>
-          </div>
-
           <!-- Terms -->
           <div class="flex items-start pt-1">
             <input type="checkbox" required class="w-4 h-4 mt-0.5 text-ug border-gray-300 rounded focus:ring-ug">
@@ -235,9 +181,14 @@
           <!-- Submit -->
           <button
             type="submit"
+            id="registerSubmit"
             class="w-full rounded-md py-2.5 text-white text-sm font-semibold
-                   bg-gradient-to-r from-ug to-ugDark hover:opacity-95 transition">
-            Register
+                   bg-gradient-to-r from-ug to-ugDark hover:opacity-95 transition disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            <span id="registerSubmitText">Register</span>
+            <svg id="registerSpinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
           </button>
         </form>
 
@@ -252,14 +203,6 @@
   </div>
 
   <script>
-    // Gabungkan nama depan + belakang
-    const form = document.getElementById('registerForm');
-    form.addEventListener('submit', function () {
-      const first = (form.querySelector('[name="first_name"]').value || '').trim();
-      const last  = (form.querySelector('[name="last_name"]').value  || '').trim();
-      document.getElementById('full_name_hidden').value = (first + ' ' + last).trim();
-    });
-
     // Toggle password & confirm password
     document.querySelectorAll('[data-eye]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -268,6 +211,54 @@
         input.type = input.type === 'password' ? 'text' : 'password';
       });
     });
+
+    // Password strength indicator
+    const strengthBar = document.getElementById('passwordStrengthBar');
+    const strengthText = document.getElementById('passwordStrengthText');
+    const passwordInput = document.getElementById('password');
+    if (passwordInput && strengthBar && strengthText) {
+      const calcStrength = (val) => {
+        let score = 0;
+        if (val.length >= 8) score += 1;
+        if (/[A-Z]/.test(val)) score += 1;
+        if (/[0-9]/.test(val)) score += 1;
+        if (/[^A-Za-z0-9]/.test(val)) score += 1;
+        return score;
+      };
+      const mapStrength = (score) => {
+        const widths = ['25%', '50%', '75%', '100%'];
+        const colors = ['bg-red-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-600'];
+        const labels = ['Lemah', 'Cukup', 'Baik', 'Kuat'];
+        return {
+          width: widths[score - 1] || '25%',
+          color: colors[score - 1] || 'bg-red-500',
+          label: labels[score - 1] || 'Lemah'
+        };
+      };
+      const updateStrength = (val) => {
+        const score = calcStrength(val);
+        const { width, color, label } = mapStrength(score);
+        strengthBar.style.width = width;
+        strengthBar.className = `h-full transition-all ${color}`;
+        strengthText.textContent = label;
+        strengthText.className = `text-xs ${score >= 3 ? 'text-green-600' : 'text-gray-500'}`;
+      };
+      passwordInput.addEventListener('input', (e) => updateStrength(e.target.value));
+      updateStrength(passwordInput.value || '');
+    }
+
+    // Submit loading state
+    const registerForm = document.getElementById('registerForm');
+    const registerSubmit = document.getElementById('registerSubmit');
+    const registerSpinner = document.getElementById('registerSpinner');
+    const registerSubmitText = document.getElementById('registerSubmitText');
+    if (registerForm && registerSubmit && registerSpinner && registerSubmitText) {
+      registerForm.addEventListener('submit', () => {
+        registerSubmit.disabled = true;
+        registerSpinner.classList.remove('hidden');
+        registerSubmitText.textContent = 'Memproses...';
+      });
+    }
   </script>
 
 </body>

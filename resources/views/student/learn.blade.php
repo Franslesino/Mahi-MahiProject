@@ -18,9 +18,9 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div class="grid grid-cols-1 gap-6">
             <!-- Outline -->
-            <div class="lg:col-span-3 lg:col-start-2">
+            <div>
                 <div class="bg-white rounded-2xl shadow p-5">
                     @if($sections->isEmpty())
                         <div class="text-center py-12 text-gray-500">
@@ -80,24 +80,6 @@
                 </div>
             </div>
 
-            <!-- Player / Content (non-quiz only) -->
-            @if($currentMaterial && $currentMaterial->type !== 'quiz')
-                <div class="lg:col-span-2">
-                    <div class="bg-white rounded-2xl shadow p-5 min-h-[500px] flex flex-col">
-                        <div class="mb-3">
-                            <p class="text-xs text-gray-500 uppercase">Sedang dipelajari</p>
-                            <h2 class="text-xl font-semibold text-gray-900">{{ $currentMaterial->judul ?? $currentMaterial->title }}</h2>
-                            @if($currentMaterial->description)
-                                <p class="text-sm text-gray-600 mt-1">{{ $currentMaterial->description }}</p>
-                            @endif
-                        </div>
-
-                        <div class="flex-1 rounded-xl border border-gray-200 bg-white overflow-hidden flex items-center justify-center text-gray-500">
-                            Pilih materi untuk membuka halaman detail.
-                        </div>
-                    </div>
-                </div>
-            @endif
         </div>
     </div>
 </div>

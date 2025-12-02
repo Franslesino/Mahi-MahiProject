@@ -100,7 +100,7 @@
                                 </a>
                                 <form action="{{ route('admin.assignments.destroy', $assignment) }}" 
                                       method="POST"
-                                      onsubmit="return confirm('Yakin ingin menghapus assignment ini?')">
+                                      data-confirm="Yakin ingin menghapus assignment ini?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" 

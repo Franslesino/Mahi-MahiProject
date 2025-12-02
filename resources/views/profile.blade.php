@@ -48,8 +48,8 @@
                     <div class="relative">
                         <img
                             id="avatarPreview"
-                            src="{{ $user->avatar_path
-                                    ? asset('storage/'.$user->avatar_path)
+                            src="{{ $user->avatar_url
+                                    ? $user->avatar_url
                                     : 'data:image/svg+xml;utf8,'.rawurlencode(
                                         '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'96\' height=\'96\'>
                                             <rect width=\'100%\' height=\'100%\' rx=\'48\' fill=\'#14b8a6\'/>
@@ -136,16 +136,22 @@
                 </div>
 
                 {{-- Profesi --}}
-<div>
-    <label class="block text-sm font-medium text-gray-700 mb-2">Profesi</label>
-    <input
-        type="text"
-        name="profesi"
-        value="{{ old('profesi', $user->profesi) }}"
-        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
-        placeholder="Contoh: Mahasiswa, Dosen, Karyawan"
-    >
-</div>
+                @php
+                    $profesiOptions = ['Mahasiswa','Pelajar','Karyawan','Dosen','Freelancer','Wiraswasta','Tidak bekerja','Lainnya…'];
+                    $profesiValue = old('profesi', $user->profesi);
+                @endphp
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Profesi</label>
+                    <select
+                        name="profesi"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none bg-white"
+                    >
+                        <option value="" {{ $profesiValue === null || $profesiValue === '' ? 'selected' : '' }}>Pilih</option>
+                        @foreach($profesiOptions as $option)
+                            <option value="{{ $option }}" {{ $profesiValue === $option ? 'selected' : '' }}>{{ $option }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
                 {{-- Gender --}}
                 @php $g = old('gender', $user->gender); @endphp

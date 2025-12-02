@@ -35,7 +35,7 @@
                     <p class="text-gray-500 text-sm font-medium">Total Pengguna</p>
                     <p class="text-3xl font-bold text-gray-800 mt-2">{{ $totalUsers }}</p>
                     <p class="text-xs text-gray-600 mt-1 font-semibold">
-                        {{ $totalStudents }} Students • {{ $totalInstructors }} Instructors
+                        {{ $totalStudents }} Students | {{ $totalInstructors }} Instructors
                     </p>
                 </div>
                 <div class="w-14 h-14 bg-emerald-100 rounded-lg flex items-center justify-center">
@@ -128,6 +128,13 @@
                 </span>
             </div>
             
+            <div class="flex items-center gap-2 mb-4">
+                <div class="flex rounded-lg border border-gray-200 overflow-hidden text-xs">
+                    <button id="chartTypeLine" class="px-3 py-1.5 bg-gray-100 text-gray-800 font-semibold">Line</button>
+                    <button id="chartTypeBar" class="px-3 py-1.5 text-gray-600 hover:bg-gray-100">Bar</button>
+                </div>
+            </div>
+
             <div style="height: 250px;">
                 <canvas id="monthlyChart"></canvas>
             </div>
@@ -187,7 +194,7 @@
             </div>
             @else
             <div class="flex flex-col items-center justify-center py-12">
-                <i class="fas fa-briefcase text-6xl text-gray-300 mb-3"></i>
+                <i class="fas a-briefcase text-6l text-gray-300 mb-3"></i>
                 <p class="text-gray-500 font-semibold">Belum ada data profesi</p>
                 <p class="text-gray-400 text-sm mt-1">Data akan muncul setelah pengguna mengisi profil</p>
             </div>
@@ -366,60 +373,95 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ==========================================
-    // Monthly Transactions Line Chart
+    // Monthly Transactions Line/Bar Chart
     // ==========================================
     const monthlyCtx = document.getElementById('monthlyChart');
     if (monthlyCtx) {
         const monthlyData = @json($monthlyData->values());
-        
-        new Chart(monthlyCtx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'],
-                datasets: [{
-                    label: 'Transaksi',
-                    data: monthlyData,
-                    borderColor: '#10B981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    tension: 0.4,
-                    fill: true,
-                    pointBackgroundColor: '#10B981',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
-                    pointHoverBackgroundColor: '#059669',
-                    pointHoverBorderWidth: 3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        padding: 12,
-                        callbacks: {
-                            label: function(context) {
-                                return 'Transaksi: ' + context.parsed.y;
+        const monthlyLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
+        let monthlyChartInstance = null;
+
+        const buildMonthlyChart = (type = 'line') => {
+            if (monthlyChartInstance) monthlyChartInstance.destroy();
+            const isLine = type === 'line';
+            monthlyChartInstance = new Chart(monthlyCtx, {
+                type,
+                data: {
+                    labels: monthlyLabels,
+                    datasets: [{
+                        label: 'Transaksi',
+                        data: monthlyData,
+                        borderColor: '#10B981',
+                        backgroundColor: isLine ? 'rgba(16, 185, 129, 0.1)' : '#10B981',
+                        tension: isLine ? 0.4 : 0,
+                        fill: isLine,
+                        borderWidth: 2,
+                        borderRadius: isLine ? 0 : 6,
+                        pointBackgroundColor: '#10B981',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: isLine ? 5 : 3,
+                        pointHoverRadius: isLine ? 7 : 5,
+                        pointHoverBackgroundColor: '#059669',
+                        pointHoverBorderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Transaksi: ' + context.parsed.y;
+                                }
                             }
                         }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { stepSize: 1 },
-                        grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false }
                     },
-                    x: {
-                        grid: { display: false, drawBorder: false }
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false }
+                        },
+                        x: {
+                            grid: { display: false, drawBorder: false }
+                        }
                     }
                 }
+            });
+        };
+
+        const setChartToggleState = (type) => {
+            const btnLine = document.getElementById('chartTypeLine');
+            const btnBar = document.getElementById('chartTypeBar');
+            if (btnLine && btnBar) {
+                if (type === 'line') {
+                    btnLine.classList.add('bg-gray-100', 'text-gray-800', 'font-semibold');
+                    btnBar.classList.remove('bg-gray-100', 'text-gray-800', 'font-semibold');
+                    btnBar.classList.add('text-gray-600');
+                } else {
+                    btnBar.classList.add('bg-gray-100', 'text-gray-800', 'font-semibold');
+                    btnLine.classList.remove('bg-gray-100', 'text-gray-800', 'font-semibold');
+                    btnLine.classList.add('text-gray-600');
+                }
             }
+        };
+
+        buildMonthlyChart('line');
+        setChartToggleState('line');
+        document.getElementById('chartTypeLine')?.addEventListener('click', () => {
+            setChartToggleState('line');
+            buildMonthlyChart('line');
+        });
+        document.getElementById('chartTypeBar')?.addEventListener('click', () => {
+            setChartToggleState('bar');
+            buildMonthlyChart('bar');
         });
     }
 

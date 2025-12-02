@@ -156,7 +156,7 @@
                                 <form action="{{ route('admin.vouchers.destroy', $voucher->id) }}" 
                                       method="POST" 
                                       class="inline"
-                                      onsubmit="return confirm('Yakin ingin menghapus voucher ini?')">
+                                      data-confirm="Yakin ingin menghapus voucher ini?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" 

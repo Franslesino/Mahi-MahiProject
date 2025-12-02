@@ -49,8 +49,8 @@
                         <td class="px-6 py-4 text-sm text-gray-600">#{{ $user->id }}</td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
-                                @if($user->avatar_path)
-                                    <img src="{{ asset('storage/' . $user->avatar_path) }}" alt="{{ $user->name }}" class="w-10 h-10 rounded-full object-cover">
+                                @if($user->avatar_url)
+                                    <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-10 h-10 rounded-full object-cover">
                                 @else
                                     <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center">
                                         <span class="text-white font-bold text-sm">{{ strtoupper(substr($user->name, 0, 2)) }}</span>
@@ -107,6 +107,9 @@
             <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
             <p class="text-gray-500 text-lg font-semibold">Belum ada data pengguna</p>
             <p class="text-gray-400 text-sm mt-2 text-center">Daftar pengguna akan ditampilkan di sini</p>
+            <a href="{{ route('admin.users.create') }}" class="mt-4 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600">
+                Tambah Pengguna
+            </a>
         </div>
         @endif
     </div>

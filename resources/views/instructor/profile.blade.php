@@ -60,8 +60,8 @@
                         <div class="relative">
                             <img
                                 id="avatarPreview"
-                                src="{{ $user->avatar_path
-                                        ? asset('storage/'.$user->avatar_path)
+                                src="{{ $user->avatar_url
+                                        ? $user->avatar_url
                                         : 'data:image/svg+xml;utf8,'.rawurlencode(
                                             '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'96\' height=\'96\'>
                                                 <rect width=\'100%\' height=\'100%\' rx=\'48\' fill=\'#3b82f6\'/>

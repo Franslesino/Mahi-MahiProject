@@ -224,7 +224,7 @@
                         </div>
                         <form action="{{ route('instructor.assignments.remove-question', [$assignment, $question]) }}" 
                               method="POST"
-                              onsubmit="return confirm('Yakin ingin menghapus soal ini dari assignment?')">
+                              data-confirm="Yakin ingin menghapus soal ini dari assignment?">
                             @csrf
                             @method('DELETE')
                             <button type="submit" 

@@ -59,11 +59,6 @@ class User extends Authenticatable
         return $this->hasMany(Kursus::class, 'pembuat');
     }
 
-    public function pengajarKursus()
-    {
-        return $this->hasMany(PengajarKursus::class, 'pengajar_id');
-    }
-
     public function instructorCourses()
     {
         return $this->hasMany(Kursus::class, 'instructor_id');
@@ -142,11 +137,7 @@ class User extends Authenticatable
         return $this->hasMany(Pesanan::class);
     }
 
-    // --- Relasi ke Jawaban Peserta ---
-    public function jawabanPeserta()
-    {
-        return $this->hasMany(JawabanPeserta::class);
-    }
+
 
     
 

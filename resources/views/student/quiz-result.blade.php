@@ -12,12 +12,30 @@
             </a>
             <div class="flex items-center gap-4 text-gray-700">
                 <span class="font-semibold">Skor:</span>
-                <span class="text-xl font-bold">{{ $score !== null ? $score . '%' : 'Pending' }}</span>
+                <div class="flex items-center gap-2">
+                    <span class="text-xl font-bold">{{ $score !== null ? $score . '%' : 'Pending' }}</span>
+                    @if(isset($passingScore))
+                        @if($score !== null && $score >= $passingScore)
+                            <span class="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold">Lulus</span>
+                        @elseif($score !== null)
+                            <span class="px-2 py-1 bg-red-50 text-red-700 rounded-full text-xs font-semibold">Tidak Lulus</span>
+                        @endif
+                    @endif
+                </div>
             </div>
-            <a href="{{ route('student.course.learn', $course) }}" class="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 transition">
-                <span>Lanjut materi berikutnya</span>
-                <i class="fas fa-arrow-right"></i>
-            </a>
+            <div class="flex items-center gap-3">
+                @if(!empty($canRetake))
+                    <a href="{{ route('courses.materials.quiz', [$course, $material->id]) }}?retake=1"
+                       class="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-800 rounded-lg text-sm font-semibold hover:bg-amber-200 transition">
+                        <i class="fas fa-redo"></i>
+                        Coba Lagi
+                    </a>
+                @endif
+                <a href="{{ route('student.course.learn', $course) }}" class="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 transition">
+                    <span>Lanjut materi berikutnya</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
         </div>
 
         <div class="bg-white rounded-2xl shadow p-6">

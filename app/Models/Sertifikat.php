@@ -10,12 +10,16 @@ class Sertifikat extends Model
 
     protected $fillable = [
         'enrollment_id',
+        'enrollments_id',
+        'nomor_sertifikat',
         'kode_sertifikat',
+        'tanggal_terbit',
         'tanggal_diterbitkan',
         'url_unduhan',
     ];
 
     protected $casts = [
+        'tanggal_terbit' => 'datetime',
         'tanggal_diterbitkan' => 'datetime',
     ];
 

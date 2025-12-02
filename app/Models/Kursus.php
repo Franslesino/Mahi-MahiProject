@@ -116,15 +116,7 @@ class Kursus extends Model
         return $this->hasMany(Enrollment::class, 'kursus_id');
     }
 
-    public function pengajarKursus()
-    {
-        return $this->hasMany(PengajarKursus::class, 'kursus_id');
-    }
 
-    public function quiz()
-    {
-        return $this->hasMany(Quiz::class, 'kursus_id');
-    }
 
     public function diskon()
     {

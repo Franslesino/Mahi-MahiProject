@@ -6,10 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Kursus;
 use App\Models\User;
 use App\Models\Notification;
+use App\Models\MaterialCompletion;
+use App\Models\Assignment;
+use App\Models\Submission;
+use App\Models\Materi;
 use App\Services\SupabaseStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class CourseController extends Controller
 {
@@ -181,7 +186,7 @@ class CourseController extends Controller
         ]);
 
         // Get assignments for this course
-        $assignments = \App\Models\Assignment::where('kursus_id', $course->id)
+        $assignments = Assignment::where('kursus_id', $course->id)
             ->withCount('questions')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -194,6 +199,82 @@ class CourseController extends Controller
             'active_students' => $course->enrollments->where('status', 'active')->count(),
         ];
 
-        return view('admin.courses.show', compact('course', 'assignments', 'stats'));
+        // Progress & score per participant
+        $materialIds = $course->materi->pluck('id');
+        $totalMaterials = max(1, $materialIds->count());
+        $passingScore = $assignments->firstWhere('passing_score')?->passing_score ?? 60;
+
+        $completionCounts = MaterialCompletion::select('user_id', DB::raw('COUNT(*) as completed_count'))
+            ->whereIn('materi_id', $materialIds)
+            ->groupBy('user_id')
+            ->get()
+            ->keyBy('user_id');
+
+        $assignmentIds = $assignments->pluck('id');
+        $submissionStats = collect();
+        if ($assignmentIds->isNotEmpty()) {
+            $submissions = Submission::whereIn('assignment_id', $assignmentIds)
+                ->orderByDesc('percentage')
+                ->orderByDesc('submitted_at')
+                ->get();
+            $submissionStats = $submissions->groupBy('user_id')->map(function ($items) {
+                $best = $items->first();
+                return (object)[
+                    'best_score' => $best?->score,
+                    'best_percentage' => $best?->percentage,
+                    'last_submitted_at' => $best?->submitted_at,
+                    'attempt_number' => $best?->attempt_number,
+                ];
+            });
+        }
+
+        // Fallback dari MaterialCompletion (quiz) bila belum ada submissions
+        $quizAssignments = Assignment::where('kursus_id', $course->id)->where('type', 'quiz')->get(['id','materi_id']);
+        $quizMaterialIds = $quizAssignments->pluck('materi_id');
+        $assignmentByMaterial = $quizAssignments->pluck('id', 'materi_id');
+
+        $completionScores = $quizMaterialIds->isNotEmpty()
+            ? MaterialCompletion::select('user_id', 'materi_id', 'score', 'completed_at')
+                ->whereIn('materi_id', $quizMaterialIds)
+                ->whereNotNull('score')
+                ->get()
+                ->groupBy('user_id')
+            : collect();
+
+        $completionAggregated = $completionScores->map(function ($items) use ($assignmentByMaterial) {
+            $best = $items->sortByDesc('score')->first();
+            return (object)[
+                'best_score' => $best?->score,
+                'best_percentage' => $best?->score,
+                'last_submitted_at' => $best?->completed_at,
+                'assignment_id' => $best ? ($assignmentByMaterial[$best->materi_id] ?? null) : null,
+            ];
+        });
+
+        $participantProgress = $course->enrollments->map(function ($enrollment) use ($completionCounts, $submissionStats, $completionAggregated, $totalMaterials, $passingScore) {
+            $completed = $completionCounts[$enrollment->user_id]->completed_count ?? 0;
+            $progress = $totalMaterials > 0 ? round(($completed / $totalMaterials) * 100) : 0;
+            $submission = $submissionStats[$enrollment->user_id] ?? null;
+            $fallback = $completionAggregated[$enrollment->user_id] ?? null;
+            $bestScore = $submission->best_score ?? $fallback->best_score ?? null;
+            $bestPercentage = $submission->best_percentage ?? $fallback->best_percentage ?? null;
+            $lastSubmit = $submission->last_submitted_at ?? $fallback->last_submitted_at ?? null;
+            $attempt = $submission->attempt_number ?? null;
+            $isPassed = $bestPercentage !== null ? $bestPercentage >= $passingScore : null;
+
+            return [
+                'user' => $enrollment->user,
+                'progress' => $progress,
+                'completed' => $completed,
+                'total' => $totalMaterials,
+                'best_score' => $bestScore,
+                'best_percentage' => $bestPercentage,
+                'last_submitted_at' => $lastSubmit,
+                'best_attempt' => $attempt,
+                'is_passed' => $isPassed,
+            ];
+        });
+
+        return view('admin.courses.show', compact('course', 'assignments', 'stats', 'participantProgress', 'passingScore'));
     }
 }

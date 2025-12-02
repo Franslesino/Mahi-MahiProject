@@ -32,9 +32,4 @@ class Pesanan extends Model
     {
         return $this->hasMany(ItemPesanan::class, 'pesanan_id');
     }
-
-    public function pembayaran()
-    {
-        return $this->hasMany(Pembayaran::class, 'pesanan_id');
-    }
 }

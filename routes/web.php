@@ -12,6 +12,7 @@ use App\Http\Controllers\Instructor\MaterialController;
 use App\Http\Controllers\Student\CourseController as StudentCourseController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Controllers\Student\TransactionController as StudentTransactionController;
+use App\Http\Controllers\MidtransNotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VoucherController;
 use App\Models\Kursus;
@@ -40,12 +41,26 @@ Route::get('/', function (Request $request) {
 
     $courses = $query
         ->with(['pembuat', 'instructor'])
-        ->withCount('materi')
+        ->withCount([
+            'materi',
+            'materi as videos_count' => function ($q) {
+                $q->where('type', 'video');
+            },
+            'enrollments as students_count' => function ($q) {
+                $q->whereIn('status_pendaftaran', ['active', 'completed', 'paid']);
+            },
+        ])
         ->latest()
         ->paginate(12)
         ->withQueryString();
 
-    return view('home.index', compact('courses'));
+    // Category counts for pills
+    $categoryCounts = Kursus::where('status_diterbitkan', true)
+        ->selectRaw('kategori, COUNT(*) as total')
+        ->groupBy('kategori')
+        ->pluck('total', 'kategori');
+
+    return view('home.index', compact('courses', 'categoryCounts'));
 })->name('home');
 
 // Terms & Conditions (public)
@@ -63,6 +78,9 @@ Route::get('/test-google-config', function () {
         'env_client_id' => env('GOOGLE_CLIENT_ID') ? 'SET' : 'NOT SET',
     ];
 });
+
+// Midtrans Webhook Notification (Public - no authentication)
+Route::post('/api/midtrans/notification', [App\Http\Controllers\MidtransNotificationController::class, 'handleNotification'])->name('midtrans.notification');
 
 // ==========================
 // Authentication Routes
@@ -109,9 +127,17 @@ Route::middleware('auth')->group(function () {
         Route::prefix('transactions')->name('transactions.')->group(function () {
             Route::get('/checkout/{course}', [StudentTransactionController::class, 'checkout'])->name('checkout');
             Route::post('/process/{course}', [StudentTransactionController::class, 'process'])->name('process');
+            Route::post('/complete-payment', [StudentTransactionController::class, 'completePayment'])->name('complete-payment');
+            Route::post('/get-payment-details', [StudentTransactionController::class, 'getPaymentDetails'])->name('get-payment-details');
+            Route::get('/check-status', [StudentTransactionController::class, 'checkStatus'])->name('check-status');
+            Route::get('/debug/{transactionCode}/midtrans-response', [StudentTransactionController::class, 'debugMidtransResponse'])->name('debug-midtrans');
             Route::get('/{transaction}', [StudentTransactionController::class, 'show'])->name('show');
             Route::post('/{transaction}/confirm', [StudentTransactionController::class, 'confirm'])->name('confirm');
             Route::post('/{transaction}/cancel', [StudentTransactionController::class, 'cancel'])->name('cancel');
+            // Midtrans callbacks
+            Route::get('/finish', [StudentTransactionController::class, 'finish'])->name('finish');
+            Route::get('/unfinish', [StudentTransactionController::class, 'unfinish'])->name('unfinish');
+            Route::get('/error', [StudentTransactionController::class, 'error'])->name('error');
         });
 
         // My transactions
@@ -157,11 +183,14 @@ Route::middleware('auth')->group(function () {
                     ], 404);
                 }
                 
+                $issuedAt = $certificate->tanggal_terbit ?? $certificate->tanggal_diterbitkan ?? $certificate->created_at;
+                $certificateNumber = $certificate->kode_sertifikat ?? $certificate->nomor_sertifikat ?? 'N/A';
+                
                 return response()->json([
                     'success' => true,
                     'url' => asset($certificate->url_unduhan),
-                    'number' => $certificate->nomor_sertifikat,
-                    'issued_date' => $certificate->tanggal_terbit->format('d F Y')
+                    'number' => $certificateNumber,
+                    'issued_date' => $issuedAt ? $issuedAt->format('d F Y') : null
                 ]);
             })->name('certificate.preview');
         });

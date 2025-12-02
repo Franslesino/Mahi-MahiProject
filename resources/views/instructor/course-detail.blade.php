@@ -77,6 +77,128 @@
         </div>
     </div>
 
+    <!-- Progress Peserta -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <i class="fas fa-users text-blue-600"></i>
+                Progress & Nilai Peserta ({{ $participantProgress->count() }})
+            </h3>
+            <span class="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full font-semibold">
+                {{ $totalMaterials }} materi • {{ $assignmentCount }} tugas/quiz
+            </span>
+        </div>
+
+        @if($participantProgress->isEmpty())
+            <div class="p-6 text-center text-gray-500">
+                <i class="fas fa-user-slash text-3xl mb-2"></i>
+                <p class="text-sm">Belum ada peserta yang terdaftar</p>
+            </div>
+        @else
+        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+            <input id="insParticipantSearch" type="text" placeholder="Cari peserta..." class="w-full sm:w-1/3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+            <select id="insParticipantFilter" class="w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="all">Semua status</option>
+                <option value="passed">Lulus</option>
+                <option value="failed">Tidak lulus</option>
+                <option value="none">Belum ada nilai</option>
+            </select>
+            <select id="insParticipantSort" class="w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="progress_desc">Progress tertinggi</option>
+                <option value="progress_asc">Progress terendah</option>
+                <option value="score_desc">Nilai tertinggi</option>
+                <option value="score_asc">Nilai terendah</option>
+                <option value="last_submit_desc">Terakhir submit terbaru</option>
+                <option value="last_submit_asc">Terakhir submit terlama</option>
+            </select>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full" id="insParticipantTable">
+                <thead class="bg-gray-50 border-b sticky top-0 z-10">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Peserta</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Progress</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Nilai Terbaik</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Terakhir Submit</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach($participantProgress as $participant)
+                        @php
+                            $user = $participant['user'];
+                            $avatar = $user->avatar_url ?? $user->avatar ?? $user->profile_url ?? null;
+                            $initials = $user->initials ?? strtoupper(substr($user->name ?? 'U', 0, 2));
+                            $bestPct = $participant['best_percentage'];
+                            $passStatus = $participant['is_passed'] === null ? 'none' : ($participant['is_passed'] ? 'passed' : 'failed');
+                            $progressVal = $participant['progress'] ?? 0;
+                            $lastSubmitTs = $participant['last_submitted_at'] ? \Carbon\Carbon::parse($participant['last_submitted_at'])->timestamp : 0;
+                            $barColor = $progressVal >= 80 ? 'bg-emerald-500' : ($progressVal >= 50 ? 'bg-amber-400' : 'bg-red-500');
+                        @endphp
+                        <tr class="hover:bg-gray-50 ins-participant-row"
+                            data-name="{{ strtolower($user->name ?? '') }}"
+                            data-email="{{ strtolower($user->email ?? '') }}"
+                            data-progress="{{ $progressVal }}"
+                            data-score="{{ $bestPct ?? -1 }}"
+                            data-last="{{ $lastSubmitTs }}"
+                            data-status="{{ $passStatus }}">
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    @if($avatar)
+                                        <img src="{{ $avatar }}" alt="{{ $user->name ?? 'avatar' }}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                                    @else
+                                        <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold text-sm">
+                                            {{ $initials }}
+                                        </div>
+                                    @endif
+                                    <div class="min-w-0">
+                                        <p class="font-semibold text-gray-900 text-sm truncate">{{ $user->name ?? 'Peserta' }}</p>
+                                        <p class="text-xs text-gray-600 truncate">{{ $user->email ?? '-' }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                                        <div class="h-full {{ $barColor }}" style="width: {{ $progressVal }}%"></div>
+                                    </div>
+                                    <div class="text-sm font-semibold text-gray-800 min-w-[56px] text-right">
+                                        {{ $progressVal }}%
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    {{ $participant['completed'] }}/{{ $participant['total'] }} materi selesai
+                                </p>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                @if(!is_null($bestPct))
+                                    <div class="flex flex-col items-center gap-1">
+                                        <div class="text-sm font-semibold text-gray-900">
+                                            {{ number_format($bestPct, 1) }}% <span class="text-xs text-gray-500">(attempt {{ $participant['best_attempt'] ?? '-' }})</span>
+                                        </div>
+                                        <div class="text-xs text-gray-500">Skor: {{ number_format($participant['best_score'] ?? 0, 1) }}</div>
+                                        @if($participant['is_passed'] === true)
+                                            <span class="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[11px] font-semibold">Lulus</span>
+                                        @elseif($participant['is_passed'] === false)
+                                            <span class="px-2 py-1 bg-red-50 text-red-700 rounded-full text-[11px] font-semibold">Tidak lulus</span>
+                                        @else
+                                            <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-[11px] font-semibold">Belum ada nilai</span>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="text-xs text-gray-400">Belum ada</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-center text-sm text-gray-600">
+                                {{ $participant['last_submitted_at'] ? \Carbon\Carbon::parse($participant['last_submitted_at'])->format('d M Y H:i') : '-' }}
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @endif
+    </div>
+
    
 
     <!-- Modul Kursus -->
@@ -520,6 +642,59 @@ function openQuizModal(sectionId = null) {
 function closeQuizModal() {
     document.getElementById('quizModal').classList.add('hidden');
 }
+
+// Filter/sort participants
+document.addEventListener('DOMContentLoaded', () => {
+    const rows = Array.from(document.querySelectorAll('.ins-participant-row'));
+    const searchInput = document.getElementById('insParticipantSearch');
+    const filterSelect = document.getElementById('insParticipantFilter');
+    const sortSelect = document.getElementById('insParticipantSort');
+
+    const apply = () => {
+        const term = (searchInput?.value || '').toLowerCase();
+        const filter = filterSelect?.value || 'all';
+        const sort = sortSelect?.value || 'progress_desc';
+
+        let filtered = rows.filter(row => {
+            const name = row.dataset.name || '';
+            const email = row.dataset.email || '';
+            const status = row.dataset.status || 'none';
+            const matchTerm = name.includes(term) || email.includes(term);
+            const matchStatus = filter === 'all' ? true : filter === status;
+            return matchTerm && matchStatus;
+        });
+
+        filtered.sort((a, b) => {
+            const pa = Number(a.dataset.progress || 0);
+            const pb = Number(b.dataset.progress || 0);
+            const sa = Number(a.dataset.score || -1);
+            const sb = Number(b.dataset.score || -1);
+            const la = Number(a.dataset.last || 0);
+            const lb = Number(b.dataset.last || 0);
+            switch (sort) {
+                case 'progress_asc': return pa - pb;
+                case 'score_desc': return sb - sa;
+                case 'score_asc': return sa - sb;
+                case 'last_submit_desc': return lb - la;
+                case 'last_submit_asc': return la - lb;
+                default: return pb - pa; // progress_desc
+            }
+        });
+
+        const tbody = document.querySelector('#insParticipantTable tbody');
+        if (tbody) {
+            tbody.innerHTML = '';
+            filtered.forEach(row => tbody.appendChild(row));
+        }
+    };
+
+    [searchInput, filterSelect, sortSelect].forEach(el => {
+        el?.addEventListener('input', apply);
+        el?.addEventListener('change', apply);
+    });
+
+    apply();
+});
 
 function deleteSection(sectionId) {
     const submitDelete = () => {

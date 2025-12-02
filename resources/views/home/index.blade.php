@@ -111,42 +111,56 @@
         <div class="flex gap-3 overflow-x-auto pb-2">
             @php
                 $currentCategory = request('category', 'Semua');
+                $categoryIcons = [
+                    '3D Design' => 'fa-cube',
+                    'Data Analytic' => 'fa-chart-line',
+                    'Graphic Design' => 'fa-pen-nib',
+                    'Web Development' => 'fa-code',
+                    'AI / Machine Learning' => 'fa-brain',
+                    'Database' => 'fa-database',
+                    'Programming' => 'fa-terminal',
+                ];
+                $categoriesList = collect($categoryCounts ?? [])->keys()->prepend('Semua');
             @endphp
 
-            <a href="{{ route('home', array_merge(request()->only('search'), ['category' => 'Semua'])) }}"
-               class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm
-               {{ $currentCategory === 'Semua' ? 'bg-pnj-blue text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
-                Semua
-            </a>
-
-            <a href="{{ route('home', array_merge(request()->only('search'), ['category' => '3D Design'])) }}"
-               class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm
-               {{ $currentCategory === '3D Design' ? 'bg-pnj-blue text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
-                3D Design
-            </a>
-
-            <a href="{{ route('home', array_merge(request()->only('search'), ['category' => 'Data Analytic'])) }}"
-               class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm
-               {{ $currentCategory === 'Data Analytic' ? 'bg-pnj-blue text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
-                Data Analytic
-            </a>
-
-            <a href="{{ route('home', array_merge(request()->only('search'), ['category' => 'Graphic Design'])) }}"
-               class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm
-               {{ $currentCategory === 'Graphic Design' ? 'bg-pnj-blue text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
-                Graphic Design
-            </a>
-
-            <a href="{{ route('home', array_merge(request()->only('search'), ['category' => 'Web Development'])) }}"
-               class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm
-               {{ $currentCategory === 'Web Development' ? 'bg-pnj-blue text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
-                Web Development
-            </a>
+            @foreach($categoriesList as $cat)
+                @php
+                    $icon = $categoryIcons[$cat] ?? 'fa-folder';
+                    $count = $cat === 'Semua' ? ($courses->total() ?? 0) : ($categoryCounts[$cat] ?? 0);
+                @endphp
+                <a href="{{ route('home', array_merge(request()->only('search'), ['category' => $cat])) }}"
+                   class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm flex items-center gap-2
+                   {{ $currentCategory === $cat ? 'bg-pnj-blue text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
+                    <i class="fas {{ $icon }}"></i>
+                    <span>{{ $cat }}</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full {{ $currentCategory === $cat ? 'bg-white/20' : 'bg-gray-100 text-gray-700' }}">
+                        {{ $count }}
+                    </span>
+                </a>
+            @endforeach
         </div>
     </div>
 
+    <!-- Courses Skeleton -->
+    <div id="courseSkeleton" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        @for($i = 0; $i < 8; $i++)
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="h-40 bg-gray-200 animate-pulse"></div>
+                <div class="p-4 space-y-3">
+                    <div class="h-4 bg-gray-200 rounded animate-pulse w-1/2"></div>
+                    <div class="h-3 bg-gray-200 rounded animate-pulse w-1/3"></div>
+                    <div class="flex gap-2">
+                        <div class="h-3 bg-gray-200 rounded animate-pulse w-16"></div>
+                        <div class="h-3 bg-gray-200 rounded animate-pulse w-12"></div>
+                    </div>
+                    <div class="h-6 bg-gray-200 rounded animate-pulse w-24"></div>
+                </div>
+            </div>
+        @endfor
+    </div>
+
     <!-- Courses Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div id="courseGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden">
         @forelse($courses as $course)
         <a href="{{ route('courses.show', $course) }}"
            class="bg-white rounded-xl shadow-sm hover:shadow-xl border border-gray-100 hover:-translate-y-1 transition overflow-hidden group cursor-pointer">
@@ -202,7 +216,9 @@
                 </div>
 
                 <div class="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                    <span><i class="fas fa-video mr-1"></i>{{ $course->videos ?? 0 }} Video</span>
+                    <span><i class="fas fa-user-graduate mr-1"></i>{{ $course->students_count ?? 0 }} Siswa</span>
+                    <span class="text-gray-300">|</span>
+                    <span><i class="fas fa-video mr-1"></i>{{ $course->videos_count ?? 0 }} Video</span>
                     <span class="text-gray-300">|</span>
                     <span>{{ $course->materi_count ?? 0 }} Materi</span>
                 </div>
@@ -239,9 +255,16 @@
         </a>
 
         @empty
-        <div class="col-span-full text-center py-12">
-            <p class="text-gray-500 text-lg">Belum ada kursus tersedia</p>
-        </div>
+            <div class="col-span-full">
+                <div class="bg-white rounded-xl border border-gray-200 p-10 text-center text-gray-600 space-y-3">
+                    <i class="fas fa-search text-3xl text-gray-400"></i>
+                    <p class="font-semibold text-gray-800">Kursus tidak ditemukan</p>
+                    <p class="text-sm text-gray-500">Coba gunakan kata kunci lain atau lihat semua kategori.</p>
+                    <a href="{{ route('home') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-pnj-blue text-white rounded-lg font-semibold shadow hover:-translate-y-0.5 transition">
+                        Reset Filter
+                    </a>
+                </div>
+            </div>
         @endforelse
     </div>
 
@@ -377,6 +400,75 @@ document.addEventListener('DOMContentLoaded', () => {
         const submitDebounced = debounce(() => form.submit(), 400);
         input.addEventListener('input', () => submitDebounced());
     });
+});
+
+// Carousel behavior (restore)
+(function() {
+    const carousel = document.getElementById('promoCarousel');
+    if (!carousel) return;
+
+    const slides = Array.from(carousel.children);
+    let totalSlides = slides.length;
+    let currentSlide = 0;
+    let autoSlideInterval;
+
+    const dotsContainer = document.querySelector('.carousel-dots');
+    if (dotsContainer) {
+        dotsContainer.innerHTML = '';
+        slides.forEach((_, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'carousel-dot';
+            btn.textContent = idx + 1;
+            btn.addEventListener('click', () => goToSlide(idx));
+            dotsContainer.appendChild(btn);
+        });
+    }
+
+    const updateCarousel = () => {
+        if (totalSlides === 0) return;
+        carousel.style.transform = `translateX(-${currentSlide * 100}%)`;
+        document.querySelectorAll('.carousel-dot').forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentSlide);
+        });
+    };
+
+    const nextSlide = () => {
+        currentSlide = (currentSlide + 1) % totalSlides;
+        updateCarousel();
+    };
+
+    const prevSlide = () => {
+        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+        updateCarousel();
+    };
+
+    window.goToSlide = (index) => {
+        currentSlide = index;
+        updateCarousel();
+        resetAuto();
+    };
+    window.nextSlide = () => { nextSlide(); resetAuto(); };
+    window.prevSlide = () => { prevSlide(); resetAuto(); };
+
+    const startAuto = () => { autoSlideInterval = setInterval(nextSlide, 5000); };
+    const resetAuto = () => { clearInterval(autoSlideInterval); startAuto(); };
+
+    updateCarousel();
+    startAuto();
+
+    const container = carousel.parentElement;
+    container.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
+    container.addEventListener('mouseleave', startAuto);
+})();
+
+// Sembunyikan skeleton kursus saat halaman siap
+document.addEventListener('DOMContentLoaded', () => {
+    const skeleton = document.getElementById('courseSkeleton');
+    const grid = document.getElementById('courseGrid');
+    if (skeleton && grid) {
+        skeleton.classList.add('hidden');
+        grid.classList.remove('hidden');
+    }
 });
 </script>
 

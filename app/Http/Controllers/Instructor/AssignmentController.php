@@ -10,6 +10,7 @@ use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AssignmentController extends Controller
 {
@@ -67,6 +68,7 @@ class AssignmentController extends Controller
             'description' => 'nullable|string',
             'type' => 'required|in:quiz,assignment,exam',
             'duration_minutes' => 'nullable|integer|min:1',
+            'time_limit' => 'nullable|integer|min:1',
             'passing_score' => 'required|integer|min:0|max:100',
             'start_date' => 'nullable|date',
             'due_date' => 'nullable|date|after_or_equal:start_date',
@@ -142,6 +144,7 @@ class AssignmentController extends Controller
             'description' => 'nullable|string',
             'type' => 'required|in:quiz,assignment,exam',
             'duration_minutes' => 'nullable|integer|min:1',
+            'time_limit' => 'nullable|integer|min:1',
             'passing_score' => 'required|integer|min:0|max:100',
             'start_date' => 'nullable|date',
             'due_date' => 'nullable|date|after_or_equal:start_date',
@@ -198,11 +201,16 @@ class AssignmentController extends Controller
         $assignment->load(['questions.options']);
         
         // Get available question banks
-        $questionBanks = QuestionBank::where('created_by', Auth::id())
-            ->orWhere('is_public', true)
+        $questionBanks = QuestionBank::where(function($query) {
+                $query->where('created_by', Auth::id())
+                      ->orWhere('is_public', true);
+            })
             ->with(['questions.options'])
             ->withCount('questions')
             ->get();
+        if (Schema::hasColumn('question_banks', 'is_internal')) {
+            $questionBanks = $questionBanks->where('is_internal', false);
+        }
 
         $ownedBanks = $questionBanks->where('created_by', Auth::id());
 
@@ -329,12 +337,15 @@ class AssignmentController extends Controller
 
             // Optional: import all questions from selected bank
             if (!empty($validated['question_bank_id'])) {
-                $bank = QuestionBank::where('id', $validated['question_bank_id'])
+                $bankQuery = QuestionBank::where('id', $validated['question_bank_id'])
                     ->where(function($q) {
                         $q->where('created_by', Auth::id())
                           ->orWhere('is_public', true);
-                    })->with('questions.options')
-                    ->firstOrFail();
+                    })->with('questions.options');
+                if (Schema::hasColumn('question_banks', 'is_internal')) {
+                    $bankQuery->where('is_internal', false);
+                }
+                $bank = $bankQuery->firstOrFail();
 
                 $order = 0;
                 foreach ($bank->questions as $question) {
@@ -365,32 +376,72 @@ class AssignmentController extends Controller
             abort(403);
         }
 
-        $validated = $request->validate([
-            'question_bank_id' => 'nullable|exists:question_banks,id',
-            'type' => 'required|in:multiple_choice,true_false,essay,short_answer',
-            'question_text' => 'required|string',
-            'explanation' => 'nullable|string',
-            'points' => 'required|integer|min:1',
-            'correct_answer' => 'nullable|string',
-            'options' => 'array',
-            'options.*.text' => 'required_with:options|string',
-            'options.*.is_correct' => 'nullable|boolean',
-        ]);
+        $isMulti = $request->has('questions');
+        if ($isMulti) {
+            $validated = $request->validate([
+                'question_bank_id' => 'nullable|exists:question_banks,id',
+                'save_to_bank' => 'nullable|boolean',
+                'questions' => 'required|array|min:1',
+                'questions.*.type' => 'required|in:multiple_choice,true_false,essay,short_answer',
+                'questions.*.question_text' => 'required|string',
+                'questions.*.explanation' => 'nullable|string',
+                'questions.*.points' => 'required|integer|min:1',
+                'questions.*.correct_answer' => 'nullable|string',
+                'questions.*.options' => 'array',
+                'questions.*.options.*.text' => 'required_with:questions.*.options|string',
+                'questions.*.options.*.is_correct' => 'nullable|boolean',
+            ]);
+        } else {
+            $validated = $request->validate([
+                'question_bank_id' => 'nullable|exists:question_banks,id',
+                'type' => 'required|in:multiple_choice,true_false,essay,short_answer',
+                'question_text' => 'required|string',
+                'explanation' => 'nullable|string',
+                'points' => 'required|integer|min:1',
+                'correct_answer' => 'nullable|string',
+                'options' => 'array',
+                'options.*.text' => 'required_with:options|string',
+                'options.*.is_correct' => 'nullable|boolean',
+                'save_to_bank' => 'nullable|boolean',
+            ]);
+        }
 
-        // Determine target bank (owned only). If none, create a course-scoped bank for this instructor.
-        $questionBank = null;
-        if (!empty($validated['question_bank_id'])) {
-            $questionBank = QuestionBank::where('id', $validated['question_bank_id'])
-                ->where('created_by', Auth::id())
-                ->firstOrFail();
+        $saveToBank = $request->boolean('save_to_bank', true);
+
+        // Tentukan target bank: publik/owned jika ingin simpan ke bank, atau bank internal kalau tidak.
+        if ($saveToBank) {
+            if (!empty($validated['question_bank_id'])) {
+                $bankQuery = QuestionBank::where('id', $validated['question_bank_id'])
+                    ->where(function($q) {
+                        $q->where('created_by', Auth::id())->orWhere('is_public', true);
+                    });
+                if (Schema::hasColumn('question_banks', 'is_internal')) {
+                    $bankQuery->where('is_internal', false);
+                }
+                $questionBank = $bankQuery->firstOrFail();
+            } else {
+                $questionBank = QuestionBank::firstOrCreate(
+                    [
+                        'created_by' => Auth::id(),
+                        'title' => 'Bank Kursus: ' . $assignment->kursus->judul,
+                        'is_internal' => false,
+                    ],
+                    [
+                        'description' => 'Bank soal otomatis untuk kursus ' . $assignment->kursus->judul,
+                        'category' => $assignment->kursus->kategori ?? null,
+                        'is_public' => false,
+                    ]
+                );
+            }
         } else {
             $questionBank = QuestionBank::firstOrCreate(
                 [
                     'created_by' => Auth::id(),
-                    'title' => 'Bank Kursus: ' . $assignment->kursus->judul,
+                    'title' => 'Internal Assignment: ' . $assignment->id,
+                    'is_internal' => true,
                 ],
                 [
-                    'description' => 'Bank soal otomatis untuk kursus ' . $assignment->kursus->judul,
+                    'description' => 'Bank internal (tidak tampil) untuk soal khusus assignment ' . $assignment->title,
                     'category' => $assignment->kursus->kategori ?? null,
                     'is_public' => false,
                 ]
@@ -400,64 +451,73 @@ class AssignmentController extends Controller
         DB::beginTransaction();
         try {
             $maxOrder = $questionBank->questions()->max('order') ?? 0;
+            $nextAssignmentOrder = ($assignment->questions()->max('assignment_questions.order') ?? 0);
 
-            $question = $questionBank->questions()->create([
+            $items = $isMulti ? $validated['questions'] : [[
                 'type' => $validated['type'],
                 'question_text' => $validated['question_text'],
                 'explanation' => $validated['explanation'] ?? null,
                 'points' => $validated['points'],
-                'order' => $maxOrder + 1,
-                'correct_answer' => in_array($validated['type'], ['short_answer']) ? ($validated['correct_answer'] ?? null) : null,
-            ]);
+                'correct_answer' => $validated['correct_answer'] ?? null,
+                'options' => $validated['options'] ?? [],
+            ]];
 
-            // Handle options per type
-            if ($validated['type'] === 'multiple_choice') {
-                $options = collect($validated['options'] ?? [])
-                    ->filter(fn ($opt) => isset($opt['text']) && trim($opt['text']) !== '')
-                    ->values();
+            foreach ($items as $item) {
+                $question = $questionBank->questions()->create([
+                    'type' => $item['type'],
+                    'question_text' => $item['question_text'],
+                    'explanation' => $item['explanation'] ?? null,
+                    'points' => $item['points'],
+                    'order' => ++$maxOrder,
+                    'correct_answer' => in_array($item['type'], ['short_answer']) ? ($item['correct_answer'] ?? null) : null,
+                ]);
 
-                if ($options->count() < 2) {
-                    throw new \Exception('Minimal dua opsi untuk pilihan ganda.');
-                }
+                if ($item['type'] === 'multiple_choice') {
+                    $options = collect($item['options'] ?? [])
+                        ->filter(fn ($opt) => isset($opt['text']) && trim($opt['text']) !== '')
+                        ->values();
 
-                $hasCorrect = $options->contains(fn ($opt) => !empty($opt['is_correct']));
-                if (!$hasCorrect) {
-                    throw new \Exception('Pilih minimal satu jawaban benar.');
-                }
+                    if ($options->count() < 2) {
+                        throw new \Exception('Minimal dua opsi untuk pilihan ganda.');
+                    }
 
-                foreach ($options as $index => $optionData) {
-                    $question->options()->create([
-                        'option_text' => $optionData['text'],
-                        'is_correct' => !empty($optionData['is_correct']),
-                        'order' => $index + 1,
+                    $hasCorrect = $options->contains(fn ($opt) => !empty($opt['is_correct']));
+                    if (!$hasCorrect) {
+                        throw new \Exception('Pilih minimal satu jawaban benar.');
+                    }
+
+                    foreach ($options as $index => $optionData) {
+                        $question->options()->create([
+                            'option_text' => $optionData['text'],
+                            'is_correct' => !empty($optionData['is_correct']),
+                            'order' => $index + 1,
+                        ]);
+                    }
+                } elseif ($item['type'] === 'true_false') {
+                    $correct = strtolower($item['correct_answer'] ?? 'true');
+                    $question->options()->createMany([
+                        [
+                            'option_text' => 'Benar',
+                            'is_correct' => in_array($correct, ['true', 'benar', '1']),
+                            'order' => 1,
+                        ],
+                        [
+                            'option_text' => 'Salah',
+                            'is_correct' => in_array($correct, ['false', 'salah', '0']),
+                            'order' => 2,
+                        ],
                     ]);
                 }
-            } elseif ($validated['type'] === 'true_false') {
-                $correct = strtolower($validated['correct_answer'] ?? 'true');
-                $question->options()->createMany([
-                    [
-                        'option_text' => 'Benar',
-                        'is_correct' => in_array($correct, ['true', 'benar', '1']),
-                        'order' => 1,
-                    ],
-                    [
-                        'option_text' => 'Salah',
-                        'is_correct' => in_array($correct, ['false', 'salah', '0']),
-                        'order' => 2,
-                    ],
+
+                $assignment->questions()->attach($question->id, [
+                    'order' => ++$nextAssignmentOrder,
+                    'points' => $item['points'],
                 ]);
             }
 
-            // Attach to assignment with next order
-            $nextOrder = ($assignment->questions()->max('assignment_questions.order') ?? 0) + 1;
-            $assignment->questions()->attach($question->id, [
-                'order' => $nextOrder,
-                'points' => $validated['points'],
-            ]);
-
             DB::commit();
 
-            return back()->with('success', 'Soal baru berhasil dibuat dan ditambahkan ke quiz!');
+            return back()->with('success', ($isMulti ? count($items) : 1) . ' soal baru berhasil dibuat dan ditambahkan ke quiz!');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withInput()->with('error', 'Gagal membuat soal: ' . $e->getMessage());

@@ -16,6 +16,7 @@ class Assignment extends Model
         'description',
         'type',
         'duration_minutes',
+        'time_limit',
         'passing_score',
         'start_date',
         'due_date',
@@ -34,6 +35,7 @@ class Assignment extends Model
         'randomize_questions' => 'boolean',
         'is_published' => 'boolean',
         'duration_minutes' => 'integer',
+        'time_limit' => 'integer',
         'passing_score' => 'integer',
         'max_attempts' => 'integer',
     ];

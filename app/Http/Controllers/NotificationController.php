@@ -32,4 +32,35 @@ class NotificationController extends Controller
 
         return back();
     }
+
+    /**
+     * Delete a single notification
+     */
+    public function destroy(Notification $notification)
+    {
+        // Ensure user owns this notification
+        if ($notification->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $notification->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notifikasi berhasil dihapus'
+        ]);
+    }
+
+    /**
+     * Delete all user's notifications
+     */
+    public function destroyAll()
+    {
+        Auth::user()->notifications()->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Semua notifikasi berhasil dihapus'
+        ]);
+    }
 }

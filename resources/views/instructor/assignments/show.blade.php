@@ -99,6 +99,13 @@
             </div>
             @endif
 
+            @if($assignment->time_limit)
+            <div>
+                <span class="text-gray-600">Batas Waktu:</span>
+                <span class="font-medium text-gray-800">{{ $assignment->time_limit }} menit</span>
+            </div>
+            @endif
+
             @if($assignment->start_date)
             <div>
                 <span class="text-gray-600">Mulai:</span>

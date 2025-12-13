@@ -6,13 +6,50 @@
     <div class="flex justify-between items-center mb-8">
         <div>
             <h2 class="text-3xl font-bold text-gray-800">Bank Soal</h2>
-            <p class="text-gray-600 mt-2">Kelola koleksi soal untuk quiz dan assignment</p>
+            <p class="text-gray-600 mt-2">Kelola koleksi soal terorganisir dalam folder dengan fitur public/private sharing</p>
         </div>
         <a href="{{ route('instructor.question-banks.create') }}" 
            class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
             <i class="fas fa-plus"></i>
             Buat Bank Soal Baru
         </a>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+        <form method="GET" action="{{ route('instructor.question-banks.index') }}" class="flex flex-wrap gap-4">
+            <div class="flex-1 min-w-[250px]">
+                <div class="relative">
+                    <input type="text" 
+                           name="search" 
+                           value="{{ request('search') }}"
+                           placeholder="Cari bank soal..."
+                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+            </div>
+            <div class="w-64">
+                <select name="category" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Semua Kategori</option>
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>
+                            {{ $cat }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <button type="submit" 
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                <i class="fas fa-filter mr-2"></i>Filter
+            </button>
+            @if(request('search') || request('category'))
+            <a href="{{ route('instructor.question-banks.index') }}" 
+               class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium">
+                <i class="fas fa-times mr-2"></i>Reset
+            </a>
+            @endif
+        </form>
     </div>
 
     @if($banks->isEmpty())

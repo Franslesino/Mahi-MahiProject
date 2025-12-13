@@ -32,9 +32,109 @@
 
 @section('content')
 
-<div class="bg-gray-50 min-h-screen">
+<div class="bg-gray-50 min-h-screen transition-all duration-300" id="main-content">
     <!-- Main Content -->
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Back Button -->
+        <div class="mb-6">
+            <a href="{{ url()->previous() }}" 
+               class="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 hover:border-teal-500 hover:text-teal-600 transition-all shadow-sm hover:shadow-md group">
+                <i class="fas fa-arrow-left transition-transform group-hover:-translate-x-1"></i>
+                <span class="font-medium">Kembali ke Daftar Kursus</span>
+            </a>
+        </div>
+
+        <!-- Purchase Deadline Alert -->
+        @if($course->purchase_deadline_date && $course->purchase_deadline_date->isFuture() && !$isEnrolled)
+            @php
+                $hoursLeft = now()->diffInHours($course->purchase_deadline_date);
+                $daysLeft = now()->diffInDays($course->purchase_deadline_date);
+                $minutesLeft = now()->diffInMinutes($course->purchase_deadline_date);
+            @endphp
+            @if($hoursLeft <= 48)
+                <div class="bg-gradient-to-r from-red-600 to-red-700 text-white rounded-2xl shadow-lg p-6 mb-6 animate-pulse">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-2xl"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold mb-2">⚠️ Segera Berakhir!</h3>
+                            <p class="text-sm leading-relaxed mb-3">
+                                Kursus ini hanya dapat dibeli hingga <strong>{{ $course->purchase_deadline_date->format('d M Y H:i') }}</strong>.
+                                Waktu tersisa: <strong id="countdown-display">{{ $hoursLeft }}j lagi</strong>
+                            </p>
+                            <div class="flex items-center gap-2 text-sm">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Jangan sampai terlewat! Daftar sekarang sebelum terlambat.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @elseif($daysLeft <= 7)
+                <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-2xl shadow-lg p-6 mb-6">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                                <i class="fas fa-hourglass-half text-2xl"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold mb-2">Waktu Terbatas!</h3>
+                            <p class="text-sm leading-relaxed">
+                                Kursus ini dapat dibeli hingga <strong>{{ $course->purchase_deadline_date->format('d M Y H:i') }}</strong>.
+                                Tersisa <strong>{{ $daysLeft }} hari lagi</strong> untuk mendaftar.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            @elseif($daysLeft <= 30)
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl shadow-lg p-5 mb-6">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-calendar-alt text-xl"></i>
+                        <p class="text-sm">
+                            Pendaftaran kursus ini akan ditutup pada <strong>{{ $course->purchase_deadline_date->format('d M Y') }}</strong>
+                        </p>
+                    </div>
+                </div>
+            @endif
+
+            @push('scripts')
+            <script>
+                // Countdown timer untuk deadline < 48 jam
+                @if($hoursLeft <= 48)
+                const deadlineTime = {{ $minutesLeft * 60 * 1000 }}; // ms
+                const deadlineDate = new Date(Date.now() + deadlineTime);
+                
+                function updateCountdown() {
+                    const now = new Date();
+                    const diff = deadlineDate - now;
+                    
+                    if (diff <= 0) {
+                        document.getElementById('countdown-display').textContent = 'Pendaftaran telah ditutup';
+                        return;
+                    }
+                    
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    
+                    const display = hours > 0 
+                        ? `${hours}j ${minutes}m ${seconds}s` 
+                        : `${minutes}m ${seconds}s`;
+                    
+                    document.getElementById('countdown-display').textContent = display;
+                }
+                
+                // Update setiap detik
+                updateCountdown();
+                setInterval(updateCountdown, 1000);
+                @endif
+            </script>
+            @endpush
+        @endif
+
         <!-- Course Card -->
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
             <!-- Course Image -->
@@ -102,16 +202,8 @@
                 <!-- Stats -->
                 <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-6 pb-6 border-b border-gray-200">
                     <div class="flex items-center gap-2">
-                        <i class="fas fa-video"></i>
-                        <span>{{ $course->videos ?? 0 }} Video</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-file-alt"></i>
-                        <span>{{ $materialsCount }} Materi</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <span>{{ number_format($course->rating ?? 0, 1) }}</span>
+                        <i class="fas fa-book"></i>
+                        <span>{{ $materialsCount }} Module</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <i class="fas fa-users"></i>
@@ -189,7 +281,7 @@
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-gray-900">Konten Kursus</h2>
                     <span class="text-sm text-gray-600">
-                        {{ $materialsCount }} Materi • {{ $course->videos ?? 0 }} Video
+                        {{ $materialsCount }} Module
                     </span>
                 </div>
 
@@ -268,28 +360,42 @@
                 <h3 class="text-xl font-bold text-gray-900 mb-6">Fitur Kursus</h3>
                 <div class="space-y-4">
                     <div class="flex items-center gap-3 text-gray-700">
-                        <div class="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-infinity text-teal-600"></i>
+                        <div class="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center shadow-sm">
+                            <i class="fas fa-{{ $course->access_duration_days ? 'calendar-check' : 'infinity' }} text-white"></i>
                         </div>
-                        <span>Akses Selamanya</span>
+                        <div class="flex flex-col">
+                            <span class="font-semibold">{{ $course->access_duration_days ? 'Akses '.$course->access_duration_days.' Hari' : 'Akses Selamanya' }}</span>
+                            @if($course->access_duration_days)
+                                <span class="text-xs text-gray-500">Setelah pembelian</span>
+                            @endif
+                        </div>
                     </div>
                     <div class="flex items-center gap-3 text-gray-700">
-                        <div class="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-mobile-alt text-teal-600"></i>
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+                            <i class="fas fa-mobile-alt text-white"></i>
                         </div>
-                        <span>Akses via Mobile</span>
+                        <div class="flex flex-col">
+                            <span class="font-semibold">Akses via Mobile</span>
+                            <span class="text-xs text-gray-500">Belajar di mana saja</span>
+                        </div>
                     </div>
                     <div class="flex items-center gap-3 text-gray-700">
-                        <div class="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-certificate text-teal-600"></i>
+                        <div class="w-10 h-10 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center shadow-sm">
+                            <i class="fas fa-certificate text-white"></i>
                         </div>
-                        <span>Sertifikat</span>
+                        <div class="flex flex-col">
+                            <span class="font-semibold">Sertifikat</span>
+                            <span class="text-xs text-gray-500">Setelah menyelesaikan kursus</span>
+                        </div>
                     </div>
                     <div class="flex items-center gap-3 text-gray-700">
-                        <div class="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-download text-teal-600"></i>
+                        <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
+                            <i class="fas fa-download text-white"></i>
                         </div>
-                        <span>Materi Download</span>
+                        <div class="flex flex-col">
+                            <span class="font-semibold">Materi Download</span>
+                            <span class="text-xs text-gray-500">PDF, dokumen, dan lainnya</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -322,4 +428,42 @@
         overflow: hidden;
     }
 </style>
+
+@push('scripts')
+<script>
+    // Detect sidebar state and shift content
+    document.addEventListener('DOMContentLoaded', function() {
+        const mainContent = document.getElementById('main-content');
+        const sidebarToggle = document.querySelector('[data-drawer-toggle]');
+        const sidebar = document.getElementById('drawer-navigation');
+        
+        if (sidebar && mainContent) {
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'class') {
+                        const isOpen = !sidebar.classList.contains('-translate-x-full');
+                        if (isOpen) {
+                            mainContent.style.marginLeft = '256px'; // sidebar width
+                        } else {
+                            mainContent.style.marginLeft = '0';
+                        }
+                    }
+                });
+            });
+            
+            observer.observe(sidebar, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
+            
+            // Check initial state
+            const isOpen = !sidebar.classList.contains('-translate-x-full');
+            if (isOpen) {
+                mainContent.style.marginLeft = '256px';
+            }
+        }
+    });
+</script>
+@endpush
+
 @endsection

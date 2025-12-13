@@ -9,21 +9,52 @@ use App\Models\QuestionOption;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class QuestionBankController extends Controller
 {
     /**
      * Display a listing of question banks
      */
-    public function index()
+    public function index(Request $request)
     {
-        $banks = QuestionBank::where('created_by', Auth::id())
-            ->orWhere('is_public', true)
+        $banksQuery = QuestionBank::where(function($query) {
+                $query->where('created_by', Auth::id())
+                      ->orWhere('is_public', true);
+            })
             ->withCount('questions')
-            ->latest()
-            ->paginate(12);
+            ->latest();
+        if (Schema::hasColumn('question_banks', 'is_internal')) {
+            $banksQuery->where('is_internal', false);
+        }
 
-        return view('instructor.question-banks.index', compact('banks'));
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $banksQuery->where(function($query) use ($search) {
+                $query->where('title', 'ilike', "%{$search}%")
+                      ->orWhere('description', 'ilike', "%{$search}%");
+            });
+        }
+
+        // Category filter
+        if ($request->filled('category')) {
+            $banksQuery->where('category', $request->category);
+        }
+
+        $banks = $banksQuery->paginate(12);
+
+        // Get all unique categories for filter
+        $categories = QuestionBank::where(function($query) {
+                $query->where('created_by', Auth::id())
+                      ->orWhere('is_public', true);
+            })
+            ->whereNotNull('category')
+            ->distinct()
+            ->pluck('category')
+            ->sort();
+
+        return view('instructor.question-banks.index', compact('banks', 'categories'));
     }
 
     /**
@@ -61,6 +92,9 @@ class QuestionBankController extends Controller
      */
     public function show(QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         // Check authorization
         if ($questionBank->created_by !== Auth::id() && !$questionBank->is_public) {
             abort(403, 'Anda tidak memiliki akses ke bank soal ini.');
@@ -76,6 +110,9 @@ class QuestionBankController extends Controller
      */
     public function edit(QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         // Check authorization
         if ($questionBank->created_by !== Auth::id()) {
             abort(403, 'Anda tidak dapat mengedit bank soal ini.');
@@ -89,6 +126,9 @@ class QuestionBankController extends Controller
      */
     public function update(Request $request, QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         // Check authorization
         if ($questionBank->created_by !== Auth::id()) {
             abort(403, 'Anda tidak dapat mengedit bank soal ini.');
@@ -115,6 +155,9 @@ class QuestionBankController extends Controller
      */
     public function destroy(QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         // Check authorization
         if ($questionBank->created_by !== Auth::id()) {
             abort(403, 'Anda tidak dapat menghapus bank soal ini.');
@@ -132,6 +175,9 @@ class QuestionBankController extends Controller
      */
     public function storeQuestion(Request $request, QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         // Check authorization
         if ($questionBank->created_by !== Auth::id()) {
             abort(403, 'Anda tidak dapat menambah soal ke bank ini.');
@@ -191,6 +237,9 @@ class QuestionBankController extends Controller
      */
     public function destroyQuestion(QuestionBank $questionBank, Question $question)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         // Check authorization
         if ($questionBank->created_by !== Auth::id() || $question->question_bank_id !== $questionBank->id) {
             abort(403, 'Anda tidak dapat menghapus soal ini.');
@@ -206,6 +255,9 @@ class QuestionBankController extends Controller
      */
     public function createQuestion(QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         // Check authorization
         if ($questionBank->created_by !== Auth::id()) {
             abort(403, 'Anda tidak dapat menambahkan soal ke bank ini.');
@@ -309,6 +361,9 @@ class QuestionBankController extends Controller
      */
     public function importQuestions(Request $request, QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         // Check authorization
         if ($questionBank->created_by !== Auth::id()) {
             abort(403);
@@ -429,6 +484,9 @@ class QuestionBankController extends Controller
      */
     public function exportQuestions(QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         // Check authorization
         if ($questionBank->created_by !== Auth::id() && !$questionBank->is_public) {
             abort(403);

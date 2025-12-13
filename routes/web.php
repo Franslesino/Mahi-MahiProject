@@ -17,6 +17,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VoucherController;
 use App\Models\Kursus;
 use App\Models\Enrollment;
+use App\Models\PromoBanner;
 use Illuminate\Support\Facades\Auth;
 
 // ==========================
@@ -60,7 +61,10 @@ Route::get('/', function (Request $request) {
         ->groupBy('kategori')
         ->pluck('total', 'kategori');
 
-    return view('home.index', compact('courses', 'categoryCounts'));
+    // Get active promo banners
+    $promoBanners = PromoBanner::active()->get();
+
+    return view('home.index', compact('courses', 'categoryCounts', 'promoBanners'));
 })->name('home');
 
 // Terms & Conditions (public)
@@ -122,6 +126,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/courses/{course}/materials/{material}/complete', [StudentController::class, 'markMaterialComplete'])->name('courses.materials.complete');
         Route::get('/courses/{course}/materials/{material}/quiz', [StudentController::class, 'quiz'])->name('courses.materials.quiz');
         Route::post('/courses/{course}/materials/{material}/quiz/submit', [StudentController::class, 'quizSubmit'])->name('courses.materials.quiz.submit');
+        
+        // Final Quiz Routes
+        Route::get('/courses/{kursus}/final-quiz', [\App\Http\Controllers\Student\FinalQuizController::class, 'show'])->name('courses.final-quiz.show');
+        Route::post('/courses/{kursus}/final-quiz/start', [\App\Http\Controllers\Student\FinalQuizController::class, 'start'])->name('courses.final-quiz.start');
+        Route::get('/courses/{kursus}/final-quiz/{attempt}', [\App\Http\Controllers\Student\FinalQuizController::class, 'take'])->name('courses.final-quiz.take');
+        Route::post('/courses/{kursus}/final-quiz/{attempt}/submit', [\App\Http\Controllers\Student\FinalQuizController::class, 'submit'])->name('courses.final-quiz.submit');
+        Route::get('/courses/{kursus}/final-quiz/{attempt}/result', [\App\Http\Controllers\Student\FinalQuizController::class, 'result'])->name('courses.final-quiz.result');
 
         // Transactions
         Route::prefix('transactions')->name('transactions.')->group(function () {
@@ -204,6 +215,8 @@ Route::middleware('auth')->group(function () {
         // Notifications
         Route::post('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
         Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+        Route::delete('/notifications/{notification}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
+        Route::delete('/notifications', [\App\Http\Controllers\NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
     });
 
     // ======================
@@ -222,6 +235,52 @@ Route::middleware('auth')->group(function () {
 
             // Courses management
             Route::resource('courses', AdminCourseController::class);
+            
+            // Admin Course Panel (like instructor panel)
+            Route::prefix('courses/{course}')->name('courses.')->group(function () {
+                Route::get('detail', [AdminCourseController::class, 'courseDetail'])->name('detail');
+                Route::get('panel', [AdminCourseController::class, 'panel'])->name('panel');
+                Route::get('modules', [AdminCourseController::class, 'modules'])->name('modules');
+                Route::post('modules', [AdminCourseController::class, 'storeModule'])->name('modules.store');
+                Route::put('modules/{section}', [AdminCourseController::class, 'updateModule'])->name('modules.update');
+                Route::delete('modules/{section}', [AdminCourseController::class, 'destroyModule'])->name('modules.destroy');
+                Route::get('modules/{section}/materials', [AdminCourseController::class, 'moduleMaterials'])->name('modules.materials');
+                Route::post('modules/{section}/materials', [AdminCourseController::class, 'storeMaterial'])->name('modules.materials.store');
+                Route::get('modules/{section}/materials/{material}/edit', [AdminCourseController::class, 'editMaterial'])->name('modules.materials.edit');
+                Route::put('modules/{section}/materials/{material}', [AdminCourseController::class, 'updateMaterial'])->name('modules.materials.update');
+                Route::delete('modules/{section}/materials/{material}', [AdminCourseController::class, 'destroyMaterial'])->name('modules.materials.destroy');
+                
+                // Preview material
+                Route::get('materials/{material}/preview', [AdminCourseController::class, 'previewMaterial'])->name('materials.preview');
+                
+                // Quiz routes
+                Route::post('quizzes', [AdminCourseController::class, 'storeQuiz'])->name('quizzes.store');
+            });
+
+            // Assignment/Quiz management routes for Admin (using instructor controller)
+            Route::prefix('assignments')->name('assignments.')->group(function () {
+                Route::get('/{assignment}/questions', [\App\Http\Controllers\Instructor\AssignmentController::class, 'editQuestions'])->name('edit-questions');
+                Route::post('/{assignment}/questions', [\App\Http\Controllers\Instructor\AssignmentController::class, 'addQuestions'])->name('add-questions');
+                Route::post('/{assignment}/questions/create', [\App\Http\Controllers\Instructor\AssignmentController::class, 'storeQuestion'])->name('store-question');
+                Route::delete('/{assignment}/questions/{question}', [\App\Http\Controllers\Instructor\AssignmentController::class, 'removeQuestion'])->name('remove-question');
+                Route::get('/{assignment}', [\App\Http\Controllers\Instructor\AssignmentController::class, 'show'])->name('show');
+                Route::put('/{assignment}', [\App\Http\Controllers\Instructor\AssignmentController::class, 'update'])->name('update');
+                Route::post('/{assignment}/publish', [\App\Http\Controllers\Instructor\AssignmentController::class, 'publish'])->name('publish');
+                Route::post('/{assignment}/unpublish', [\App\Http\Controllers\Instructor\AssignmentController::class, 'unpublish'])->name('unpublish');
+            });
+
+            // Final Quiz Routes for Admin
+            Route::prefix('courses/{kursus}')->name('courses.')->group(function () {
+                Route::get('/final-quiz', [\App\Http\Controllers\Admin\FinalQuizController::class, 'edit'])->name('final-quiz.edit');
+                Route::put('/final-quiz', [\App\Http\Controllers\Admin\FinalQuizController::class, 'update'])->name('final-quiz.update');
+                Route::get('/final-quiz/statistics', [\App\Http\Controllers\Admin\FinalQuizController::class, 'statistics'])->name('final-quiz.statistics');
+                Route::get('/final-quiz/create-quiz', [\App\Http\Controllers\Admin\FinalQuizController::class, 'createQuiz'])->name('final-quiz.create-quiz');
+                Route::post('/final-quiz/store-quiz', [\App\Http\Controllers\Admin\FinalQuizController::class, 'storeQuiz'])->name('final-quiz.store-quiz');
+                Route::post('/final-quiz/import-from-bank', [\App\Http\Controllers\Admin\FinalQuizController::class, 'importFromBankSoal'])->name('final-quiz.import-from-bank');
+                Route::post('/final-quiz/store-new-question', [\App\Http\Controllers\Admin\FinalQuizController::class, 'storeNewQuestion'])->name('final-quiz.store-new-question');
+                Route::delete('/final-quiz/remove-question/{question}', [\App\Http\Controllers\Admin\FinalQuizController::class, 'removeQuestion'])->name('final-quiz.remove-question');
+                Route::post('/final-quiz/toggle-activation', [\App\Http\Controllers\Admin\FinalQuizController::class, 'toggleActivation'])->name('final-quiz.toggle-activation');
+            });
 
             // Transactions management
             Route::get('transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
@@ -235,6 +294,11 @@ Route::middleware('auth')->group(function () {
             Route::patch('vouchers/{voucher}/toggle', [\App\Http\Controllers\Admin\VoucherController::class, 'toggleStatus'])
                 ->name('vouchers.toggle');
 
+            // Promo Banners management
+            Route::resource('promo-banners', \App\Http\Controllers\Admin\PromoBannerController::class);
+            Route::patch('promo-banners/{promoBanner}/toggle', [\App\Http\Controllers\Admin\PromoBannerController::class, 'toggleStatus'])
+                ->name('promo-banners.toggle');
+
             // Course Materials Management
             Route::prefix('courses/{course}')->name('courses.')->group(function () {
                 Route::get('materials', [\App\Http\Controllers\Admin\MaterialController::class, 'index'])->name('materials.index');
@@ -245,30 +309,27 @@ Route::middleware('auth')->group(function () {
                 Route::delete('materials/{material}', [\App\Http\Controllers\Admin\MaterialController::class, 'destroy'])->name('materials.destroy');
             });
 
+            // Bank Soal Management (New Unified System)
+            Route::get('bank-soal/api', [\App\Http\Controllers\Instructor\BankSoalController::class, 'api'])->name('bank-soal.api');
+            Route::resource('bank-soal', \App\Http\Controllers\Instructor\BankSoalController::class)->names([
+                'index' => 'bank-soal.index',
+                'create' => 'bank-soal.create',
+                'store' => 'bank-soal.store',
+                'edit' => 'bank-soal.edit',
+                'update' => 'bank-soal.update',
+                'destroy' => 'bank-soal.destroy',
+            ]);
+            
             // Question Bank Management
             Route::resource('question-banks', \App\Http\Controllers\Admin\QuestionBankController::class);
             Route::get('/question-banks/{questionBank}/create-question', [\App\Http\Controllers\Admin\QuestionBankController::class, 'createQuestion'])->name('question-banks.create-question');
             Route::post('/question-banks/{questionBank}/questions', [\App\Http\Controllers\Admin\QuestionBankController::class, 'storeQuestion'])->name('question-banks.questions.store');
             Route::delete('/question-banks/{questionBank}/questions/{question}', [\App\Http\Controllers\Admin\QuestionBankController::class, 'destroyQuestion'])->name('question-banks.questions.destroy');
             
-            // Question Import/Export
+            // Question Import/Export (Old System)
             Route::get('/question-banks/export/template', [\App\Http\Controllers\Admin\QuestionBankController::class, 'exportTemplate'])->name('question-banks.export-template');
             Route::post('/question-banks/{questionBank}/import', [\App\Http\Controllers\Admin\QuestionBankController::class, 'importQuestions'])->name('question-banks.import-questions');
             Route::get('/question-banks/{questionBank}/export', [\App\Http\Controllers\Admin\QuestionBankController::class, 'exportQuestions'])->name('question-banks.export-questions');
-
-            // Assignment Management
-            Route::get('/assignments', [\App\Http\Controllers\Admin\AssignmentController::class, 'index'])->name('assignments.index');
-            Route::get('/assignments/create', [\App\Http\Controllers\Admin\AssignmentController::class, 'create'])->name('assignments.create');
-            Route::post('/assignments', [\App\Http\Controllers\Admin\AssignmentController::class, 'store'])->name('assignments.store');
-            Route::get('/assignments/{assignment}', [\App\Http\Controllers\Admin\AssignmentController::class, 'show'])->name('assignments.show');
-            Route::get('/assignments/{assignment}/edit', [\App\Http\Controllers\Admin\AssignmentController::class, 'edit'])->name('assignments.edit');
-            Route::put('/assignments/{assignment}', [\App\Http\Controllers\Admin\AssignmentController::class, 'update'])->name('assignments.update');
-            Route::delete('/assignments/{assignment}', [\App\Http\Controllers\Admin\AssignmentController::class, 'destroy'])->name('assignments.destroy');
-            Route::get('/assignments/{assignment}/questions', [\App\Http\Controllers\Admin\AssignmentController::class, 'editQuestions'])->name('assignments.edit-questions');
-            Route::post('/assignments/{assignment}/questions', [\App\Http\Controllers\Admin\AssignmentController::class, 'addQuestions'])->name('assignments.add-questions');
-            Route::delete('/assignments/{assignment}/questions/{question}', [\App\Http\Controllers\Admin\AssignmentController::class, 'removeQuestion'])->name('assignments.remove-question');
-            Route::post('/assignments/{assignment}/publish', [\App\Http\Controllers\Admin\AssignmentController::class, 'publish'])->name('assignments.publish');
-            Route::post('/assignments/{assignment}/unpublish', [\App\Http\Controllers\Admin\AssignmentController::class, 'unpublish'])->name('assignments.unpublish');
         });
 
     // ======================
@@ -324,6 +385,12 @@ Route::middleware('auth')->group(function () {
                 ];
             })->name('notifications.poll');
 
+            // Notification Actions
+            Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+            Route::post('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+            Route::delete('/notifications/{notification}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
+            Route::delete('/notifications', [\App\Http\Controllers\NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
+
             // Question Import/Export
             Route::get('/question-banks/export/template', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'exportTemplate'])->name('question-banks.export-template');
             Route::post('/question-banks/{questionBank}/import', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'importQuestions'])->name('question-banks.import-questions');
@@ -346,6 +413,26 @@ Route::middleware('auth')->group(function () {
 
             // Quick quiz creation from course detail
             Route::post('/courses/{course}/quizzes', [\App\Http\Controllers\Instructor\AssignmentController::class, 'quickCreateFromCourse'])->name('courses.quizzes.store');
+
+            // Final Quiz Management
+            Route::get('/courses/{kursus}/final-quiz', [\App\Http\Controllers\Instructor\FinalQuizController::class, 'edit'])->name('courses.final-quiz.edit');
+            Route::put('/courses/{kursus}/final-quiz', [\App\Http\Controllers\Instructor\FinalQuizController::class, 'update'])->name('courses.final-quiz.update');
+            Route::get('/courses/{kursus}/final-quiz/statistics', [\App\Http\Controllers\Instructor\FinalQuizController::class, 'statistics'])->name('courses.final-quiz.statistics');
+            Route::get('/courses/{kursus}/final-quiz/create-quiz', [\App\Http\Controllers\Instructor\FinalQuizController::class, 'createQuiz'])->name('courses.final-quiz.create-quiz');
+            Route::post('/courses/{kursus}/final-quiz/store-quiz', [\App\Http\Controllers\Instructor\FinalQuizController::class, 'storeQuiz'])->name('courses.final-quiz.store-quiz');
+            Route::post('/courses/{kursus}/final-quiz/import-from-bank', [\App\Http\Controllers\Instructor\FinalQuizController::class, 'importFromBankSoal'])->name('courses.final-quiz.import-from-bank');
+            Route::post('/courses/{kursus}/final-quiz/store-new-question', [\App\Http\Controllers\Instructor\FinalQuizController::class, 'storeNewQuestion'])->name('courses.final-quiz.store-new-question');
+            Route::delete('/courses/{kursus}/final-quiz/remove-question/{question}', [\App\Http\Controllers\Instructor\FinalQuizController::class, 'removeQuestion'])->name('courses.final-quiz.remove-question');
+            Route::post('/courses/{kursus}/final-quiz/toggle-activation', [\App\Http\Controllers\Instructor\FinalQuizController::class, 'toggleActivation'])->name('courses.final-quiz.toggle-activation');
+            
+            Route::resource('bank-soal', \App\Http\Controllers\Instructor\BankSoalController::class)->names([
+                'index' => 'bank-soal.index',
+                'create' => 'bank-soal.create',
+                'store' => 'bank-soal.store',
+                'edit' => 'bank-soal.edit',
+                'update' => 'bank-soal.update',
+                'destroy' => 'bank-soal.destroy',
+            ]);
 
             // Section Management (INSTRUKTUR)
             Route::resource('courses.sections', \App\Http\Controllers\Instructor\SectionController::class)->shallow();

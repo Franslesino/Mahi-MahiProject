@@ -17,13 +17,13 @@
         </div>
 
         <div class="flex items-center gap-3">
-            <a href="{{ route('admin.courses.materials.index', $course) }}"
-               class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            <a href="{{ route('admin.courses.detail', $course->id) }}"
+               class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
                 <i class="fas fa-book-open mr-2"></i>
                 Kelola Materi
             </a>
             <a href="{{ route('admin.courses.edit', $course) }}"
-               class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+               class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                 <i class="fas fa-edit mr-2"></i>
                 Edit Kursus
             </a>
@@ -160,7 +160,7 @@
                         <i class="fas fa-book text-blue-600 mr-2"></i>
                         Materi Kursus ({{ $course->materi->count() }})
                     </h3>
-                    <a href="{{ route('admin.courses.materials.index', $course) }}"
+                    <a href="{{ route('admin.courses.detail', $course->id) }}"
                        class="text-blue-600 hover:text-blue-700 text-sm font-medium">
                         Kelola Materi →
                     </a>
@@ -221,7 +221,7 @@
                         <i class="fas fa-clipboard-list text-purple-600 mr-2"></i>
                         Assignment & Quiz ({{ $assignments->count() }})
                     </h3>
-                    <a href="{{ route('admin.assignments.create') }}?course_id={{ $course->id }}"
+                    <a href="{{ route('admin.courses.detail', $course->id) }}"
                        class="text-purple-600 hover:text-purple-700 text-sm font-medium">
                         Tambah Assignment →
                     </a>
@@ -281,24 +281,12 @@
                                     @endif
                                 </div>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <a href="{{ route('admin.assignments.show', $assignment) }}"
-                                   class="text-gray-600 hover:text-gray-800"
-                                   title="Lihat">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{{ route('admin.assignments.edit', $assignment) }}"
-                                   class="text-blue-600 hover:text-blue-800"
-                                   title="Edit">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                            </div>
                         </div>
                     @empty
                         <div class="text-center py-8 text-gray-500">
                             <i class="fas fa-clipboard-list text-4xl mb-3"></i>
                             <p>Belum ada assignment</p>
-                            <a href="{{ route('admin.assignments.create') }}?course_id={{ $course->id }}"
+                            <a href="{{ route('admin.courses.detail', $course->id) }}"
                                class="text-purple-600 hover:text-purple-700 text-sm mt-2 inline-block">
                                 Tambah Assignment Pertama →
                             </a>

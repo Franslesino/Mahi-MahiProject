@@ -31,13 +31,6 @@
                     <li>Pastikan status materi/quiz sudah <strong>Published</strong>.</li>
                 </ul>
             </div>
-            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h2 class="font-semibold text-gray-800 mb-2">Pendapatan</h2>
-                <ul class="text-sm text-gray-700 space-y-2 list-disc list-inside">
-                    <li>Pendapatan dihitung dari transaksi berstatus <strong>paid</strong>.</li>
-                    <li>Cek ringkasan di dashboard revenue dan performa kursus.</li>
-                </ul>
-            </div>
         </div>
 
         <div class="mt-6">
@@ -50,10 +43,6 @@
                 <details class="bg-white border border-gray-200 rounded-lg p-4">
                     <summary class="cursor-pointer font-medium text-gray-800">Quiz tidak muncul?</summary>
                     <p class="text-sm text-gray-700 mt-2">Pastikan assignment memiliki soal dan statusnya published. Hubungkan assignment ke materi bertipe quiz.</p>
-                </details>
-                <details class="bg-white border border-gray-200 rounded-lg p-4">
-                    <summary class="cursor-pointer font-medium text-gray-800">Pendapatan masih Rp 0?</summary>
-                    <p class="text-sm text-gray-700 mt-2">Pendapatan dihitung dari transaksi paid untuk kursus Anda. Cek status transaksi dan pastikan kursus memiliki harga.</p>
                 </details>
             </div>
         </div>

@@ -78,6 +78,52 @@
                         </div>
                     @endif
                 </div>
+
+                @if(!empty($finalExam))
+                    @php
+                        $finalStatus = $finalExamStatus ?? [];
+                        $finalPassed = $finalStatus['passed'] ?? false;
+                        $finalScore = $finalStatus['score'] ?? null;
+                        $finalLocked = empty($materialsComplete);
+                    @endphp
+                    <div class="bg-white rounded-2xl shadow p-5 mt-4 border border-gray-100">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-sm text-gray-500 font-semibold uppercase">Final Quiz</p>
+                                <h3 class="text-lg font-bold text-gray-900">{{ $finalExam->title ?? 'Final Quiz' }}</h3>
+                                <p class="text-xs text-gray-500 mt-1">Harus diselesaikan untuk mendapatkan sertifikat kursus.</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600">Passing grade</p>
+                                <p class="text-xl font-bold text-emerald-700">{{ $finalExam->passing_score ?? 70 }}%</p>
+                                @if($finalScore !== null)
+                                    <p class="text-xs text-gray-500 mt-1">Skor terakhir: <span class="font-semibold">{{ $finalScore }}%</span></p>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="mt-4 flex flex-wrap items-center gap-3">
+                            @if($finalLocked)
+                                <button class="px-4 py-2 bg-gray-200 text-gray-500 rounded-lg cursor-not-allowed" disabled>
+                                    Selesaikan semua materi untuk membuka final quiz
+                                </button>
+                            @elseif($finalPassed)
+                                <span class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg font-semibold">
+                                    <i class="fas fa-check-circle"></i> Final quiz lulus
+                                </span>
+                                <p class="text-sm text-gray-600">Sertifikat akan tersedia setelah proses selesai.</p>
+                            @else
+                                <a href="{{ route('courses.final-quiz', $course) }}"
+                                   class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 transition font-semibold shadow">
+                                    <i class="fas fa-flag-checkered"></i>
+                                    {{ $finalScore !== null ? 'Ulangi Final Quiz' : 'Mulai Final Quiz' }}
+                                </a>
+                                @if(($finalExamStatus['canRetake'] ?? false) === false && $finalScore !== null)
+                                    <span class="text-xs text-red-600">Batas percobaan tercapai.</span>
+                                @endif
+                            @endif
+                        </div>
+                    </div>
+                @endif
             </div>
 
         </div>

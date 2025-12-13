@@ -65,7 +65,7 @@ class CourseController extends Controller
             }
         ]);
 
-        $course->loadCount('materi');
+        $course->loadCount(['materi', 'assignments']);
 
         // Check if user is enrolled
         $isEnrolled = false;

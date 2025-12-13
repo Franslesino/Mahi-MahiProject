@@ -18,6 +18,13 @@ class MidtransService
         Config::$isSanitized = config('midtrans.is_sanitized', true);
         Config::$is3ds = config('midtrans.is_3ds', true);
         Config::$appendNotifUrl = config('midtrans.append_notif_url');
+        
+        // Paksa cURL memakai CA bundle yang ada agar tidak bergantung pada path lama di php.ini
+        Config::$curlOptions = [
+            CURLOPT_CAINFO => 'C:\laragon\etc\ssl\cacert.pem',
+            // Midtrans library mengharapkan key ini ada saat merge header, jadi set kosong untuk hindari undefined array key
+            CURLOPT_HTTPHEADER => [],
+        ];
     }
 
     /**

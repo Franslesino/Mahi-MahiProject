@@ -1,4 +1,10 @@
-@extends('layouts.instructor')
+@php
+    $isAdmin = auth()->user()->role === 'admin';
+    $layout = $isAdmin ? 'layouts.admin' : 'layouts.instructor';
+    $routePrefix = $isAdmin ? 'admin.assignments' : 'instructor.assignments';
+@endphp
+
+@extends($layout)
 
 @section('content')
 <div class="p-8">
@@ -6,6 +12,89 @@
     <div class="mb-8">
         <h2 class="text-3xl font-bold text-gray-800">{{ $assignment->title }}</h2>
         <p class="text-gray-600 mt-2">Tambah dan kelola soal untuk assignment ini</p>
+    </div>
+
+    <!-- Quiz Settings Card -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-cog text-blue-600"></i>
+                Pengaturan Quiz
+            </h3>
+            <button type="button" onclick="toggleSettingsForm()" class="text-sm px-3 py-1.5 border rounded-lg text-gray-700 hover:bg-gray-50" id="toggleSettingsBtn">
+                Sembunyikan
+            </button>
+        </div>
+        <form action="{{ route($routePrefix . '.update', $assignment) }}" method="POST" class="space-y-4" id="settingsForm">
+            @csrf
+            @method('PUT')
+            <input type="hidden" name="kursus_id" value="{{ $assignment->kursus_id }}">
+            <input type="hidden" name="materi_id" value="{{ $assignment->materi_id }}">
+            <input type="hidden" name="title" value="{{ $assignment->title }}">
+            <input type="hidden" name="description" value="{{ $assignment->description }}">
+            <input type="hidden" name="type" value="{{ $assignment->type }}">
+            <input type="hidden" name="start_date" value="{{ $assignment->start_date?->format('Y-m-d\TH:i') }}">
+            <input type="hidden" name="due_date" value="{{ $assignment->due_date?->format('Y-m-d\TH:i') }}">
+            <input type="hidden" name="show_results_immediately" value="{{ $assignment->show_results_immediately ? '1' : '0' }}">
+            <input type="hidden" name="allow_multiple_attempts" value="{{ $assignment->allow_multiple_attempts ? '1' : '0' }}">
+            <input type="hidden" name="max_attempts" value="{{ $assignment->max_attempts }}">
+            <input type="hidden" name="randomize_questions" value="{{ $assignment->randomize_questions ? '1' : '0' }}">
+
+            <div class="grid md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-clock text-blue-600 mr-1"></i>
+                        Batas Waktu Pengerjaan (Menit)
+                    </label>
+                    <input type="number" 
+                           name="time_limit" 
+                           value="{{ old('time_limit', $assignment->time_limit) }}"
+                           min="1"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                           placeholder="Kosongkan jika tidak ada batas waktu">
+                    <p class="text-xs text-gray-500 mt-1">
+                        Timer akan berjalan mundur dan quiz otomatis tersubmit saat waktu habis
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-hourglass-half text-green-600 mr-1"></i>
+                        Durasi (Menit)
+                    </label>
+                    <input type="number" 
+                           name="duration_minutes" 
+                           value="{{ old('duration_minutes', $assignment->duration_minutes) }}"
+                           min="1"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                           placeholder="0 = Tanpa batas">
+                    <p class="text-xs text-gray-500 mt-1">
+                        Estimasi durasi pengerjaan
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-trophy text-yellow-600 mr-1"></i>
+                        Nilai Minimal Lulus (%)
+                    </label>
+                    <input type="number" 
+                           name="passing_score" 
+                           value="{{ old('passing_score', $assignment->passing_score) }}"
+                           min="0"
+                           max="100"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                           required>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Nilai minimum untuk lulus quiz
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                    <i class="fas fa-save mr-2"></i>Simpan Pengaturan
+                </button>
+            </div>
+        </form>
     </div>
 
     <!-- Create Question Inline -->
@@ -19,17 +108,23 @@
                 Sembunyikan
             </button>
         </div>
-        <form action="{{ route('instructor.assignments.store-question', $assignment) }}" method="POST" class="space-y-4" id="createQuestionForm">
+        <form action="{{ route($routePrefix . '.store-question', $assignment) }}" method="POST" class="space-y-4" id="createQuestionForm">
             @csrf
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Bank Soal (opsional)</label>
-                    <select name="question_bank_id" class="w-full border rounded-lg px-3 py-2">
+                    <select name="question_bank_id" class="w-full border rounded-lg px-3 py-2" id="questionBankSelect">
                         <option value="">Bank otomatis: Bank Kursus {{ $assignment->kursus->judul }}</option>
                         @foreach($ownedBanks as $bank)
                             <option value="{{ $bank->id }}">{{ $bank->title }} ({{ $bank->questions_count }} soal)</option>
                         @endforeach
                     </select>
+                    <div class="mt-2 flex items-center gap-2 text-sm text-gray-700">
+                        <input type="hidden" name="save_to_bank" value="0">
+                        <input type="checkbox" name="save_to_bank" value="1" id="saveToBankCheckbox" class="h-4 w-4 text-purple-600" checked>
+                        <label for="saveToBankCheckbox">Simpan ke Bank Soal</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1" id="saveToBankHint">Jika dimatikan, soal hanya tersimpan di assignment ini.</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -110,7 +205,7 @@
             </button>
         </div>
 
-        <form action="{{ route('instructor.assignments.add-questions', $assignment) }}" method="POST" id="addQuestionsForm">
+        <form action="{{ route($routePrefix . '.add-questions', $assignment) }}" method="POST" id="addQuestionsForm">
             @csrf
 
             <div id="bankSectionBody">
@@ -222,7 +317,7 @@
                             </div>
                             <p class="text-gray-800">{{ $question->question_text }}</p>
                         </div>
-                        <form action="{{ route('instructor.assignments.remove-question', [$assignment, $question]) }}" 
+                        <form action="{{ route($routePrefix . '.remove-question', [$assignment, $question]) }}" 
                               method="POST"
                               data-confirm="Yakin ingin menghapus soal ini dari assignment?">
                             @csrf
@@ -275,7 +370,7 @@
                     <i class="fas fa-arrow-left mr-2"></i>Kembali
                 </button>
                 @if($assignment->is_published)
-                <form action="{{ route('instructor.assignments.unpublish', $assignment) }}" method="POST">
+                <form action="{{ route($routePrefix . '.unpublish', $assignment) }}" method="POST">
                     @csrf
                     <button type="submit" 
                             class="px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-medium">
@@ -283,7 +378,7 @@
                     </button>
                 </form>
                 @else
-                <form action="{{ route('instructor.assignments.publish', $assignment) }}" method="POST">
+                <form action="{{ route($routePrefix . '.publish', $assignment) }}" method="POST">
                     @csrf
                     <button type="submit" 
                             class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
@@ -305,6 +400,15 @@ function toggleBank(id) {
 
 const createFormStorageKey = 'assignment_{{ $assignment->id }}_create_form_hidden';
 const bankSectionStorageKey = 'assignment_{{ $assignment->id }}_bank_section_hidden';
+const settingsFormStorageKey = 'assignment_{{ $assignment->id }}_settings_form_hidden';
+
+function toggleSettingsForm() {
+    const form = document.getElementById('settingsForm');
+    const btn = document.getElementById('toggleSettingsBtn');
+    const hidden = form.classList.toggle('hidden');
+    btn.textContent = hidden ? 'Tampilkan' : 'Sembunyikan';
+    localStorage.setItem(settingsFormStorageKey, hidden ? '1' : '0');
+}
 
 function toggleBankSection() {
     const body = document.getElementById('bankSectionBody');
@@ -353,7 +457,27 @@ document.addEventListener('DOMContentLoaded', () => {
     typeSelect.addEventListener('change', toggleQuestionFields);
     toggleQuestionFields();
 
+    const saveToBankCheckbox = document.getElementById('saveToBankCheckbox');
+    const bankSelect = document.getElementById('questionBankSelect');
+    const saveHint = document.getElementById('saveToBankHint');
+    const syncBankToggle = () => {
+        const enabled = saveToBankCheckbox.checked;
+        bankSelect.disabled = !enabled;
+        saveHint.textContent = enabled
+            ? 'Soal akan tersimpan di bank soal yang dipilih.'
+            : 'Soal hanya tersimpan di assignment ini (tidak masuk bank soal).';
+    };
+    saveToBankCheckbox.addEventListener('change', syncBankToggle);
+    syncBankToggle();
+
     // Restore toggle states from localStorage
+    const settingsFormHidden = localStorage.getItem(settingsFormStorageKey);
+    if (settingsFormHidden === '1') {
+        const form = document.getElementById('settingsForm');
+        form.classList.add('hidden');
+        document.getElementById('toggleSettingsBtn').textContent = 'Tampilkan';
+    }
+
     const createFormHidden = localStorage.getItem(createFormStorageKey);
     if (createFormHidden === '1' || createFormHidden === null) {
         const form = document.getElementById('createQuestionForm');
@@ -372,11 +496,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function handleBack() {
-    if (document.referrer && document.referrer !== window.location.href) {
-        window.history.back();
-    } else {
-        window.location.href = "{{ url()->previous() ?: route('instructor.assignments.index') }}";
-    }
+    // Redirect langsung ke halaman course detail
+    @if($isAdmin)
+        window.location.href = "{{ route('admin.courses.detail', $assignment->kursus_id) }}";
+    @else
+        window.location.href = "{{ route('instructor.courses.show', $assignment->kursus_id) }}";
+    @endif
 }
 </script>
 @endsection

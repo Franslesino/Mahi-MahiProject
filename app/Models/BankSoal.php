@@ -20,6 +20,14 @@ class BankSoal extends Model
         return $this->hasMany(OpsiJawaban::class, 'bank_soal_id');
     }
 
+    /**
+     * Alias untuk opsiJawaban untuk kompatibilitas dengan view
+     */
+    public function options()
+    {
+        return $this->opsiJawaban();
+    }
+
     public function jawabanPeserta()
     {
         return $this->hasMany(JawabanPeserta::class, 'bank_soal_id');

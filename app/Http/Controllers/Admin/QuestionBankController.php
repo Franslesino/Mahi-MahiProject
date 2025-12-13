@@ -9,20 +9,45 @@ use App\Models\QuestionOption;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class QuestionBankController extends Controller
 {
     /**
      * Display a listing of question banks
      */
-    public function index()
+    public function index(Request $request)
     {
-        $banks = QuestionBank::withCount('questions')
+        $banksQuery = QuestionBank::withCount('questions')
             ->with('creator')
-            ->latest()
-            ->paginate(12);
+            ->latest();
+        if (Schema::hasColumn('question_banks', 'is_internal')) {
+            $banksQuery->where('is_internal', false);
+        }
 
-        return view('admin.question-banks.index', compact('banks'));
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $banksQuery->where(function($query) use ($search) {
+                $query->where('title', 'ilike', "%{$search}%")
+                      ->orWhere('description', 'ilike', "%{$search}%");
+            });
+        }
+
+        // Category filter
+        if ($request->filled('category')) {
+            $banksQuery->where('category', $request->category);
+        }
+
+        $banks = $banksQuery->paginate(12);
+
+        // Get all unique categories for filter
+        $categories = QuestionBank::whereNotNull('category')
+            ->distinct()
+            ->pluck('category')
+            ->sort();
+
+        return view('admin.question-banks.index', compact('banks', 'categories'));
     }
 
     /**
@@ -60,6 +85,9 @@ class QuestionBankController extends Controller
      */
     public function show(QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         $questionBank->load('questions.options', 'creator');
 
         return view('admin.question-banks.show', compact('questionBank'));
@@ -70,6 +98,9 @@ class QuestionBankController extends Controller
      */
     public function edit(QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         return view('admin.question-banks.edit', compact('questionBank'));
     }
 
@@ -78,6 +109,9 @@ class QuestionBankController extends Controller
      */
     public function update(Request $request, QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -99,6 +133,9 @@ class QuestionBankController extends Controller
      */
     public function destroy(QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         $questionBank->delete();
 
         return redirect()
@@ -111,6 +148,9 @@ class QuestionBankController extends Controller
      */
     public function storeQuestion(Request $request, QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         $validated = $request->validate([
             'type' => 'required|in:multiple_choice,true_false,essay,short_answer',
             'question_text' => 'required|string',
@@ -165,6 +205,9 @@ class QuestionBankController extends Controller
      */
     public function destroyQuestion(QuestionBank $questionBank, Question $question)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         $question->delete();
 
         return back()->with('success', 'Soal berhasil dihapus!');
@@ -175,6 +218,9 @@ class QuestionBankController extends Controller
      */
     public function createQuestion(QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         return view('admin.question-banks.create-question', compact('questionBank'));
     }
 
@@ -273,6 +319,9 @@ class QuestionBankController extends Controller
      */
     public function importQuestions(Request $request, QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         $request->validate([
             'file' => 'required|file|mimes:csv,xlsx,xls|max:2048'
         ]);
@@ -388,6 +437,9 @@ class QuestionBankController extends Controller
      */
     public function exportQuestions(QuestionBank $questionBank)
     {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
         $filename = 'soal_' . str_replace(' ', '_', $questionBank->title) . '_' . date('Y-m-d') . '.csv';
         
         $headers = [

@@ -76,7 +76,6 @@
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Instruktur</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Kategori</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Harga</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Materi</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Aksi</th>
                     </tr>
@@ -138,13 +137,6 @@
                                 @endif
                             </td>
 
-                            {{-- MATERI --}}
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                                    {{ $course->materi_count }} Materi
-                                </span>
-                            </td>
-
                             {{-- STATUS --}}
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if($course->status === 'active')
@@ -161,11 +153,11 @@
                         <div class="flex items-center gap-2">
 
                                     {{-- KELOLA MATERI --}}
-                                    <a href="{{ route('admin.courses.materials.index', $course) }}"
-                                       class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition text-xs font-medium"
+                                    <a href="{{ route('admin.courses.detail', $course) }}"
+                                       class="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-700 transition"
                                        title="Kelola Materi">
                                         <i class="fas fa-book-open mr-1"></i>
-                                        Materi
+                                        Kelola Materi
                                     </a>
 
                                     {{-- LIHAT DETAIL --}}
@@ -199,7 +191,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                                 Tidak ada kursus ditemukan.
                             </td>
                         </tr>
@@ -222,26 +214,13 @@
 
 @push('scripts')
 <script>
-const debounce = (fn, delay = 250) => {
-    let t;
-    return (...args) => {
-        clearTimeout(t);
-        t = setTimeout(() => fn(...args), delay);
-    };
-};
-
+// Auto-submit form on status change
 document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('coursesQuickSearch');
-    const rows = document.querySelectorAll('table tbody tr');
-    if (searchInput && rows.length) {
-        const filterRows = debounce(() => {
-            const q = searchInput.value.trim().toLowerCase();
-            rows.forEach(row => {
-                const haystack = row.innerText.toLowerCase();
-                row.style.display = haystack.includes(q) ? '' : 'none';
-            });
-        }, 200);
-        searchInput.addEventListener('input', filterRows);
+    const statusSelect = document.querySelector('select[name="status"]');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            this.closest('form').submit();
+        });
     }
 });
 </script>

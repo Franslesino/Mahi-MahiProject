@@ -63,20 +63,6 @@
         </div>
     </div>
 
-    <!-- Revenue Card (Full Width) -->
-    <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white mb-8">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-emerald-100 text-sm mb-1">Total Pendapatan</p>
-                <h3 class="text-3xl font-bold">Rp {{ number_format($stats['totalRevenue'], 0, ',', '.') }}</h3>
-                <p class="text-emerald-100 text-sm mt-2">Dari semua kursus Anda</p>
-            </div>
-            <div class="w-16 h-16 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-wallet text-3xl"></i>
-            </div>
-        </div>
-    </div>
-
     <!-- Charts & Analytics -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <!-- Course Performance -->
@@ -99,9 +85,15 @@
                     <a href="{{ route('instructor.courses.show', $course) }}"
                        class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition border border-transparent hover:border-blue-100">
                         <div class="flex items-center gap-4 flex-1">
-                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <i class="fas fa-graduation-cap text-blue-600"></i>
-                            </div>
+                            @if($course->image_url)
+                                <img src="{{ $course->image_url }}" 
+                                     alt="{{ $course->title ?? $course->judul }}"
+                                     class="w-16 h-16 rounded-lg object-cover flex-shrink-0">
+                            @else
+                                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-graduation-cap text-white text-xl"></i>
+                                </div>
+                            @endif
                             <div class="flex-1 min-w-0">
                                 <h4 class="font-semibold text-gray-800 mb-1 truncate">{{ $course->title ?? $course->judul }}</h4>
                                 <div class="flex items-center gap-4 text-sm text-gray-500">
@@ -109,10 +101,6 @@
                                     <span><i class="fas fa-file-alt mr-1"></i>{{ $course->materials_count }} materi</span>
                                 </div>
                             </div>
-                        </div>
-                        <div class="text-right flex-shrink-0 ml-4">
-                            <p class="text-lg font-bold text-emerald-600">Rp {{ number_format($course->total_revenue ?? 0, 0, ',', '.') }}</p>
-                            <p class="text-xs text-gray-500">Revenue</p>
                         </div>
                     </a>
                     @endforeach
@@ -136,9 +124,15 @@
                 <div class="space-y-4">
                     @foreach($recentEnrollments as $enrollment)
                     <div class="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0">
-                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span class="text-white text-sm font-bold">{{ substr($enrollment->user->name, 0, 1) }}</span>
-                        </div>
+                        @if($enrollment->user->avatar)
+                            <img src="{{ $enrollment->user->avatar }}" 
+                                 alt="{{ $enrollment->user->name }}"
+                                 class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                        @else
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="text-white text-sm font-bold">{{ substr($enrollment->user->name, 0, 1) }}</span>
+                            </div>
+                        @endif
                         <div class="flex-1 min-w-0">
     <p class="text-sm font-medium text-gray-800">{{ $enrollment->user->name }}</p>
     {{-- ✅ PERBAIKAN: Cek dulu apakah kursus ada --}}

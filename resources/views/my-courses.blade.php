@@ -3,6 +3,8 @@
 
 @php
     use App\Models\MaterialCompletion;
+    use App\Models\Assignment;
+    use App\Models\Submission;
     use Illuminate\Support\Facades\Auth;
 @endphp
 
@@ -25,13 +27,35 @@
                 ->count()
             : 0;
         $progress = $materiCount > 0 ? round(($completedMaterialCount / $materiCount) * 100) : 0;
-        $isCompleted = $materiCount > 0 && $completedMaterialCount >= $materiCount;
+        $materialsCompleted = $materiCount > 0 && $completedMaterialCount >= $materiCount;
+
+        // Final quiz status (assignment type exam yang sudah publish)
+        $finalExam = Assignment::where('kursus_id', $course->id)
+            ->where('type', 'exam')
+            ->where('is_published', true)
+            ->first();
+        $finalExamScore = null;
+        $finalExamPassed = false;
+        if ($finalExam) {
+            $latestFinal = Submission::where('assignment_id', $finalExam->id)
+                ->where('user_id', Auth::id())
+                ->latest()
+                ->first();
+            $finalExamScore = $latestFinal->percentage ?? $latestFinal->score;
+            $finalExamPassed = $latestFinal && $finalExamScore !== null && $finalExamScore >= ($finalExam->passing_score ?? 70);
+        }
+
+        $isCompleted = $materialsCompleted && (!$finalExam || $finalExamPassed);
 
         $courseProgressMap[$course->id] = [
             'materiCount' => $materiCount,
             'completedCount' => $completedMaterialCount,
             'progress' => $progress,
             'isCompleted' => $isCompleted,
+            'finalExamRequired' => (bool) $finalExam,
+            'finalExamPassed' => $finalExamPassed,
+            'finalExamScore' => $finalExamScore,
+            'materialsCompleted' => $materialsCompleted,
         ];
 
         if ($isCompleted) {
@@ -126,6 +150,14 @@
                         $progress = $progressData['progress'];
                         $isCompleted = $progressData['isCompleted'];
                         $certificate = $enrollment->sertifikat;
+                        $finalExamRequired = $progressData['finalExamRequired'] ?? false;
+                        $finalExamPassed = $progressData['finalExamPassed'] ?? false;
+                        $finalExamScore = $progressData['finalExamScore'] ?? null;
+                        $materialsCompleted = $progressData['materialsCompleted'] ?? false;
+
+                        if ($finalExamRequired && !$finalExamPassed && $progress >= 100) {
+                            $progress = 95;
+                        }
                     @endphp
 
                     <div class="course-item bg-white rounded-2xl shadow-sm hover:shadow-md transition p-4"
@@ -215,10 +247,15 @@
                                         <p class="text-xs text-gray-500">
                                             {{ $progressData['completedCount'] }}/{{ $progressData['materiCount'] }} Materi Selesai
                                         </p>
+                                        @if($finalExamRequired && !$finalExamPassed && $materialsCompleted)
+                                            <p class="text-xs text-amber-600 font-semibold">
+                                                Final quiz belum lulus. Selesaikan untuk mendapatkan sertifikat.
+                                            </p>
+                                        @endif
                                         <a href="{{ route('student.course.learn', $course) }}" 
                                            class="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 transition shadow-sm">
                                             <i class="fas fa-play mr-2"></i>
-                                            Lanjutkan Belajar
+                                            {{ $finalExamRequired && $materialsCompleted ? 'Kerjakan Final Quiz' : 'Lanjutkan Belajar' }}
                                         </a>
                                     </div>
                                 @endif

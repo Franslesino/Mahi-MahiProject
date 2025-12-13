@@ -32,13 +32,6 @@ class InstructorController extends Controller
 
         $courseIds = $myCourses->pluck('id');
 
-        // Revenue per course (paid/completed transactions)
-        $revenueByCourse = Transaction::whereIn('kursus_id', $courseIds)
-            ->whereIn('status', ['paid', 'completed'])
-            ->select('kursus_id', DB::raw('SUM(total_bayar) as revenue'))
-            ->groupBy('kursus_id')
-            ->pluck('revenue', 'kursus_id');
-
         // Calculate statistics
         $stats = [
             'totalCourses' => $myCourses->count(),
@@ -48,17 +41,15 @@ class InstructorController extends Controller
                 ->distinct('user_id')
                 ->count('user_id'),
             'totalMaterials' => Materi::whereIn('kursus_id', $courseIds)->count(),
-            'totalRevenue' => $revenueByCourse->sum(),
         ];
 
         // Course performance stats
-        $courseStats = $myCourses->map(function($course) use ($revenueByCourse) {
+        $courseStats = $myCourses->map(function($course) {
             $enrollments = Enrollment::where('kursus_id', $course->id)
                 ->whereIn('status_pendaftaran', ['active', 'completed'])
                 ->get();
             
             $course->students_count = $enrollments->count();
-            $course->total_revenue = (float) ($revenueByCourse[$course->id] ?? 0);
             
             return $course;
         })->sortByDesc('students_count');

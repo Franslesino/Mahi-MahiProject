@@ -13,6 +13,11 @@
             <p class="text-gray-600 mt-1">{{ $course->description }}</p>
         </div>
         <div class="flex gap-3">
+            <a href="{{ route('instructor.courses.final-quiz.edit', $course->id) }}" 
+               class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-medium flex items-center gap-2">
+                <i class="fas fa-graduation-cap"></i>
+                <span>Final Quiz</span>
+            </a>
             <button onclick="openSectionModal()" 
                     class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium flex items-center gap-2">
                 <i class="fas fa-folder-plus"></i>
@@ -76,6 +81,139 @@
             </div>
         </div>
     </div>
+
+    <!-- Final Quiz Statistics (if exists) -->
+    @if($course->require_final_quiz && $course->final_quiz_id)
+        @php
+            $finalQuizStats = DB::table('quiz_attempts')
+                ->select(
+                    DB::raw('COUNT(DISTINCT user_id) as total_participants'),
+                    DB::raw('SUM(CASE WHEN is_passed = true THEN 1 ELSE 0 END) as passed_count'),
+                    DB::raw('AVG(score) as avg_score'),
+                    DB::raw('MAX(score) as max_score'),
+                    DB::raw('MIN(score) as min_score')
+                )
+                ->where('kursus_id', $course->id)
+                ->where('quiz_id', $course->final_quiz_id)
+                ->first();
+            
+            $totalParticipants = $finalQuizStats->total_participants ?? 0;
+            $passedCount = $finalQuizStats->passed_count ?? 0;
+            $failedCount = $totalParticipants - $passedCount;
+            $avgScore = $finalQuizStats->avg_score ?? 0;
+            $maxScore = $finalQuizStats->max_score ?? 0;
+            $minScore = $finalQuizStats->min_score ?? 0;
+            $passRate = $totalParticipants > 0 ? ($passedCount / $totalParticipants) * 100 : 0;
+        @endphp
+
+        <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg shadow-sm border-2 border-purple-200 mb-6">
+            <div class="p-6 border-b border-purple-200 flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-graduation-cap text-purple-600"></i>
+                    Statistik Final Quiz
+                </h3>
+                <div class="flex items-center gap-2">
+                    @if($course->finalQuiz->is_active)
+                        <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                            <i class="fas fa-check-circle"></i> Aktif
+                        </span>
+                    @else
+                        <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">
+                            <i class="fas fa-pause-circle"></i> Nonaktif
+                        </span>
+                    @endif
+                    <a href="{{ route('instructor.courses.final-quiz.statistics', $course->id) }}" 
+                       class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-semibold inline-flex items-center gap-2">
+                        <i class="fas fa-chart-bar"></i> Detail Statistik
+                    </a>
+                </div>
+            </div>
+
+            @if($totalParticipants > 0)
+                <div class="p-6">
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                            <div class="text-3xl font-bold text-blue-600 mb-1">{{ $totalParticipants }}</div>
+                            <div class="text-xs text-gray-600 font-semibold">Total Peserta</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                            <div class="text-3xl font-bold text-green-600 mb-1">{{ $passedCount }}</div>
+                            <div class="text-xs text-gray-600 font-semibold">Lulus</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                            <div class="text-3xl font-bold text-red-600 mb-1">{{ $failedCount }}</div>
+                            <div class="text-xs text-gray-600 font-semibold">Belum Lulus</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                            <div class="text-3xl font-bold text-purple-600 mb-1">{{ number_format($avgScore, 1) }}%</div>
+                            <div class="text-xs text-gray-600 font-semibold">Rata-rata Nilai</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                            <div class="text-3xl font-bold text-indigo-600 mb-1">{{ number_format($passRate, 1) }}%</div>
+                            <div class="text-xs text-gray-600 font-semibold">Pass Rate</div>
+                        </div>
+                    </div>
+
+                    <!-- Pass Rate Bar -->
+                    <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-semibold text-gray-700">Tingkat Kelulusan</span>
+                            <span class="text-sm font-bold text-purple-600">{{ number_format($passRate, 1) }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+                            <div class="h-full flex">
+                                @if($passedCount > 0)
+                                    <div class="bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center text-white text-xs font-bold transition-all duration-500"
+                                         style="width: {{ ($passedCount / $totalParticipants) * 100 }}%">
+                                        {{ $passedCount }}
+                                    </div>
+                                @endif
+                                @if($failedCount > 0)
+                                    <div class="bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center text-white text-xs font-bold transition-all duration-500"
+                                         style="width: {{ ($failedCount / $totalParticipants) * 100 }}%">
+                                        {{ $failedCount }}
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between mt-2 text-xs">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 bg-green-500 rounded"></span>
+                                <span class="text-gray-600">Lulus (≥{{ $course->min_passing_score }}%)</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 bg-red-500 rounded"></span>
+                                <span class="text-gray-600">Belum Lulus</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Score Distribution -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200 text-center">
+                            <div class="text-sm text-gray-600 mb-1">Nilai Tertinggi</div>
+                            <div class="text-2xl font-bold text-green-600">{{ number_format($maxScore, 1) }}%</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200 text-center">
+                            <div class="text-sm text-gray-600 mb-1">Nilai Rata-rata</div>
+                            <div class="text-2xl font-bold text-blue-600">{{ number_format($avgScore, 1) }}%</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200 text-center">
+                            <div class="text-sm text-gray-600 mb-1">Nilai Terendah</div>
+                            <div class="text-2xl font-bold text-red-600">{{ number_format($minScore, 1) }}%</div>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <div class="p-8 text-center">
+                    <i class="fas fa-inbox text-gray-300 text-5xl mb-3"></i>
+                    <p class="text-gray-600 font-semibold">Belum ada peserta yang mengerjakan final quiz</p>
+                    <p class="text-gray-500 text-sm mt-1">Statistik akan muncul setelah ada peserta yang mengerjakan</p>
+                </div>
+            @endif
+        </div>
+    @endif
 
     <!-- Progress Peserta -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
@@ -434,9 +572,9 @@
             <input type="hidden" name="type" id="materialType">
 
             <div class="mb-4 relative z-10">
-                <div class="flex items-start gap-3 bg-blue-50 border border-blue-100 text-blue-800 rounded-xl px-3 py-2 text-sm mb-3">
+                <div class="flex items-start gap-3 bg-blue-50 border border-blue-100 text-blue-800 rounded-xl px-3 py-2 text-sm mb-3" id="materialAlert">
                     <i class="fas fa-info-circle mt-0.5"></i>
-                    <div>Unggah video (.mp4/.mov) atau PDF sesuai tipe materi. Untuk teks, isi konten tanpa unggah file.</div>
+                    <div id="materialAlertText">Unggah video (.mp4/.mov) atau PDF sesuai tipe materi. Untuk teks, isi konten tanpa unggah file.</div>
                 </div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Judul Materi *</label>
                 <input type="text" name="judul" required
@@ -459,12 +597,6 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Konten</label>
                 <textarea name="content" rows="6"
                           class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 shadow-sm"></textarea>
-            </div>
-
-            <div class="mb-4 relative z-10">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Durasi (menit)</label>
-                <input type="number" name="duration" min="0"
-                       class="w-full px-4 py-2 border border-gray-200 rounded-lg shadow-sm">
             </div>
 
             <div class="flex gap-3 justify-end relative z-10">
@@ -528,10 +660,6 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Passing Score</label>
                     <input type="number" name="passing_score" value="60" min="0" max="100" class="w-full px-4 py-2 border border-gray-200 rounded-lg shadow-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Durasi (menit)</label>
-                    <input type="number" name="duration_minutes" min="1" class="w-full px-4 py-2 border border-gray-200 rounded-lg shadow-sm" placeholder="Opsional">
                 </div>
             </div>
 
@@ -620,11 +748,27 @@ function openMaterialModal(sectionId = null, type = 'video') {
     }
     document.getElementById('materialType').value = type;
     
-    // Show/hide sections based on type
-    if (type === 'text') {
+    // Update alert berdasarkan tipe materi
+    const alertText = document.getElementById('materialAlertText');
+    const fileInput = document.querySelector('#fileUploadSection input[type="file"]');
+    
+    if (type === 'video') {
+        alertText.textContent = 'Unggah file video dengan format .mp4 atau .mov. Maksimal ukuran file: 100 MB.';
+        fileInput.accept = '.mp4,.mov,.avi';
+        document.getElementById('fileUploadSection').style.display = 'block';
+        document.getElementById('contentSection').style.display = 'none';
+    } else if (type === 'pdf') {
+        alertText.textContent = 'Unggah file PDF. Maksimal ukuran file: 100 MB.';
+        fileInput.accept = '.pdf';
+        document.getElementById('fileUploadSection').style.display = 'block';
+        document.getElementById('contentSection').style.display = 'none';
+    } else if (type === 'text') {
+        alertText.textContent = 'Buat konten teks langsung di editor. Tidak perlu mengunggah file.';
         document.getElementById('fileUploadSection').style.display = 'none';
         document.getElementById('contentSection').style.display = 'block';
     } else {
+        alertText.textContent = 'Unggah file sesuai dengan tipe materi yang dipilih. Maksimal ukuran: 100 MB.';
+        fileInput.accept = '.pdf,.mp4,.avi,.mov';
         document.getElementById('fileUploadSection').style.display = 'block';
         document.getElementById('contentSection').style.display = 'none';
     }

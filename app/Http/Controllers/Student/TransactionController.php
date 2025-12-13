@@ -206,13 +206,24 @@ class TransactionController extends Controller
                     'tanggal_daftar' => now(),
                 ]);
 
-                // Notify instructor
+                // Notify instructor yang mengampuh kursus ini
                 $course = $transaction->kursus;
                 if ($course) {
-                    $instructorId = $course->instructor_id ?? $course->pembuat;
-                    if ($instructorId) {
+                    // Prioritas: instructor_id, jika tidak ada baru pembuat (admin)
+                    $instructorId = $course->instructor_id ?: $course->pembuat;
+                    
+                    // Hanya kirim notifikasi ke instructor, bukan admin
+                    if ($instructorId && $instructorId != $course->pembuat) {
                         Notification::create([
                             'user_id' => $instructorId,
+                            'title' => 'Pendaftar baru',
+                            'message' => 'Pengguna ' . Auth::user()->name . ' mendaftar kursus "' . ($course->judul ?? $course->title) . '".',
+                            'type' => 'info',
+                        ]);
+                    } elseif ($instructorId == $course->pembuat && $course->pembuat) {
+                        // Jika tidak ada instructor_id, kirim ke pembuat (admin/creator)
+                        Notification::create([
+                            'user_id' => $course->pembuat,
                             'title' => 'Pendaftar baru',
                             'message' => 'Pengguna ' . Auth::user()->name . ' mendaftar kursus "' . ($course->judul ?? $course->title) . '".',
                             'type' => 'info',
@@ -320,13 +331,24 @@ class TransactionController extends Controller
                 'tanggal_daftar' => now(),
             ]);
 
-            // Notify instructor/pembuat tentang pendaftaran baru
+            // Notify instructor yang mengampuh kursus ini
             $course = $transaction->kursus;
             if ($course) {
-                $instructorId = $course->instructor_id ?? $course->pembuat;
-                if ($instructorId) {
+                // Prioritas: instructor_id, jika tidak ada baru pembuat (admin)
+                $instructorId = $course->instructor_id ?: $course->pembuat;
+                
+                // Hanya kirim notifikasi ke instructor, bukan admin
+                if ($instructorId && $instructorId != $course->pembuat) {
                     Notification::create([
                         'user_id' => $instructorId,
+                        'title' => 'Pendaftar baru',
+                        'message' => 'Pengguna ' . Auth::user()->name . ' mendaftar kursus "' . ($course->judul ?? $course->title) . '".',
+                        'type' => 'info',
+                    ]);
+                } elseif ($instructorId == $course->pembuat && $course->pembuat) {
+                    // Jika tidak ada instructor_id, kirim ke pembuat (admin/creator)
+                    Notification::create([
+                        'user_id' => $course->pembuat,
                         'title' => 'Pendaftar baru',
                         'message' => 'Pengguna ' . Auth::user()->name . ' mendaftar kursus "' . ($course->judul ?? $course->title) . '".',
                         'type' => 'info',

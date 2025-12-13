@@ -11,16 +11,18 @@ class JawabanPeserta extends Model
     protected $fillable = [
         'user_id',
         'quiz_id',
-        'bank_soal_id',
-        'opsi_jawaban_id',
-        'opsi_dipilih',
-        'nilai_tercapai',
-        'tanggal_submit',
+        'quiz_attempt_id',
+        'attempt_number',
+        'question_id',
+        'selected_option_id',
+        'points_earned',
+        'submitted_at',
+        'answer_text', // Legacy field
     ];
 
     protected $casts = [
-        'nilai_tercapai' => 'decimal:2',
-        'tanggal_submit' => 'datetime',
+        'points_earned' => 'decimal:2',
+        'submitted_at' => 'datetime',
     ];
 
     public function user()
@@ -33,13 +35,18 @@ class JawabanPeserta extends Model
         return $this->belongsTo(Quiz::class, 'quiz_id');
     }
 
-    public function bankSoal()
+    public function question()
     {
-        return $this->belongsTo(BankSoal::class, 'bank_soal_id');
+        return $this->belongsTo(Question::class, 'question_id');
     }
 
-    public function opsiJawaban()
+    public function selectedOption()
     {
-        return $this->belongsTo(OpsiJawaban::class, 'opsi_jawaban_id');
+        return $this->belongsTo(QuestionOption::class, 'selected_option_id');
+    }
+
+    public function quizAttempt()
+    {
+        return $this->belongsTo(QuizAttempt::class, 'quiz_attempt_id');
     }
 }

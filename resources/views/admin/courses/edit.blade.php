@@ -170,6 +170,52 @@
                     @enderror
                 </div>
 
+                {{-- Lama Akses Kursus --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-calendar-check text-blue-600 mr-1"></i>
+                        Lama Akses Kursus Setelah Pembelian (Hari)
+                    </label>
+                    <input
+                        type="number"
+                        name="access_duration_days"
+                        value="{{ old('access_duration_days', $course->access_duration_days) }}"
+                        min="1"
+                        placeholder="Kosongkan untuk akses selamanya"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
+                               focus:outline-none focus:ring-2 focus:ring-emerald-500
+                               @error('access_duration_days') border-red-500 @enderror">
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle"></i>
+                        Berapa hari siswa dapat mengakses materi kursus setelah pembelian. Kosongkan untuk akses unlimited.
+                    </p>
+                    @error('access_duration_days')
+                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Batas Waktu Pembelian --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-calendar-times text-red-600 mr-1"></i>
+                        Batas Waktu Pembelian Kursus
+                    </label>
+                    <input
+                        type="datetime-local"
+                        name="purchase_deadline_date"
+                        value="{{ old('purchase_deadline_date', $course->purchase_deadline_date?->format('Y-m-d\TH:i')) }}"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
+                               focus:outline-none focus:ring-2 focus:ring-emerald-500
+                               @error('purchase_deadline_date') border-red-500 @enderror">
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle"></i>
+                        Tanggal dan waktu terakhir siswa dapat membeli kursus ini. Kosongkan jika tidak ada batas waktu.
+                    </p>
+                    @error('purchase_deadline_date')
+                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 {{-- Instruktur --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">

@@ -11,6 +11,9 @@ use App\Models\Materi;
 use App\Models\Assignment;
 use App\Models\Submission;
 use App\Models\Sertifikat;
+use App\Models\Quiz;
+use App\Models\QuizAttempt;
+use App\Models\JawabanPeserta;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
@@ -46,22 +49,14 @@ class StudentController extends Controller
             },
         ]);
 
-        $materials = $course->sections
-            ->flatMap(function ($section) {
-                return $section->materials;
-            })
-            ->values();
+        $materialStats = $this->getMaterialStats($course, Auth::id());
+        $materials = $materialStats['materials'];
+        $materialIds = $materialStats['materialIds'];
+        $completedIds = $materialStats['completedIds'];
+        $progress = $materialStats['progress'];
 
-        $materialIds = $materials->pluck('id')->toArray();
-        $completedIds = MaterialCompletion::where('user_id', Auth::id())
-            ->whereIn('materi_id', $materialIds)
-            ->pluck('materi_id')
-            ->toArray();
-        $totalMaterials = $materials->count();
-        $progress = $totalMaterials > 0 ? min(100, round((count($completedIds) / $totalMaterials) * 100)) : 0;
-
-        // Auto-generate certificate if course is completed
-        if ($progress >= 100) {
+        // Auto-generate certificate if all materials are completed
+        if ($materialStats['isComplete']) {
             $this->generateCertificateIfNeeded($enrollment, $course);
         }
 
@@ -83,6 +78,9 @@ class StudentController extends Controller
             'enrollment' => $enrollment,
             'completedIds' => $completedIds,
             'progress' => $progress,
+            'finalExam' => $finalExam,
+            'finalExamStatus' => $finalExamStatus,
+            'materialsComplete' => $materialStats['isComplete'],
         ]);
     }
 
@@ -136,24 +134,14 @@ class StudentController extends Controller
         );
 
         // Check if all materials are completed
-        $course->load('sections.materials');
-        $materials = $course->sections
-            ->flatMap(function ($section) {
-                return $section->materials;
-            })
-            ->values();
-
-        $materialIds = $materials->pluck('id')->toArray();
-        $completedCount = MaterialCompletion::where('user_id', Auth::id())
-            ->whereIn('materi_id', $materialIds)
-            ->count();
+        $materialStats = $this->getMaterialStats($course, Auth::id());
 
         // If all materials completed, generate certificate
-        if ($completedCount >= count($materialIds) && count($materialIds) > 0) {
+        if ($materialStats['isComplete']) {
             $this->generateCertificateIfNeeded($enrollment, $course);
         }
 
-        return back()->with('success', 'Materi ditandai selesai.');
+    return back()->with('success', 'Materi ditandai selesai.');
     }
 
     public function quiz(Request $request, Kursus $course, Materi $material)
@@ -329,6 +317,45 @@ class StudentController extends Controller
     }
 
     /**
+     * Ambil statistik materi untuk kursus tertentu
+     */
+    private function getMaterialStats(Kursus $course, int $userId): array
+    {
+        $course->loadMissing([
+            'sections.materials' => function ($query) {
+                $query->orderBy('urutan', 'asc');
+            },
+        ]);
+
+        $materials = $course->sections
+            ->flatMap(function ($section) {
+                return $section->materials;
+            })
+            ->values();
+
+        $materialIds = $materials->pluck('id')->toArray();
+        $completedIds = [];
+        if (!empty($materialIds)) {
+            $completedIds = MaterialCompletion::where('user_id', $userId)
+                ->whereIn('materi_id', $materialIds)
+                ->pluck('materi_id')
+                ->toArray();
+        }
+
+        $totalMaterials = $materials->count();
+        $progress = $totalMaterials > 0 ? min(100, round((count($completedIds) / $totalMaterials) * 100)) : 0;
+
+        return [
+            'materials' => $materials,
+            'materialIds' => $materialIds,
+            'completedIds' => $completedIds,
+            'totalMaterials' => $totalMaterials,
+            'progress' => $progress,
+            'isComplete' => $totalMaterials > 0 && count($completedIds) >= $totalMaterials,
+        ];
+    }
+
+    /**
      * My courses page
      */
     public function myCourses()
@@ -374,6 +401,25 @@ class StudentController extends Controller
         // Check if certificate already exists
         if ($enrollment->sertifikat) {
             return;
+        }
+
+        // Pastikan semua materi selesai
+        $materialStats = $this->getMaterialStats($course, $enrollment->user_id ?? Auth::id());
+        if (!$materialStats['isComplete']) {
+            return;
+        }
+
+        // Jika kursus memiliki final quiz yang wajib, pastikan sudah lulus
+        if ($course->require_final_quiz && $course->final_quiz_id) {
+            $hasPassed = \App\Models\QuizAttempt::where('user_id', $enrollment->user_id ?? Auth::id())
+                ->where('quiz_id', $course->final_quiz_id)
+                ->where('kursus_id', $course->id)
+                ->where('is_passed', true)
+                ->exists();
+
+            if (!$hasPassed) {
+                return; // Belum lulus final quiz, tidak bisa generate sertifikat
+            }
         }
 
         $user = Auth::user();

@@ -22,9 +22,9 @@
                         {{ $activeCourses }} Aktif
                     </p>
                 </div>
-                <div class="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center">
+                <a href="{{ route('admin.courses.index') }}" class="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 transition" aria-label="Kelola kursus">
                     <i class="fas fa-book text-blue-600 text-2xl"></i>
-                </div>
+                </a>
             </div>
         </div>
 
@@ -38,9 +38,9 @@
                         {{ $totalStudents }} Students | {{ $totalInstructors }} Instructors
                     </p>
                 </div>
-                <div class="w-14 h-14 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <a href="{{ route('admin.users.index') }}" class="w-14 h-14 bg-emerald-100 rounded-lg flex items-center justify-center hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-300 transition" aria-label="Kelola pengguna">
                     <i class="fas fa-users text-emerald-600 text-2xl"></i>
-                </div>
+                </a>
             </div>
         </div>
 
@@ -55,9 +55,9 @@
                         {{ $pendingTransactions }} Pending
                     </p>
                 </div>
-                <div class="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center">
+                <a href="{{ route('admin.transactions.index') }}" class="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center hover:bg-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-300 transition" aria-label="Lihat transaksi">
                     <i class="fas fa-exchange-alt text-purple-600 text-2xl"></i>
-                </div>
+                </a>
             </div>
         </div>
 
@@ -74,9 +74,9 @@
                         {{ $paidTransactions }} Paid
                     </p>
                 </div>
-                <div class="w-14 h-14 bg-amber-100 rounded-lg flex items-center justify-center">
+                <a href="{{ route('admin.transactions.index') }}" class="w-14 h-14 bg-amber-100 rounded-lg flex items-center justify-center hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-300 transition" aria-label="Lihat pendapatan">
                     <i class="fas fa-wallet text-amber-600 text-2xl"></i>
-                </div>
+                </a>
             </div>
         </div>
     </div>

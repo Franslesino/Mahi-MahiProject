@@ -20,6 +20,22 @@ class CourseSection extends Model
         'is_collapsed' => 'boolean',
     ];
 
+    // Accessor untuk kompatibilitas dengan view berbahasa Indonesia
+    public function getJudulAttribute()
+    {
+        return $this->title;
+    }
+
+    public function getDeskripsiAttribute()
+    {
+        return $this->description;
+    }
+
+    public function getUrutanAttribute()
+    {
+        return $this->order;
+    }
+
     public function course(): BelongsTo
     {
         return $this->belongsTo(Kursus::class, 'course_id');

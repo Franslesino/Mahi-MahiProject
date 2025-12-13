@@ -33,6 +33,16 @@ class Kursus extends Model
         'created_by',
         'rating',
         'videos',
+
+        // final quiz settings
+        'final_quiz_id',
+        'min_passing_score',
+        'max_quiz_attempts',
+        'require_final_quiz',
+
+        // time settings
+        'access_duration_days',
+        'purchase_deadline_date',
     ];
 
     protected $casts = [
@@ -42,6 +52,11 @@ class Kursus extends Model
         'status_diterbitkan'=> 'boolean',
         'rating'            => 'decimal:1',
         'videos'            => 'integer',
+        'access_duration_days' => 'integer',
+        'purchase_deadline_date' => 'datetime',
+        'min_passing_score' => 'decimal:2',
+        'max_quiz_attempts' => 'integer',
+        'require_final_quiz'=> 'boolean',
     ];
 
     /*
@@ -138,6 +153,24 @@ class Kursus extends Model
 {
     return $this->hasMany(CourseSection::class, 'course_id')->orderBy('order');
 }
+
+    // quiz
+    public function quizzes()
+    {
+        return $this->hasMany(Quiz::class, 'kursus_id');
+    }
+
+    // assignments / quiz assignments
+    public function assignments()
+    {
+        return $this->hasMany(Assignment::class, 'kursus_id');
+    }
+
+    // final quiz
+    public function finalQuiz()
+    {
+        return $this->belongsTo(Quiz::class, 'final_quiz_id');
+    }
 
     // admin yang membuat (kalau dipakai)
     public function creator()

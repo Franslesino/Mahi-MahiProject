@@ -50,6 +50,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
 <body class="bg-gray-50">
     
@@ -122,7 +123,8 @@
 
                                     <!-- Dropdown (Responsive) -->
                                     <div x-show="open" 
-                                         @click.away="open = false"
+                                         @click.away="open = false; markAllAsReadOnClose()"
+                                         x-on:keydown.escape.window="open = false; markAllAsReadOnClose()"
                                          x-transition:enter="transition ease-out duration-200"
                                          x-transition:enter-start="opacity-0 scale-95"
                                          x-transition:enter-end="opacity-100 scale-100"
@@ -146,14 +148,22 @@
                                                         </span>
                                                     @endif
                                                 </div>
-                                                @if(Auth::user()->unreadNotifications()->count() > 0)
-                                                    <form action="{{ route('notifications.mark-all-read') }}" method="POST" class="inline">
-                                                        @csrf
-                                                        <button type="submit" class="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition">
-                                                            Tandai semua
+                                                <div class="flex items-center gap-2">
+                                                    @if(Auth::user()->unreadNotifications()->count() > 0)
+                                                        <form action="{{ route('notifications.mark-all-read') }}" method="POST" class="inline">
+                                                            @csrf
+                                                            <button type="submit" class="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition">
+                                                                Tandai semua
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                    @if(Auth::user()->notifications()->count() > 0)
+                                                        <button onclick="deleteAllNotifications()" 
+                                                                class="text-xs font-medium text-red-600 hover:text-red-800 hover:underline transition">
+                                                            Hapus semua
                                                         </button>
-                                                    </form>
-                                                @endif
+                                                    @endif
+                                                </div>
                                             </div>
                                         </div>
                                         
@@ -215,6 +225,10 @@
                                                                         </button>
                                                                     </form>
                                                                 @endif
+                                                                <button onclick="deleteNotification({{ $notification->id }})" 
+                                                                        class="text-xs font-medium text-red-600 hover:text-red-800 hover:underline transition">
+                                                                    Hapus
+                                                                </button>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -294,5 +308,82 @@
         </div>
     </div>
 
+    <script>
+        function deleteNotification(notificationId) {
+            if (!confirm('Hapus notifikasi ini?')) return;
+            
+            fetch(`/notifications/${notificationId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload halaman untuk update badge dan list
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Gagal menghapus notifikasi');
+            });
+        }
+
+        function deleteAllNotifications() {
+            if (!confirm('Hapus semua notifikasi?')) return;
+            
+            fetch('/notifications', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload halaman untuk update badge dan list
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Gagal menghapus notifikasi');
+            });
+        }
+
+        function markAllAsReadOnClose() {
+            @auth
+            const unreadCount = {{ Auth::user()->unreadNotifications()->count() }};
+            
+            // Cek apakah ada notifikasi unread
+            if (unreadCount > 0) {
+                // Kirim request untuk mark all as read
+                fetch('/notifications/read-all', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    // Reload halaman untuk update badge
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 100);
+                })
+                .catch(error => {
+                    console.error('Error marking all as read:', error);
+                });
+            }
+            @endauth
+        }
+    </script>
 </body>
 </html>

@@ -15,10 +15,12 @@ class QuestionBank extends Model
         'category',
         'created_by',
         'is_public',
+        'is_internal',
     ];
 
     protected $casts = [
         'is_public' => 'boolean',
+        'is_internal' => 'boolean',
     ];
 
     /**

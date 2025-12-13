@@ -117,6 +117,24 @@
                     </div>
                 </div>
 
+                <!-- Time Limit -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-clock text-blue-600 mr-1"></i>
+                        Batas Waktu Pengerjaan (Menit)
+                    </label>
+                    <input type="number" 
+                           name="time_limit" 
+                           value="{{ old('time_limit') }}"
+                           min="1"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                           placeholder="Kosongkan jika tidak ada batas waktu">
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle"></i>
+                        Jika diisi, timer akan berjalan mundur dan quiz otomatis tersubmit saat waktu habis
+                    </p>
+                </div>
+
                 <!-- Start and Due Date -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>

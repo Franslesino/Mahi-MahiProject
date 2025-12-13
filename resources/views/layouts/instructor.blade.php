@@ -7,7 +7,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'EDUQUEST') }} - Instructor</title>
     
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
@@ -103,15 +104,8 @@
             <!-- Bank Soal -->
             <a href="{{ route('instructor.question-banks.index') }}" 
                class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('instructor.question-banks*') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
-                <i class="fas fa-question-circle w-5 text-center"></i>
+                <i class="fas fa-folder-open w-5 text-center"></i>
                 <span class="font-medium">Bank Soal</span>
-            </a>
-
-            <!-- Assignment & Quiz -->
-            <a href="{{ route('instructor.assignments.index') }}" 
-               class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('instructor.assignments*') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
-                <i class="fas fa-clipboard-list w-5 text-center"></i>
-                <span class="font-medium">Assignment & Quiz</span>
             </a>
 
             <!-- Divider -->
@@ -131,17 +125,18 @@
 
         <!-- Logout Button -->
         <div class="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
-            <form method="POST" action="{{ route('logout') }}">
+            <button 
+                type="button"
+                onclick="showLogoutModal()"
+                class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+                <span>Logout</span>
+            </button>
+            <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
                 @csrf
-                <button 
-                    type="submit" 
-                    class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-medium">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                    <span>Logout</span>
-                </button>
             </form>
         </div>
     </aside>
@@ -162,17 +157,24 @@
                             <i class="fas fa-bell text-gray-600"></i>
                             <span id="notif-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-4 px-1 bg-red-500 text-white text-[11px] rounded-full flex items-center justify-center"></span>
                         </button>
-                        <div x-show="openNotif" x-transition @click.away="openNotif=false"
+                        <div x-show="openNotif" x-transition 
+                             @click.away="openNotif=false; markAllAsReadOnClose()"
+                             x-on:keydown.escape.window="openNotif=false; markAllAsReadOnClose()"
                              class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-30">
                             <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
                                 <div class="flex items-center gap-2">
                                     <i class="fas fa-bell text-blue-600"></i>
                                     <span class="font-semibold text-gray-800 text-sm">Notifikasi</span>
                                 </div>
-                                <form action="{{ route('notifications.mark-all-read') }}" method="POST" id="notif-mark-all-form" class="hidden">
-                                    @csrf
-                                    <button type="submit" class="text-xs text-blue-600 hover:text-blue-800 font-semibold">Tandai semua</button>
-                                </form>
+                                <div class="flex items-center gap-2">
+                                    <form action="{{ route('instructor.notifications.mark-all-read') }}" method="POST" id="notif-mark-all-form" class="hidden">
+                                        @csrf
+                                        <button type="submit" class="text-xs text-blue-600 hover:text-blue-800 font-semibold">Tandai semua</button>
+                                    </form>
+                                    <button onclick="deleteAllNotifications()" id="notif-delete-all-btn" class="text-xs text-red-600 hover:text-red-800 font-semibold hidden">
+                                        Hapus semua
+                                    </button>
+                                </div>
                             </div>
                             <div class="max-h-96 overflow-y-auto" id="notif-list">
                                 <div class="px-4 py-6 text-center text-sm text-gray-500">Memuat notifikasi...</div>
@@ -256,6 +258,7 @@
             const badge = document.getElementById('notif-badge');
             const list = document.getElementById('notif-list');
             const markAllForm = document.getElementById('notif-mark-all-form');
+            const deleteAllBtn = document.getElementById('notif-delete-all-btn');
             const endpoint = "{{ route('instructor.notifications.poll') }}";
 
             const escapeHtml = (str) => {
@@ -278,8 +281,11 @@
 
                 if (!data.items || data.items.length === 0) {
                     list.innerHTML = '<div class="px-4 py-6 text-center text-sm text-gray-500">Belum ada notifikasi.</div>';
+                    deleteAllBtn?.classList.add('hidden');
                     return;
                 }
+                
+                deleteAllBtn?.classList.remove('hidden');
 
                 list.innerHTML = data.items.map(item => {
                     const typeClass = item.type === 'success'
@@ -297,7 +303,12 @@
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm font-semibold text-gray-900">${escapeHtml(item.title)}</p>
                                     <p class="text-xs text-gray-600 leading-relaxed">${escapeHtml(item.message)}</p>
-                                    <p class="text-[11px] text-gray-400 mt-1">${escapeHtml(item.time)}</p>
+                                    <div class="flex items-center gap-3 mt-1">
+                                        <p class="text-[11px] text-gray-400">${escapeHtml(item.time)}</p>
+                                        <button onclick="deleteNotification(${item.id})" class="text-[11px] text-red-600 hover:text-red-800 font-semibold">
+                                            Hapus
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -319,6 +330,206 @@
             poll();
             setInterval(poll, 15000);
         })();
+
+        function deleteNotification(notificationId) {
+            if (!confirm('Hapus notifikasi ini?')) return;
+            
+            fetch(`/instructor/notifications/${notificationId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Re-poll notifikasi untuk update UI
+                    const pollFunc = async () => {
+                        const endpoint = "{{ route('instructor.notifications.poll') }}";
+                        const badge = document.getElementById('notif-badge');
+                        const list = document.getElementById('notif-list');
+                        const markAllForm = document.getElementById('notif-mark-all-form');
+                        const deleteAllBtn = document.getElementById('notif-delete-all-btn');
+                        
+                        try {
+                            const res = await fetch(endpoint, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                            if (!res.ok) return;
+                            const data = await res.json();
+                            
+                            // Update badge
+                            if (data.unread > 0) {
+                                badge.textContent = data.unread;
+                                badge.classList.remove('hidden');
+                                markAllForm?.classList.remove('hidden');
+                            } else {
+                                badge.classList.add('hidden');
+                                markAllForm?.classList.add('hidden');
+                            }
+                            
+                            // Update list
+                            if (!data.items || data.items.length === 0) {
+                                list.innerHTML = '<div class="px-4 py-6 text-center text-sm text-gray-500">Belum ada notifikasi.</div>';
+                                deleteAllBtn?.classList.add('hidden');
+                            } else {
+                                deleteAllBtn?.classList.remove('hidden');
+                                list.innerHTML = data.items.map(item => {
+                                    const typeClass = item.type === 'success'
+                                        ? 'bg-emerald-100 text-emerald-600'
+                                        : item.type === 'warning'
+                                            ? 'bg-amber-100 text-amber-600'
+                                            : 'bg-blue-100 text-blue-600';
+                                    const unreadClass = item.unread ? 'bg-blue-50' : '';
+                                    const escapeHtml = (str) => {
+                                        if (!str) return '';
+                                        return str.replace(/[&<>"']/g, m => ({
+                                            '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+                                        }[m]));
+                                    };
+                                    return `
+                                        <div class="px-4 py-3 border-b border-gray-100 ${unreadClass}">
+                                            <div class="flex items-start gap-3">
+                                                <div class="w-9 h-9 rounded-full flex items-center justify-center ${typeClass}">
+                                                    <i class="fas fa-bell"></i>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm font-semibold text-gray-900">${escapeHtml(item.title)}</p>
+                                                    <p class="text-xs text-gray-600 leading-relaxed">${escapeHtml(item.message)}</p>
+                                                    <div class="flex items-center gap-3 mt-1">
+                                                        <p class="text-[11px] text-gray-400">${escapeHtml(item.time)}</p>
+                                                        <button onclick="deleteNotification(${item.id})" class="text-[11px] text-red-600 hover:text-red-800 font-semibold">
+                                                            Hapus
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('');
+                            }
+                        } catch (e) {
+                            console.error('Error:', e);
+                        }
+                    };
+                    pollFunc();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Gagal menghapus notifikasi');
+            });
+        }
+
+        function deleteAllNotifications() {
+            if (!confirm('Hapus semua notifikasi?')) return;
+            
+            fetch('/instructor/notifications', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Clear UI langsung
+                    const badge = document.getElementById('notif-badge');
+                    const list = document.getElementById('notif-list');
+                    const markAllForm = document.getElementById('notif-mark-all-form');
+                    const deleteAllBtn = document.getElementById('notif-delete-all-btn');
+                    
+                    badge?.classList.add('hidden');
+                    markAllForm?.classList.add('hidden');
+                    deleteAllBtn?.classList.add('hidden');
+                    list.innerHTML = '<div class="px-4 py-6 text-center text-sm text-gray-500">Belum ada notifikasi.</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Gagal menghapus notifikasi');
+            });
+        }
+
+        function markAllAsReadOnClose() {
+            const badge = document.getElementById('notif-badge');
+            
+            // Cek apakah ada notifikasi unread
+            if (badge && !badge.classList.contains('hidden')) {
+                // Kirim request untuk mark all as read
+                fetch('/instructor/notifications/read-all', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide badge setelah berhasil
+                    badge.classList.add('hidden');
+                    const markAllForm = document.getElementById('notif-mark-all-form');
+                    markAllForm?.classList.add('hidden');
+                })
+                .catch(error => {
+                    console.error('Error marking all as read:', error);
+                });
+            }
+        }
+    </script>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Konfirmasi Logout</h3>
+                <p class="text-gray-600">Apakah Anda yakin ingin keluar dari akun?</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="hideLogoutModal()" class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium">
+                    Tidak
+                </button>
+                <button onclick="confirmLogout()" class="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">
+                    Iya, Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showLogoutModal() {
+            document.getElementById('logoutModal').classList.remove('hidden');
+        }
+        
+        function hideLogoutModal() {
+            document.getElementById('logoutModal').classList.add('hidden');
+        }
+        
+        function confirmLogout() {
+            document.getElementById('logout-form').submit();
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('logoutModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideLogoutModal();
+            }
+        });
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideLogoutModal();
+            }
+        });
     </script>
 
     @include('components.delete-modal')

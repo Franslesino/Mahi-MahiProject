@@ -20,11 +20,8 @@
 
                 <!-- Actions -->
                 <div class="flex items-center gap-2">
-                    <a href="{{ route('instructor.materials.edit', [$course, $material]) }}" 
-                       class="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                        <i class="fas fa-edit mr-1"></i>
-                        <span class="hidden sm:inline">Edit</span>
-                    </a>
+                    <!-- Placeholder for spacing -->
+                    <div class="w-20"></div>
                 </div>
             </div>
         </div>
@@ -178,10 +175,6 @@
                                         <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
                                             <i class="fas fa-inbox text-gray-300 text-4xl mb-3"></i>
                                             <p class="text-gray-600 mb-4">Belum ada soal pada quiz ini</p>
-                                            <a href="{{ route('instructor.assignments.edit-questions', $assignment) }}"
-                                               class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                                                <i class="fas fa-plus-circle"></i> Tambah Soal
-                                            </a>
                                         </div>
                                     @else
                                         <div class="border border-gray-200 rounded-lg">
@@ -209,16 +202,14 @@
                                         </div>
                                     @endif
 
-                                    <div class="flex flex-wrap gap-3">
-                                        <a href="{{ route('instructor.assignments.edit-questions', $assignment) }}"
-                                           class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                                            Kelola Soal
-                                        </a>
-                                        <a href="{{ route('instructor.assignments.show', $assignment) }}"
-                                           class="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition">
-                                            Lihat Pengaturan Quiz
-                                        </a>
-                                    </div>
+                                    @if($assignment)
+                                        <div class="mt-4">
+                                            <a href="{{ route('instructor.assignments.edit-questions', $assignment) }}"
+                                               class="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition">
+                                                <i class="fas fa-cog"></i> Kelola Soal
+                                            </a>
+                                        </div>
+                                    @endif
                                 </div>
                             @endif
                         @endif

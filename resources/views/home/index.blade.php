@@ -11,78 +11,72 @@
             <!-- Carousel Container -->
             <div id="promoCarousel" class="flex transition-transform duration-500 ease-in-out">
                 
-                <!-- Slide 1 -->
+                @forelse($promoBanners as $banner)
+                <!-- Slide {{ $loop->iteration }} -->
+                <div class="min-w-full bg-gradient-to-r from-{{ $banner->gradient_from }} to-{{ $banner->gradient_to }} p-8 text-white relative overflow-hidden">
+                    <div class="absolute inset-0 bg-black/10 md:bg-black/15"></div>
+                    <div class="relative z-10 max-w-md">
+                        @if($banner->badge)
+                        <div class="inline-block bg-white/20 px-3 py-1 rounded-full text-sm font-semibold mb-3">
+                            {{ $banner->badge }}
+                        </div>
+                        @endif
+                        <h2 class="text-3xl font-bold mb-2">{{ $banner->title }}</h2>
+                        <p class="text-white/90 mb-4 leading-relaxed">
+                            {!! nl2br(e($banner->description)) !!}
+                        </p>
+                        @if($banner->button_text)
+                            @if($banner->button_link)
+                            <a href="{{ $banner->button_link }}" class="inline-flex items-center gap-2 bg-white text-gray-900 px-6 py-3 rounded-xl font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 shadow-sm text-sm md:text-base">
+                                {{ $banner->button_text }}
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </a>
+                            @else
+                            <button class="inline-flex items-center gap-2 bg-white text-gray-900 px-6 py-3 rounded-xl font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 shadow-sm text-sm md:text-base">
+                                {{ $banner->button_text }}
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </button>
+                            @endif
+                        @endif
+                    </div>
+                    <div class="absolute right-0 top-0 w-40 h-40 bg-white/20 rounded-full -mr-20 -mt-10"></div>
+                    <div class="absolute right-20 bottom-0 w-32 h-32 bg-white/10 rounded-full -mb-10"></div>
+                </div>
+                @empty
+                <!-- Default Slide if no banners -->
                 <div class="min-w-full bg-gradient-to-r from-teal-600 to-teal-700 p-8 text-white relative overflow-hidden">
                     <div class="absolute inset-0 bg-black/10 md:bg-black/15"></div>
                     <div class="relative z-10 max-w-md">
                         <div class="inline-block bg-white/20 px-3 py-1 rounded-full text-sm font-semibold mb-3">
-                            35% OFF
+                            SELAMAT DATANG
                         </div>
-                        <h2 class="text-3xl font-bold mb-2">PNJ SPECIAL</h2>
+                        <h2 class="text-3xl font-bold mb-2">UpGrennius</h2>
                         <p class="text-teal-50 mb-4 leading-relaxed">
-                            Dapatkan Voucher Kode Bagi<br>Mahasiswa Politeknik Negeri Jakarta
+                            Platform Pembelajaran Online<br>Terbaik untuk Pengembangan Skill
                         </p>
-                        <button class="inline-flex items-center gap-2 bg-white text-teal-700 px-6 py-3 rounded-xl font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 shadow-sm text-sm md:text-base">
-                            MASUKKAN NIM ANDA
+                        <a href="#courses" class="inline-flex items-center gap-2 bg-white text-teal-700 px-6 py-3 rounded-xl font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 shadow-sm text-sm md:text-base">
+                            JELAJAHI KURSUS
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                             </svg>
-                        </button>
+                        </a>
                     </div>
                     <div class="absolute right-0 top-0 w-40 h-40 bg-teal-500/30 rounded-full -mr-20 -mt-10"></div>
                     <div class="absolute right-20 bottom-0 w-32 h-32 bg-teal-400/20 rounded-full -mb-10"></div>
                 </div>
-
-                <!-- Slide 2 -->
-                <div class="min-w-full bg-gradient-to-r from-purple-600 to-pink-600 p-8 text-white relative overflow-hidden">
-                    <div class="absolute inset-0 bg-black/10 md:bg-black/15"></div>
-                    <div class="relative z-10 max-w-md">
-                        <div class="inline-block bg-white/20 px-3 py-1 rounded-full text-sm font-semibold mb-3">
-                            HOT DEAL
-                        </div>
-                        <h2 class="text-3xl font-bold mb-2">Bundle Package</h2>
-                        <p class="text-purple-50 mb-4 leading-relaxed">
-                            Beli 3 Kursus Dapat Diskon 50%<br>Penawaran Terbatas!
-                        </p>
-                        <button class="inline-flex items-center gap-2 bg-white text-purple-700 px-6 py-3 rounded-xl font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 shadow-sm text-sm md:text-base">
-                            LIHAT BUNDLE
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="absolute right-0 top-0 w-40 h-40 bg-pink-500/30 rounded-full -mr-20 -mt-10"></div>
-                    <div class="absolute right-20 bottom-0 w-32 h-32 bg-purple-400/20 rounded-full -mb-10"></div>
-                </div>
-
-                <!-- Slide 3 -->
-                <div class="min-w-full bg-gradient-to-r from-orange-500 to-red-600 p-8 text-white relative overflow-hidden">
-                    <div class="absolute inset-0 bg-black/10 md:bg-black/15"></div>
-                    <div class="relative z-10 max-w-md">
-                        <div class="inline-block bg-white/20 px-3 py-1 rounded-full text-sm font-semibold mb-3">
-                            FLASH SALE
-                        </div>
-                        <h2 class="text-3xl font-bold mb-2">Weekend Special</h2>
-                        <p class="text-orange-50 mb-4 leading-relaxed">
-                            Diskon hingga 60% untuk<br>Kursus Pilihan Akhir Pekan
-                        </p>
-                        <button class="inline-flex items-center gap-2 bg-white text-orange-700 px-6 py-3 rounded-xl font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 shadow-sm text-sm md:text-base">
-                            SHOP NOW
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="absolute right-0 top-0 w-40 h-40 bg-red-500/30 rounded-full -mr-20 -mt-10"></div>
-                    <div class="absolute right-20 bottom-0 w-32 h-32 bg-orange-400/20 rounded-full -mb-10"></div>
-                </div>
+                @endforelse
 
             </div>
 
             <!-- Navigation Dots -->
             <div class="carousel-dots absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20"></div>
 
-            <!-- Navigation Arrows (Optional) -->
+            <!-- Navigation Arrows -->
+            @if($promoBanners->count() > 1 || $promoBanners->count() == 0)
             <button onclick="prevSlide()" class="absolute left-4 top-1/2 -translate-y-1/2 bg-white text-gray-900 shadow-md hover:shadow-xl p-2 rounded-full transition z-20 border border-white/60">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -93,6 +87,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
             </button>
+            @endif
         </div>
     </div> 
 
@@ -204,6 +199,29 @@
                     </span>
                 </div>
                 @endif
+
+                <!-- Purchase Deadline Badge -->
+                @if($course->purchase_deadline_date && $course->purchase_deadline_date->isFuture())
+                    @php
+                        $hoursLeft = now()->diffInHours($course->purchase_deadline_date);
+                        $daysLeft = now()->diffInDays($course->purchase_deadline_date);
+                    @endphp
+                    @if($hoursLeft <= 48)
+                        <div class="absolute bottom-3 left-3 right-3">
+                            <div class="bg-red-600 text-white text-xs px-2.5 py-1.5 rounded-lg font-semibold shadow-lg flex items-center gap-1.5 animate-pulse">
+                                <i class="fas fa-clock"></i>
+                                <span>Berakhir {{ $hoursLeft }}j lagi!</span>
+                            </div>
+                        </div>
+                    @elseif($daysLeft <= 7)
+                        <div class="absolute bottom-3 left-3 right-3">
+                            <div class="bg-orange-500 text-white text-xs px-2.5 py-1.5 rounded-lg font-semibold shadow-lg flex items-center gap-1.5">
+                                <i class="fas fa-hourglass-half"></i>
+                                <span>{{ $daysLeft }} hari lagi</span>
+                            </div>
+                        </div>
+                    @endif
+                @endif
             </div>
 
             <!-- Info Card -->
@@ -222,6 +240,28 @@
                     <span class="text-gray-300">|</span>
                     <span>{{ $course->materi_count ?? 0 }} Materi</span>
                 </div>
+
+                {{-- Purchase Deadline Info --}}
+                @if($course->purchase_deadline_date && $course->purchase_deadline_date->isFuture())
+                    @php
+                        $hoursLeft = now()->diffInHours($course->purchase_deadline_date);
+                        $daysLeft = now()->diffInDays($course->purchase_deadline_date);
+                    @endphp
+                    <div class="mb-3 p-2 rounded-lg {{ $hoursLeft <= 48 ? 'bg-red-50 border border-red-200' : ($daysLeft <= 7 ? 'bg-orange-50 border border-orange-200' : 'bg-blue-50 border border-blue-200') }}">
+                        <div class="flex items-center gap-2 text-xs {{ $hoursLeft <= 48 ? 'text-red-700' : ($daysLeft <= 7 ? 'text-orange-700' : 'text-blue-700') }}">
+                            <i class="fas fa-clock"></i>
+                            <span class="font-semibold">
+                                @if($hoursLeft <= 48)
+                                    Berakhir dalam {{ $hoursLeft }} jam
+                                @elseif($daysLeft <= 7)
+                                    Berakhir dalam {{ $daysLeft }} hari
+                                @else
+                                    Tersedia hingga {{ $course->purchase_deadline_date->format('d M Y') }}
+                                @endif
+                            </span>
+                        </div>
+                    </div>
+                @endif
 
                 <div class="flex items-center justify-between">
     @php
@@ -268,8 +308,13 @@
         @endforelse
     </div>
 
+    <!-- Pagination -->
+    <div class="mt-10 mb-8">
+        {{ $courses->links() }}
+    </div>
+
     <!-- Why Choose Us Section -->
-    <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-3xl p-12 mb-12 mt-12 shadow-sm border border-gray-100">
+    <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-3xl p-12 mb-12 shadow-sm border border-gray-100">
         <div class="text-center mb-12">
             <h3 class="text-3xl font-bold text-gray-900 mb-3">Mengapa Memilih UpGrennius?</h3>
             <p class="text-gray-600 text-lg">Platform pembelajaran terbaik untuk mahasiswa PNJ</p>
@@ -304,15 +349,10 @@
                 <div class="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-xl">
                     <i class="fas fa-infinity text-white text-3xl"></i>
                 </div>
-                <h4 class="font-bold text-gray-900 mb-2 text-lg">Akses Selamanya</h4>
-                <p class="text-gray-600 text-sm">Materi yang sudah dibeli bisa diakses tanpa batas waktu</p>
+                <h4 class="font-bold text-gray-900 mb-2 text-lg">Akses Fleksibel</h4>
+                <p class="text-gray-600 text-sm">Akses materi sesuai durasi yang ditentukan atau selamanya</p>
             </div>
         </div>
-    </div>
-
-    <!-- Pagination -->
-    <div class="mt-10 pb-4">
-        {{ $courses->links() }}
     </div>
 
 </div>

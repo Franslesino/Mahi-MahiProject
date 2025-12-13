@@ -580,7 +580,7 @@
 
 <script>
 function openImportModal() {
-    @if($kursus->finalQuiz->is_active)
+    @if($kursus->finalQuiz && $kursus->finalQuiz->is_active)
         alert('Final quiz sedang aktif. Nonaktifkan terlebih dahulu untuk menambah soal.');
         return;
     @endif
@@ -626,7 +626,7 @@ function toggleFinalQuizSettings() {
 let optionCounter = 0;
 
 function openCreateQuestionModal() {
-    @if($kursus->finalQuiz->is_active)
+    @if($kursus->finalQuiz && $kursus->finalQuiz->is_active)
         alert('Final quiz sedang aktif. Nonaktifkan terlebih dahulu untuk menambah soal.');
         return;
     @endif

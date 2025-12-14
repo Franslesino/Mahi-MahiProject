@@ -48,32 +48,20 @@
                             @endif
 
                             <div class="options-container">
-                                @php
-                                    $isEssay = $question->type === 'essay';
-                                    $hasOptions = $question->options && $question->options->count() > 0;
-                                @endphp
-
-                                @if($isEssay || !$hasOptions)
-                                    <div class="mb-2">
-                                        <textarea name="answers[{{ $question->id }}]" rows="4" class="form-control"
-                                                  placeholder="Tuliskan jawaban Anda di sini..." required></textarea>
+                                @foreach($question->options as $option)
+                                    <div class="form-check option-item p-3 mb-2 border rounded">
+                                        <input class="form-check-input" 
+                                               type="radio" 
+                                               name="answers[{{ $question->id }}]" 
+                                               id="option_{{ $question->id }}_{{ $option->id }}"
+                                               value="{{ $option->id }}"
+                                               required>
+                                        <label class="form-check-label w-100" 
+                                               for="option_{{ $question->id }}_{{ $option->id }}">
+                                            {{ $option->option_text }}
+                                        </label>
                                     </div>
-                                @else
-                                    @foreach($question->options as $option)
-                                        <div class="form-check option-item p-3 mb-2 border rounded">
-                                            <input class="form-check-input" 
-                                                   type="radio" 
-                                                   name="answers[{{ $question->id }}]" 
-                                                   id="option_{{ $question->id }}_{{ $option->id }}"
-                                                   value="{{ $option->id }}"
-                                                   required>
-                                            <label class="form-check-label w-100" 
-                                                   for="option_{{ $question->id }}_{{ $option->id }}">
-                                                {{ $option->option_text }}
-                                            </label>
-                                        </div>
-                                    @endforeach
-                                @endif
+                                @endforeach
                             </div>
                         </div>
                     </div>
@@ -152,12 +140,9 @@ let timerInterval;
 function submitQuiz(event) {
     event.preventDefault();
     
-    // Check if all questions are answered (termasuk essay)
+    // Check if all questions are answered
     const totalQuestions = {{ $questions->count() }};
-    const answeredRadios = document.querySelectorAll('input[type="radio"]:checked').length;
-    const answeredEssays = Array.from(document.querySelectorAll('textarea[name^="answers["]'))
-        .filter(t => t.value.trim() !== '').length;
-    const answeredQuestions = answeredRadios + answeredEssays;
+    const answeredQuestions = document.querySelectorAll('input[type="radio"]:checked').length;
     
     if (answeredQuestions < totalQuestions) {
         if (!confirm(`Anda baru menjawab ${answeredQuestions} dari ${totalQuestions} soal. Yakin ingin submit?`)) {
@@ -191,7 +176,7 @@ function submitQuiz(event) {
     }
     
     // Submit via AJAX
-    fetch('{{ route("courses.final-quiz.submit", [$kursusId, $attempt->id]) }}', {
+    fetch('{{ route("student.courses.final-quiz.submit", [$kursusId, $attempt->id]) }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

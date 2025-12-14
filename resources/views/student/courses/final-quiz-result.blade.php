@@ -84,12 +84,10 @@
                 <div class="card-body">
                     @foreach($attempt->jawabanPeserta as $index => $jawaban)
                         @php
-                            $question = $jawaban->question; // memakai relasi question
-                            $options = $question?->options ?? collect();
-                            $correctOption = $options->where('is_correct', true)->first();
-                            $selectedOption = $options->firstWhere('id', $jawaban->selected_option_id);
-                            $isEssay = ($question?->type === 'essay') || $options->count() === 0;
-                            $isCorrect = !$isEssay && $selectedOption && $selectedOption->is_correct;
+                            $question = $jawaban->bankSoal;
+                            $correctOption = $question->opsiJawaban->where('is_correct', true)->first();
+                            $selectedOption = $jawaban->opsiJawaban;
+                            $isCorrect = $jawaban->nilai_tercapai == 1;
                         @endphp
 
                         <div class="mb-4 pb-4 {{ !$loop->last ? 'border-bottom' : '' }}">
@@ -99,9 +97,9 @@
                                     {{ $index + 1 }}
                                 </span>
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-2">{{ $question?->question_text ?? 'Pertanyaan' }}</h6>
-                                    @if($question?->image)
-                                        <img src="{{ asset('storage/' . $question->image) }}" 
+                                    <h6 class="mb-2">{{ $question->pertanyaan }}</h6>
+                                    @if($question->gambar)
+                                        <img src="{{ asset('storage/' . $question->gambar) }}" 
                                              alt="Question Image" 
                                              class="img-fluid rounded mb-2"
                                              style="max-height: 200px;">
@@ -111,50 +109,43 @@
 
                             <!-- Options -->
                             <div class="ms-4">
-                                @if($isEssay)
-                                    <div class="p-3 mb-2 bg-light rounded border">
-                                        <strong>Jawaban Anda:</strong>
-                                        <div class="mt-1">{{ $jawaban->answer_text ?: '-' }}</div>
-                                    </div>
-                                @else
-                                    @foreach($options as $option)
-                                        @php
-                                            $isSelected = $selectedOption && $selectedOption->id == $option->id;
-                                            $isCorrectOption = $option->is_correct;
-                                        @endphp
+                                @foreach($question->opsiJawaban as $option)
+                                    @php
+                                        $isSelected = $selectedOption && $selectedOption->id == $option->id;
+                                        $isCorrectOption = $option->is_correct;
+                                    @endphp
 
-                                        <div class="p-2 mb-2 rounded
-                                            {{ $isCorrectOption ? 'bg-success bg-opacity-10 border border-success' : '' }}
-                                            {{ $isSelected && !$isCorrectOption ? 'bg-danger bg-opacity-10 border border-danger' : '' }}
-                                            {{ !$isSelected && !$isCorrectOption ? 'bg-light' : '' }}">
+                                    <div class="p-2 mb-2 rounded
+                                        {{ $isCorrectOption ? 'bg-success bg-opacity-10 border border-success' : '' }}
+                                        {{ $isSelected && !$isCorrectOption ? 'bg-danger bg-opacity-10 border border-danger' : '' }}
+                                        {{ !$isSelected && !$isCorrectOption ? 'bg-light' : '' }}">
+                                        
+                                        <div class="d-flex align-items-center">
+                                            @if($isCorrectOption)
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                            @elseif($isSelected)
+                                                <i class="fas fa-times-circle text-danger me-2"></i>
+                                            @else
+                                                <i class="far fa-circle text-muted me-2"></i>
+                                            @endif
                                             
-                                            <div class="d-flex align-items-center">
-                                                @if($isCorrectOption)
-                                                    <i class="fas fa-check-circle text-success me-2"></i>
-                                                @elseif($isSelected)
-                                                    <i class="fas fa-times-circle text-danger me-2"></i>
-                                                @else
-                                                    <i class="far fa-circle text-muted me-2"></i>
-                                                @endif
-                                                
-                                                <span class="{{ $isCorrectOption ? 'fw-bold' : '' }}">
-                                                    {{ $option->option_text }}
-                                                </span>
+                                            <span class="{{ $isCorrectOption ? 'fw-bold' : '' }}">
+                                                {{ $option->opsi_jawaban }}
+                                            </span>
 
-                                                @if($isSelected && !$isCorrectOption)
-                                                    <span class="badge bg-danger ms-2">Jawaban Anda</span>
-                                                @endif
-                                                @if($isCorrectOption)
-                                                    <span class="badge bg-success ms-2">Jawaban Benar</span>
-                                                @endif
-                                            </div>
+                                            @if($isSelected && !$isCorrectOption)
+                                                <span class="badge bg-danger ms-2">Jawaban Anda</span>
+                                            @endif
+                                            @if($isCorrectOption)
+                                                <span class="badge bg-success ms-2">Jawaban Benar</span>
+                                            @endif
                                         </div>
-                                    @endforeach
-                                @endif
+                                    </div>
+                                @endforeach
                             </div>
 
                             <!-- Explanation (if available) -->
-                            @if($question?->penjelasan)
+                            @if($question->penjelasan)
                                 <div class="alert alert-info mt-3 ms-4">
                                     <strong><i class="fas fa-lightbulb"></i> Penjelasan:</strong><br>
                                     {{ $question->penjelasan }}
@@ -168,7 +159,7 @@
             <!-- Action Buttons -->
             <div class="card shadow-sm">
                 <div class="card-body text-center py-4">
-                    <a href="{{ route('courses.final-quiz.show', $kursus->id) }}" class="btn btn-primary btn-lg">
+                    <a href="{{ route('student.courses.final-quiz.show', $kursus->id) }}" class="btn btn-primary btn-lg">
                         <i class="fas fa-arrow-left"></i> Kembali ke Final Quiz
                     </a>
                     
@@ -182,7 +173,7 @@
                         @endphp
                         
                         @if($canRetake)
-                            <a href="{{ route('courses.final-quiz.show', $kursus->id) }}" class="btn btn-warning btn-lg">
+                            <a href="{{ route('student.courses.final-quiz.show', $kursus->id) }}" class="btn btn-warning btn-lg">
                                 <i class="fas fa-redo"></i> Coba Lagi
                             </a>
                         @endif

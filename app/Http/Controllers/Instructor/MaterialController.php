@@ -15,7 +15,7 @@ use App\Services\SupabaseStorageService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Schema;
 
 class MaterialController extends Controller
 {
@@ -27,7 +27,7 @@ class MaterialController extends Controller
                 $query->where('pembuat', $instructorId)
                       ->orWhere('instructor_id', $instructorId);
             })
-            ->withCount('materi')
+            ->withCount(['materi', 'enrollments'])
             ->latest()
             ->get();
 
@@ -56,10 +56,15 @@ class MaterialController extends Controller
             ->distinct('user_id')
             ->count('user_id');
 
-        $questionBanks = QuestionBank::where('created_by', Auth::id())
-            ->orWhere('is_public', true)
+        $questionBanks = QuestionBank::where(function($query) {
+                $query->where('created_by', Auth::id())
+                      ->orWhere('is_public', true);
+            })
             ->withCount('questions')
             ->get();
+        if (Schema::hasColumn('question_banks', 'is_internal')) {
+            $questionBanks = $questionBanks->where('is_internal', false);
+        }
 
         // Progress & score per participant
         $materialIds = $course->materi()->pluck('id');
@@ -207,27 +212,9 @@ class MaterialController extends Controller
             'judul' => 'required|string|max:255',
             'description' => 'nullable|string',
             'isi' => 'nullable|string',
-            'type' => 'required|in:video,pdf,text,quiz',
-            'file' => [
-                'nullable',
-                'file',
-                'max:102400',
-                function ($attribute, $value, $fail) use ($request) {
-                    if (!$value) {
-                        return;
-                    }
-                    $ext = strtolower($value->getClientOriginalExtension());
-                    $mime = $value->getMimeType();
-                    if ($request->type === 'pdf' && $ext !== 'pdf') {
-                        return $fail('Format file tidak valid. Harus PDF.');
-                    }
-                    if ($request->type === 'video' && !in_array($ext, ['mp4', 'mov'], true) && !in_array($mime, ['video/mp4', 'video/quicktime'], true)) {
-                        return $fail('Format file tidak didukung. Gunakan MP4 atau MOV.');
-                    }
-                },
-            ],
+            'type' => 'required|in:video,pdf,text,quiz,document,reading',
+            'file' => 'nullable|file|max:102400',
             'content' => 'nullable|string',
-            'duration' => 'nullable|integer|min:0',
             'urutan' => 'nullable|integer|min:1',
             'is_preview' => 'nullable|boolean',
             'status' => 'nullable|in:published,draft',
@@ -263,7 +250,7 @@ class MaterialController extends Controller
             'file_url' => $fileUrl,
             'url_konten' => $filePublicUrl ?? null,
             'content' => $request->content,
-            'duration' => $request->duration,
+            'duration' => 0,
             'urutan' => $urutan,
             'is_preview' => $request->is_preview ?? false,
             'status' => $request->status ?? 'draft',
@@ -308,24 +295,7 @@ class MaterialController extends Controller
             'description' => 'nullable|string',
             'isi' => 'nullable|string',
             'type' => 'required|in:video,pdf,text,quiz',
-            'file' => [
-                'nullable',
-                'file',
-                'max:102400',
-                function ($attribute, $value, $fail) use ($request) {
-                    if (!$value) {
-                        return;
-                    }
-                    $ext = strtolower($value->getClientOriginalExtension());
-                    $mime = $value->getMimeType();
-                    if ($request->type === 'pdf' && $ext !== 'pdf') {
-                        return $fail('Format file tidak valid. Harus PDF.');
-                    }
-                    if ($request->type === 'video' && !in_array($ext, ['mp4', 'mov'], true) && !in_array($mime, ['video/mp4', 'video/quicktime'], true)) {
-                        return $fail('Format file tidak didukung. Gunakan MP4 atau MOV.');
-                    }
-                },
-            ],
+            'file' => 'nullable|file|max:102400',
             'content' => 'nullable|string',
             'duration' => 'nullable|integer|min:0',
             'urutan' => 'nullable|integer|min:1',

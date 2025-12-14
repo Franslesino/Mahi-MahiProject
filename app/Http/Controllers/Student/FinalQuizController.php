@@ -1,0 +1,263 @@
+<?php
+
+namespace App\Http\Controllers\Student;
+
+use App\Http\Controllers\Controller;
+use App\Models\Enrollment;
+use App\Models\Kursus;
+use App\Models\Quiz;
+use App\Models\QuizAttempt;
+use App\Models\JawabanPeserta;
+use App\Models\Question;
+use App\Models\QuestionOption;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+class FinalQuizController extends Controller
+{
+    /**
+     * Menampilkan halaman final quiz untuk kursus
+     */
+    public function show($kursusId)
+    {
+        $user = Auth::user();
+        $kursus = Kursus::with(['finalQuiz'])->findOrFail($kursusId);
+
+        // Pastikan user terdaftar di kursus ini
+        $enrollment = Enrollment::where('user_id', $user->id)
+            ->where('kursus_id', $kursusId)
+            ->first();
+
+        if (!$enrollment) {
+            abort(403, 'Anda belum terdaftar di kursus ini.');
+        }
+
+        // Cek apakah kursus memiliki final quiz
+        if (!$kursus->require_final_quiz || !$kursus->final_quiz_id) {
+            return redirect()->route('courses.show', $kursusId)
+                ->with('info', 'Kursus ini tidak memiliki final quiz.');
+        }
+
+        $finalQuiz = $kursus->finalQuiz;
+
+        // Ambil semua attempts user untuk final quiz ini
+        $attempts = QuizAttempt::where('user_id', $user->id)
+            ->where('quiz_id', $finalQuiz->id)
+            ->where('kursus_id', $kursusId)
+            ->orderBy('attempt_number', 'desc')
+            ->get();
+
+        $latestAttempt = $attempts->first();
+        $attemptCount = $attempts->count();
+        $canRetake = $attemptCount < $kursus->max_quiz_attempts;
+        $hasPassed = $attempts->where('is_passed', true)->isNotEmpty();
+
+        return view('student.courses.final-quiz', compact(
+            'kursus',
+            'finalQuiz',
+            'attempts',
+            'latestAttempt',
+            'attemptCount',
+            'canRetake',
+            'hasPassed'
+        ));
+    }
+
+    /**
+     * Memulai attempt baru untuk final quiz
+     */
+    public function start(Request $request, $kursusId)
+    {
+        $user = Auth::user();
+        $kursus = Kursus::with(['finalQuiz'])->findOrFail($kursusId);
+
+        // Validasi enrollment
+        $enrollment = Enrollment::where('user_id', $user->id)
+            ->where('kursus_id', $kursusId)
+            ->first();
+
+        if (!$enrollment) {
+            return response()->json(['error' => 'Anda belum terdaftar di kursus ini.'], 403);
+        }
+
+        if (!$kursus->require_final_quiz || !$kursus->final_quiz_id) {
+            return response()->json(['error' => 'Kursus ini tidak memiliki final quiz.'], 400);
+        }
+
+        $finalQuiz = $kursus->finalQuiz;
+
+        // Cek jumlah attempt
+        $attemptCount = QuizAttempt::where('user_id', $user->id)
+            ->where('quiz_id', $finalQuiz->id)
+            ->where('kursus_id', $kursusId)
+            ->count();
+
+        if ($attemptCount >= $kursus->max_quiz_attempts) {
+            return response()->json([
+                'error' => 'Anda telah mencapai batas maksimal percobaan (' . $kursus->max_quiz_attempts . 'x).'
+            ], 403);
+        }
+
+        // Cek apakah sudah pernah lulus
+        $hasPassed = QuizAttempt::where('user_id', $user->id)
+            ->where('quiz_id', $finalQuiz->id)
+            ->where('kursus_id', $kursusId)
+            ->where('is_passed', true)
+            ->exists();
+
+        if ($hasPassed) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Anda sudah lulus final quiz ini.',
+                'redirect' => route('courses.final-quiz.show', $kursusId)
+            ]);
+        }
+
+        // Buat attempt baru
+        $attempt = QuizAttempt::create([
+            'user_id' => $user->id,
+            'quiz_id' => $finalQuiz->id,
+            'kursus_id' => $kursusId,
+            'attempt_number' => $attemptCount + 1,
+            'started_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'redirect' => route('courses.final-quiz.take', [$kursusId, $attempt->id])
+        ]);
+    }
+
+    /**
+     * Halaman mengerjakan final quiz
+     */
+    public function take($kursusId, $attemptId)
+    {
+        $user = Auth::user();
+        $attempt = QuizAttempt::with(['quiz.soal.options', 'kursus'])
+            ->where('id', $attemptId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        // Cek apakah sudah selesai
+        if ($attempt->completed_at) {
+            return redirect()
+                ->route('courses.final-quiz.result', [$kursusId, $attemptId])
+                ->with('info', 'Anda sudah menyelesaikan quiz ini.');
+        }
+
+        $quiz = $attempt->quiz;
+        $questions = $quiz->soal()->with('options')->get();
+
+        return view('student.courses.take-final-quiz', compact('attempt', 'quiz', 'questions', 'kursusId'));
+    }
+
+    /**
+     * Submit jawaban final quiz
+     */
+    public function submit(Request $request, $kursusId, $attemptId)
+    {
+        $user = Auth::user();
+        $attempt = QuizAttempt::where('id', $attemptId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        if ($attempt->completed_at) {
+            return response()->json(['error' => 'Quiz ini sudah diselesaikan.'], 400);
+        }
+
+        $kursus = Kursus::findOrFail($kursusId);
+        $quiz = $attempt->quiz;
+        $answers = $request->input('answers', []);
+
+        DB::beginTransaction();
+        try {
+            $totalScore = 0;
+            $totalPossiblePoints = 0;
+
+            foreach ($answers as $questionId => $answerValue) {
+                $question = Question::findOrFail($questionId);
+
+                $isEssay = $question->type === 'essay' || $question->options()->count() === 0;
+                $selectedOptionId = null;
+                $answerText = null;
+                $pointsEarned = 0;
+
+                if ($isEssay) {
+                    // Simpan teks jawaban, tidak auto-grading
+                    $answerText = is_string($answerValue) ? $answerValue : '';
+                    // Opsional: tidak menambah totalPossiblePoints agar essay tidak menggagalkan auto-grade
+                    // Jika ingin dihitung, ganti baris di bawah menjadi $totalPossiblePoints += $question->points;
+                    $totalPossiblePoints += 0;
+                } else {
+                    $selectedOptionId = $answerValue;
+                    $correctOption = $question->options()
+                        ->where('is_correct', true)
+                        ->first();
+
+                    $isCorrect = $correctOption && $correctOption->id == $selectedOptionId;
+                    $pointsEarned = $isCorrect ? $question->points : 0;
+                    $totalScore += $pointsEarned;
+                    $totalPossiblePoints += $question->points;
+                }
+
+                // Simpan jawaban
+                JawabanPeserta::create([
+                    'user_id' => $user->id,
+                    'quiz_id' => $quiz->id,
+                    'quiz_attempt_id' => $attempt->id,
+                    'attempt_number' => $attempt->attempt_number,
+                    'question_id' => $questionId,
+                    'selected_option_id' => $selectedOptionId,
+                    'answer_text' => $answerText,
+                    'points_earned' => $pointsEarned,
+                    'submitted_at' => now(),
+                ]);
+            }
+            
+            // Hitung score persentase
+            $scorePercentage = $totalPossiblePoints > 0 ? ($totalScore / $totalPossiblePoints) * 100 : 0;
+            $isPassed = $scorePercentage >= $kursus->min_passing_score;
+
+            // Update attempt
+            $attempt->update([
+                'score' => $scorePercentage,
+                'is_passed' => $isPassed,
+                'completed_at' => now(),
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'redirect' => route('courses.final-quiz.result', [$kursusId, $attemptId])
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Melihat hasil final quiz
+     */
+    public function result($kursusId, $attemptId)
+    {
+        $user = Auth::user();
+        $attempt = QuizAttempt::with([
+            'quiz.soal.options', 
+            'kursus', 
+            'jawabanPeserta.question.options'
+        ])
+            ->where('id', $attemptId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $kursus = $attempt->kursus;
+        $quiz = $attempt->quiz;
+
+        return view('student.courses.final-quiz-result', compact('attempt', 'kursus', 'quiz'));
+    }
+}

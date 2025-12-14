@@ -180,12 +180,8 @@ Route::middleware('auth')->group(function () {
             
             // Preview Certificate (AJAX)
             Route::get('/enrollment/{enrollment}/certificate-preview', function (Enrollment $enrollment) {
-                // Pastikan enrollment milik user
-                $enrollment = Enrollment::where('id', $enrollment->id)
-                    ->where('user_id', Auth::id())
-                    ->first();
-
-                if (!$enrollment) {
+                // Verify ownership
+                if ($enrollment->user_id !== Auth::id()) {
                     return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
                 }
                 

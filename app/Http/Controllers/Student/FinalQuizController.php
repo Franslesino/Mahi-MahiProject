@@ -35,7 +35,7 @@ class FinalQuizController extends Controller
 
         // Cek apakah kursus memiliki final quiz
         if (!$kursus->require_final_quiz || !$kursus->final_quiz_id) {
-            return redirect()->route('courses.show', $kursusId)
+            return redirect()->route('student.courses.show', $kursusId)
                 ->with('info', 'Kursus ini tidak memiliki final quiz.');
         }
 
@@ -110,7 +110,7 @@ class FinalQuizController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Anda sudah lulus final quiz ini.',
-                'redirect' => route('courses.final-quiz.show', $kursusId)
+                'redirect' => route('student.courses.final-quiz.show', $kursusId)
             ]);
         }
 
@@ -125,7 +125,7 @@ class FinalQuizController extends Controller
 
         return response()->json([
             'success' => true,
-            'redirect' => route('courses.final-quiz.take', [$kursusId, $attempt->id])
+            'redirect' => route('student.courses.final-quiz.take', [$kursusId, $attempt->id])
         ]);
     }
 
@@ -143,7 +143,7 @@ class FinalQuizController extends Controller
         // Cek apakah sudah selesai
         if ($attempt->completed_at) {
             return redirect()
-                ->route('courses.final-quiz.result', [$kursusId, $attemptId])
+                ->route('student.courses.final-quiz.result', [$kursusId, $attemptId])
                 ->with('info', 'Anda sudah menyelesaikan quiz ini.');
         }
 
@@ -174,33 +174,20 @@ class FinalQuizController extends Controller
         DB::beginTransaction();
         try {
             $totalScore = 0;
-            $totalPossiblePoints = 0;
+            $totalQuestions = 0;
 
-            foreach ($answers as $questionId => $answerValue) {
+            foreach ($answers as $questionId => $answerId) {
                 $question = Question::findOrFail($questionId);
+                $totalQuestions++;
 
-                $isEssay = $question->type === 'essay' || $question->options()->count() === 0;
-                $selectedOptionId = null;
-                $answerText = null;
-                $pointsEarned = 0;
+                // Cek jawaban benar
+                $correctOption = $question->options()
+                    ->where('is_correct', true)
+                    ->first();
 
-                if ($isEssay) {
-                    // Simpan teks jawaban, tidak auto-grading
-                    $answerText = is_string($answerValue) ? $answerValue : '';
-                    // Opsional: tidak menambah totalPossiblePoints agar essay tidak menggagalkan auto-grade
-                    // Jika ingin dihitung, ganti baris di bawah menjadi $totalPossiblePoints += $question->points;
-                    $totalPossiblePoints += 0;
-                } else {
-                    $selectedOptionId = $answerValue;
-                    $correctOption = $question->options()
-                        ->where('is_correct', true)
-                        ->first();
-
-                    $isCorrect = $correctOption && $correctOption->id == $selectedOptionId;
-                    $pointsEarned = $isCorrect ? $question->points : 0;
-                    $totalScore += $pointsEarned;
-                    $totalPossiblePoints += $question->points;
-                }
+                $isCorrect = $correctOption && $correctOption->id == $answerId;
+                $pointsEarned = $isCorrect ? $question->points : 0;
+                $totalScore += $pointsEarned;
 
                 // Simpan jawaban
                 JawabanPeserta::create([
@@ -209,12 +196,14 @@ class FinalQuizController extends Controller
                     'quiz_attempt_id' => $attempt->id,
                     'attempt_number' => $attempt->attempt_number,
                     'question_id' => $questionId,
-                    'selected_option_id' => $selectedOptionId,
-                    'answer_text' => $answerText,
+                    'selected_option_id' => $answerId,
                     'points_earned' => $pointsEarned,
                     'submitted_at' => now(),
                 ]);
             }
+
+            // Hitung total points yang mungkin
+            $totalPossiblePoints = $quiz->soal()->sum('points');
             
             // Hitung score persentase
             $scorePercentage = $totalPossiblePoints > 0 ? ($totalScore / $totalPossiblePoints) * 100 : 0;
@@ -231,7 +220,7 @@ class FinalQuizController extends Controller
 
             return response()->json([
                 'success' => true,
-                'redirect' => route('courses.final-quiz.result', [$kursusId, $attemptId])
+                'redirect' => route('student.courses.final-quiz.result', [$kursusId, $attemptId])
             ]);
 
         } catch (\Exception $e) {

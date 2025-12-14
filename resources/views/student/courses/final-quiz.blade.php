@@ -10,7 +10,7 @@
                     <h2>Final Quiz</h2>
                     <p class="text-muted mb-0">{{ $kursus->judul }}</p>
                 </div>
-                <a href="{{ route('courses.show', $kursus->id) }}" class="btn btn-secondary">
+                <a href="{{ route('student.courses.show', $kursus->id) }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Kembali
                 </a>
             </div>
@@ -23,128 +23,168 @@
                 </div>
             @endif
 
-            <!-- Hero / Stats -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body text-white" style="background: linear-gradient(120deg, #0ea5e9, #22c55e);">
-                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
-                        <div class="mb-3 mb-md-0">
-                            <h4 class="fw-bold mb-1"><i class="fas fa-graduation-cap me-2"></i>{{ $finalQuiz->judul_quiz }}</h4>
-                            <p class="mb-0 opacity-75">Final Quiz untuk kursus {{ $kursus->judul }}</p>
+            <!-- Quiz Info Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-graduation-cap"></i> {{ $finalQuiz->judul_quiz }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Nilai Minimum</small>
+                                    <strong>{{ $kursus->min_passing_score }}%</strong>
+                                </div>
+                            </div>
                         </div>
-                        <div class="d-flex gap-3 flex-wrap">
-                            <div class="bg-white bg-opacity-20 rounded-3 px-3 py-2">
-                                <small class="d-block opacity-75">Nilai Minimum</small>
-                                <span class="fw-bold">{{ $kursus->min_passing_score }}%</span>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-redo text-info me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Maksimal Percobaan</small>
+                                    <strong>{{ $kursus->max_quiz_attempts }}x</strong>
+                                </div>
                             </div>
-                            <div class="bg-white bg-opacity-20 rounded-3 px-3 py-2">
-                                <small class="d-block opacity-75">Maks. Percobaan</small>
-                                <span class="fw-bold">{{ $kursus->max_quiz_attempts }}x</span>
-                            </div>
-                            <div class="bg-white bg-opacity-20 rounded-3 px-3 py-2">
-                                <small class="d-block opacity-75">Durasi</small>
-                                <span class="fw-bold">{{ $finalQuiz->durasi_quiz ?? 'Tidak Terbatas' }} menit</span>
-                            </div>
-                            <div class="bg-white bg-opacity-20 rounded-3 px-3 py-2">
-                                <small class="d-block opacity-75">Status</small>
-                                @if($hasPassed)
-                                    <span class="badge bg-success text-white"><i class="fas fa-check"></i> Lulus</span>
-                                @else
-                                    <span class="badge bg-warning text-dark"><i class="fas fa-hourglass-half"></i> Belum Lulus</span>
-                                @endif
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-clock text-warning me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Durasi</small>
+                                    <strong>{{ $finalQuiz->durasi_quiz ?? 'Tidak Terbatas' }} menit</strong>
+                                </div>
                             </div>
                         </div>
                     </div>
+
+                    @if($hasPassed)
+                        <div class="alert alert-success mb-0">
+                            <i class="fas fa-check-circle"></i> 
+                            <strong>Selamat!</strong> Anda telah lulus final quiz dengan nilai <strong>{{ number_format($latestAttempt->score, 2) }}%</strong>
+                        </div>
+                    @else
+                        <div class="alert alert-warning mb-0">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Perhatian!</strong> Anda harus lulus final quiz ini untuk mendapatkan sertifikat.
+                        </div>
+                    @endif
                 </div>
             </div>
 
-            <div class="row g-4">
-                <!-- Left: actions / info -->
-                <div class="col-lg-7">
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-body">
-                            @if($hasPassed)
-                                <div class="d-flex align-items-center mb-3">
-                                    <i class="fas fa-trophy fa-2x text-warning me-3"></i>
-                                    <div>
-                                        <h5 class="mb-1 text-success fw-bold">Anda Telah Lulus!</h5>
-                                        <p class="mb-0 text-muted">Nilai terakhir: <strong>{{ number_format($latestAttempt->score, 2) }}%</strong></p>
-                                    </div>
-                                </div>
-                                <a href="{{ route('courses.show', $kursus->id) }}" class="btn btn-success">
-                                    <i class="fas fa-arrow-left"></i> Kembali ke Kursus
-                                </a>
-                            @elseif($canRetake)
-                                <div class="mb-3">
-                                    <h5 class="fw-bold mb-1">{{ $attemptCount > 0 ? 'Coba Lagi' : 'Mulai Final Quiz' }}</h5>
-                                    <p class="text-muted mb-0">
-                                        Percobaan: <strong>{{ $attemptCount }}</strong> / <strong>{{ $kursus->max_quiz_attempts }}</strong>
-                                    </p>
-                                </div>
-                                <button type="button" class="btn btn-primary btn-lg" onclick="startQuiz(this)">
-                                    <i class="fas fa-play"></i>
-                                    {{ $attemptCount > 0 ? 'Mulai Percobaan ke-' . ($attemptCount + 1) : 'Mulai Quiz' }}
-                                </button>
-                                <p class="text-muted small mt-3 mb-0">Anda harus lulus final quiz ini untuk mendapatkan sertifikat.</p>
-                            @else
-                                <div class="d-flex align-items-start mb-3">
-                                    <i class="fas fa-times-circle fa-2x text-danger me-3"></i>
-                                    <div>
-                                        <h5 class="text-danger fw-bold mb-1">Batas Percobaan Tercapai</h5>
-                                        <p class="text-muted mb-0">Anda telah menggunakan semua percobaan ({{ $attemptCount }}/{{ $kursus->max_quiz_attempts }}) dan belum mencapai nilai minimum.</p>
-                                    </div>
-                                </div>
-                                <p class="text-muted mb-3">Silakan hubungi instruktur untuk bantuan lebih lanjut.</p>
-                            @endif
+            <!-- Attempts History -->
+            @if($attempts->count() > 0)
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-history"></i> Riwayat Percobaan</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Percobaan</th>
+                                        <th>Tanggal</th>
+                                        <th class="text-center">Nilai</th>
+                                        <th class="text-center">Status</th>
+                                        <th class="text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($attempts as $attempt)
+                                        <tr>
+                                            <td>
+                                                <strong>Percobaan ke-{{ $attempt->attempt_number }}</strong>
+                                            </td>
+                                            <td>{{ $attempt->completed_at ? $attempt->completed_at->format('d M Y, H:i') : 'Sedang Berlangsung' }}</td>
+                                            <td class="text-center">
+                                                @if($attempt->score !== null)
+                                                    <span class="badge {{ $attempt->is_passed ? 'bg-success' : 'bg-danger' }}">
+                                                        {{ number_format($attempt->score, 2) }}%
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-secondary">-</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-center">
+                                                @if($attempt->completed_at)
+                                                    @if($attempt->is_passed)
+                                                        <span class="badge bg-success">
+                                                            <i class="fas fa-check"></i> Lulus
+                                                        </span>
+                                                    @else
+                                                        <span class="badge bg-danger">
+                                                            <i class="fas fa-times"></i> Tidak Lulus
+                                                        </span>
+                                                    @endif
+                                                @else
+                                                    <span class="badge bg-warning">
+                                                        <i class="fas fa-hourglass-half"></i> Berlangsung
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="text-center">
+                                                @if($attempt->completed_at)
+                                                    <a href="{{ route('student.courses.final-quiz.result', [$kursus->id, $attempt->id]) }}" 
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-eye"></i> Lihat Detail
+                                                    </a>
+                                                @else
+                                                    <a href="{{ route('student.courses.final-quiz.take', [$kursus->id, $attempt->id]) }}" 
+                                                       class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-play"></i> Lanjutkan
+                                                    </a>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
+            @endif
 
-                <!-- Right: history -->
-                <div class="col-lg-5">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-light d-flex align-items-center">
-                            <i class="fas fa-history text-primary me-2"></i>
-                            <strong class="mb-0">Riwayat Percobaan</strong>
-                        </div>
-                        <div class="card-body">
-                            @if($attempts->count() > 0)
-                                <div class="list-group list-group-flush">
-                                    @foreach($attempts as $attempt)
-                                        <div class="list-group-item px-0">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <div class="fw-bold">Percobaan ke-{{ $attempt->attempt_number }}</div>
-                                                    <div class="text-muted small">
-                                                        {{ $attempt->completed_at ? $attempt->completed_at->format('d M Y, H:i') : 'Sedang berlangsung' }}
-                                                    </div>
-                                                </div>
-                                                <div class="text-end">
-                                                    @if($attempt->score !== null)
-                                                        <span class="badge {{ $attempt->is_passed ? 'bg-success' : 'bg-danger' }}">{{ number_format($attempt->score, 2) }}%</span>
-                                                    @else
-                                                        <span class="badge bg-secondary">-</span>
-                                                    @endif
-                                                    <div class="mt-2">
-                                                        @if($attempt->completed_at)
-                                                            <a href="{{ route('courses.final-quiz.result', [$kursus->id, $attempt->id]) }}" class="btn btn-sm btn-outline-primary">
-                                                                Lihat Detail
-                                                            </a>
-                                                        @else
-                                                            <a href="{{ route('courses.final-quiz.take', [$kursus->id, $attempt->id]) }}" class="btn btn-sm btn-primary">
-                                                                Lanjutkan
-                                                            </a>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
+            <!-- Action Card -->
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    @if($hasPassed)
+                        <i class="fas fa-trophy fa-4x text-warning mb-3"></i>
+                        <h4 class="text-success mb-3">Anda Telah Lulus!</h4>
+                        <p class="text-muted mb-4">Selamat! Anda telah menyelesaikan final quiz.</p>
+                        <a href="{{ route('student.courses.show', $kursus->id) }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left"></i> Kembali ke Kursus
+                        </a>
+                    @elseif($canRetake)
+                        <i class="fas fa-pen-to-square fa-4x text-primary mb-3"></i>
+                        <h4 class="mb-3">
+                            @if($attemptCount > 0)
+                                Coba Lagi
                             @else
-                                <p class="text-muted mb-0">Belum ada percobaan. Mulai final quiz sekarang.</p>
+                                Mulai Final Quiz
                             @endif
-                        </div>
-                    </div>
+                        </h4>
+                        <p class="text-muted mb-4">
+                            Percobaan: <strong>{{ $attemptCount }}</strong> / <strong>{{ $kursus->max_quiz_attempts }}</strong>
+                        </p>
+                        <button type="button" class="btn btn-primary btn-lg" onclick="startQuiz()">
+                            <i class="fas fa-play"></i> 
+                            @if($attemptCount > 0)
+                                Mulai Percobaan ke-{{ $attemptCount + 1 }}
+                            @else
+                                Mulai Quiz
+                            @endif
+                        </button>
+                    @else
+                        <i class="fas fa-times-circle fa-4x text-danger mb-3"></i>
+                        <h4 class="text-danger mb-3">Batas Percobaan Tercapai</h4>
+                        <p class="text-muted mb-4">
+                            Anda telah menggunakan semua percobaan ({{ $attemptCount }}/{{ $kursus->max_quiz_attempts }}) 
+                            dan belum mencapai nilai minimum.
+                        </p>
+                        <p class="text-muted">Silakan hubungi instruktur untuk bantuan lebih lanjut.</p>
+                    @endif
                 </div>
             </div>
         </div>
@@ -152,18 +192,16 @@
 </div>
 
 <script>
-function startQuiz(btnElem) {
+function startQuiz() {
     if (!confirm('Apakah Anda yakin ingin memulai final quiz? Pastikan Anda siap.')) {
         return;
     }
 
-    const btn = btnElem || event?.target;
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memulai...';
-    }
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memulai...';
 
-    fetch('{{ route("courses.final-quiz.start", $kursus->id) }}', {
+    fetch('{{ route("student.courses.final-quiz.start", $kursus->id) }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -176,19 +214,15 @@ function startQuiz(btnElem) {
             window.location.href = data.redirect;
         } else {
             alert(data.error || 'Terjadi kesalahan');
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-play"></i> Mulai Quiz';
-            }
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-play"></i> Mulai Quiz';
         }
     })
     .catch(error => {
         console.error('Error:', error);
         alert('Terjadi kesalahan saat memulai quiz');
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-play"></i> Mulai Quiz';
-        }
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-play"></i> Mulai Quiz';
     });
 }
 </script>

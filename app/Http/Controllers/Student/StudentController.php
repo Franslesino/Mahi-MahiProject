@@ -20,9 +20,11 @@ use Illuminate\Support\Facades\Schema;
 
 class StudentController extends Controller
 {
+    protected $middleware = ['auth', 'role:student'];
+
     public function __construct()
     {
-        $this->middleware(['auth', 'role:student']);
+        // Middleware already applied in routes
     }
 
     /**
@@ -707,41 +709,12 @@ HTML;
             return Storage::disk('public')->download($filePath, $certificateNumber . '.pdf');
         }
 
-        // Ambil HTML sertifikat (atau buat ulang jika hilang)
+        // Ambil HTML sertifikat
         $htmlContent = null;
         if (Storage::disk('public')->exists($filePath)) {
             $htmlContent = Storage::disk('public')->get($filePath);
         } elseif (filter_var($certificate->url_unduhan, FILTER_VALIDATE_URL)) {
             $htmlContent = @file_get_contents($certificate->url_unduhan);
-        }
-
-        // Jika file hilang, regenerasi HTML lalu perbarui url_unduhan
-        if (!$htmlContent) {
-            $course = $enrollment->kursus ?? $enrollment->course ?? null;
-            $user = $enrollment->user ?? Auth::user();
-
-            if ($course && $user) {
-                $instructorName = $course->pembuat->name ?? $course->instructor->name ?? 'Instructor';
-                $issuedDate = $certificate->tanggal_terbit ?? $certificate->tanggal_diterbitkan ?? $certificate->created_at ?? now();
-                $issuedDateString = $issuedDate instanceof \Illuminate\Support\Carbon
-                    ? $issuedDate->format('F d, Y')
-                    : now()->format('F d, Y');
-
-                $newPath = $this->generateCertificateImage(
-                    $user->name ?? 'Student',
-                    $course->judul ?? $course->title ?? 'Course',
-                    $certificateNumber,
-                    $issuedDateString,
-                    $instructorName
-                );
-
-                $certificate->url_unduhan = Storage::url($newPath);
-                $certificate->save();
-
-                if (Storage::disk('public')->exists($newPath)) {
-                    $htmlContent = Storage::disk('public')->get($newPath);
-                }
-            }
         }
 
         if (!$htmlContent) {

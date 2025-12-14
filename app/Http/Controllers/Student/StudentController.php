@@ -70,6 +70,50 @@ class StudentController extends Controller
             $currentMaterial = $materials->first();
         }
 
+        // Get final exam if course requires it
+        $finalExam = null;
+        $finalExamStatus = [];
+        
+        if ($course->final_quiz_id) {
+            $finalExam = $course->finalQuiz;
+            
+            if ($finalExam) {
+                // Get the latest quiz attempt for this student
+                $latestAttempt = \App\Models\QuizAttempt::where('user_id', Auth::id())
+                    ->where('quiz_id', $finalExam->id)
+                    ->where('kursus_id', $course->id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                if ($latestAttempt) {
+                    $finalExamStatus = [
+                        'passed' => $latestAttempt->is_passed,
+                        'score' => $latestAttempt->score,
+                        'totalAttempts' => \App\Models\QuizAttempt::where('user_id', Auth::id())
+                            ->where('quiz_id', $finalExam->id)
+                            ->where('kursus_id', $course->id)
+                            ->count(),
+                        'maxAttempts' => $course->max_quiz_attempts ?? 3,
+                        'canRetake' => !$latestAttempt->is_passed && (
+                            (\App\Models\QuizAttempt::where('user_id', Auth::id())
+                                ->where('quiz_id', $finalExam->id)
+                                ->where('kursus_id', $course->id)
+                                ->count() < ($course->max_quiz_attempts ?? 3))
+                        ),
+                    ];
+                } else {
+                    // No attempts yet
+                    $finalExamStatus = [
+                        'passed' => false,
+                        'score' => null,
+                        'totalAttempts' => 0,
+                        'maxAttempts' => $course->max_quiz_attempts ?? 3,
+                        'canRetake' => true,
+                    ];
+                }
+            }
+        }
+
         return view('student.learn', [
             'course' => $course,
             'sections' => $course->sections,

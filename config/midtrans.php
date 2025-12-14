@@ -7,4 +7,5 @@ return [
     'is_sanitized' => env('MIDTRANS_IS_SANITIZED', true),
     'is_3ds' => env('MIDTRANS_IS_3DS', true),
     'append_notif_url' => env('MIDTRANS_APPEND_NOTIF_URL'),
+    'cainfo' => env('MIDTRANS_CAINFO', null), // Custom CA certificate path
 ];

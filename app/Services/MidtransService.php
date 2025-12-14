@@ -19,12 +19,49 @@ class MidtransService
         Config::$is3ds = config('midtrans.is_3ds', true);
         Config::$appendNotifUrl = config('midtrans.append_notif_url');
         
+        // Tentukan CA certificate path dengan fallback strategy
+        $caInfoPath = $this->getCACertificatePath();
+        
         // Paksa cURL memakai CA bundle yang ada agar tidak bergantung pada path lama di php.ini
         Config::$curlOptions = [
-            CURLOPT_CAINFO => 'C:\laragon\etc\ssl\cacert.pem',
+            CURLOPT_CAINFO => $caInfoPath,
             // Midtrans library mengharapkan key ini ada saat merge header, jadi set kosong untuk hindari undefined array key
             CURLOPT_HTTPHEADER => [],
         ];
+    }
+
+    /**
+     * Determine the appropriate CA certificate path with fallback strategy
+     * Supports: .env configuration, Laragon, Composer bundle, PHP built-in
+     */
+    private function getCACertificatePath()
+    {
+        // 1. Check if MIDTRANS_CAINFO is configured in .env
+        $envCaInfo = config('midtrans.cainfo');
+        if ($envCaInfo && file_exists($envCaInfo)) {
+            return $envCaInfo;
+        }
+
+        // 2. Try Laragon Windows path
+        $laragonPath = 'C:\\laragon\\etc\\ssl\\cacert.pem';
+        if (file_exists($laragonPath)) {
+            return $laragonPath;
+        }
+
+        // 3. Try Composer's CA bundle
+        $composerCertPath = base_path('vendor/composer/ca-bundle/res/cacert.pem');
+        if (file_exists($composerCertPath)) {
+            return $composerCertPath;
+        }
+
+        // 4. Try PHP's built-in OpenSSL CA bundle
+        $phpCertPath = php_ini_loaded_file() ? dirname(php_ini_loaded_file()) . '/cacert.pem' : null;
+        if ($phpCertPath && file_exists($phpCertPath)) {
+            return $phpCertPath;
+        }
+
+        // 5. Last resort: Use PHP's default (may not work for all systems)
+        return 'php://openssl.cacert.pem';
     }
 
     /**

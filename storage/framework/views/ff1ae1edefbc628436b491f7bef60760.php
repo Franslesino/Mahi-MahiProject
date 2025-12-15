@@ -1,6 +1,3 @@
-
-
-
 <?php $__env->startSection('title', 'Belajar - ' . ($course->judul ?? $course->title)); ?>
 
 <?php $__env->startSection('content'); ?>

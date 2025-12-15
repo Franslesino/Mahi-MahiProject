@@ -137,9 +137,10 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
-        if (($validated['role'] ?? null) === 'user') {
-            $validated['role'] = 'student';
-        }
+        if (isset($validated['role']) && $validated['role'] === 'user') {
+    $validated['role'] = 'student';
+}
+
 
         $user->update($validated);
 

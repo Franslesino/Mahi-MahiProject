@@ -18,11 +18,13 @@ class JawabanPeserta extends Model
         'points_earned',
         'submitted_at',
         'answer_text', // Legacy field
+        'nilai_tercapai',
     ];
 
     protected $casts = [
         'points_earned' => 'decimal:2',
         'submitted_at' => 'datetime',
+        'nilai_tercapai' => 'decimal:2',
     ];
 
     public function user()

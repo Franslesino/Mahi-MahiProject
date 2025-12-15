@@ -48,10 +48,14 @@ class UserController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'role'     => 'required|in:admin,instructor,user',
+            'role'     => 'required|in:admin,instructor,student,user',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
+        // Normalisasi: jika ada input "user" dari form lama, simpan sebagai "student"
+        if ($validated['role'] === 'user') {
+            $validated['role'] = 'student';
+        }
 
         User::create($validated);
 
@@ -124,13 +128,17 @@ class UserController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
-            'role'     => 'required|in:admin,instructor,user',
+            'role'     => 'required|in:admin,instructor,student,user',
         ]);
 
         if ($request->filled('password')) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
+        }
+
+        if (($validated['role'] ?? null) === 'user') {
+            $validated['role'] = 'student';
         }
 
         $user->update($validated);

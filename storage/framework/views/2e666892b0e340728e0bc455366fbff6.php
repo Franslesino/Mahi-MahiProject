@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     <title><?php echo $__env->yieldContent('title', 'Pelayanan TIK PNJ'); ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -48,6 +49,11 @@
             * {
                 scroll-behavior: smooth;
             }
+        }
+
+        /* Toast tweaks */
+        #toast-container .toast {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
         }
     </style>
     <link rel="stylesheet" href="<?php echo e(asset('css/app.css')); ?>">
@@ -388,6 +394,9 @@
             <?php endif; ?>
         }
     </script>
+
+    <!-- Toasts -->
+    <?php echo $__env->make('components.toast', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 </body>
 </html>
 <?php /**PATH C:\Users\Sabil Aditia\OneDrive\mahi\Mahi-MahiProject\resources\views/layouts/app.blade.php ENDPATH**/ ?>

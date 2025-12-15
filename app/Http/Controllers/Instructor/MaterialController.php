@@ -23,10 +23,10 @@ class MaterialController extends Controller
     {
         $instructorId = Auth::id();
 
-        $courses = Kursus::where(function($query) use ($instructorId) {
-                $query->where('pembuat', $instructorId)
-                      ->orWhere('instructor_id', $instructorId);
-            })
+        $courses = Kursus::where(function ($query) use ($instructorId) {
+            $query->where('pembuat', $instructorId)
+                ->orWhere('instructor_id', $instructorId);
+        })
             ->withCount('materi')
             ->latest()
             ->get();
@@ -42,9 +42,11 @@ class MaterialController extends Controller
 
         // Load sections dengan materials
         $sections = $course->sections()
-            ->with(['materials' => function($query) {
-                $query->orderBy('urutan')->with('assignment');
-            }])
+            ->with([
+                'materials' => function ($query) {
+                    $query->orderBy('urutan')->with('assignment');
+                }
+            ])
             ->orderBy('order')
             ->get();
 
@@ -82,7 +84,7 @@ class MaterialController extends Controller
                 ->get();
             $submissionStats = $submissions->groupBy('user_id')->map(function ($items) {
                 $best = $items->first();
-                return (object)[
+                return (object) [
                     'best_score' => $best?->score,
                     'best_percentage' => $best?->percentage,
                     'last_submitted_at' => $best?->submitted_at,
@@ -92,7 +94,7 @@ class MaterialController extends Controller
         }
 
         // Fallback nilai dari MaterialCompletion (quiz) bila belum ada submissions
-        $quizAssignments = Assignment::where('kursus_id', $course->id)->where('type', 'quiz')->get(['id','materi_id']);
+        $quizAssignments = Assignment::where('kursus_id', $course->id)->where('type', 'quiz')->get(['id', 'materi_id']);
         $quizMaterialIds = $quizAssignments->pluck('materi_id');
         $assignmentByMaterial = $quizAssignments->pluck('id', 'materi_id');
 
@@ -106,7 +108,7 @@ class MaterialController extends Controller
 
         $completionAggregated = $completionScores->map(function ($items) use ($assignmentByMaterial) {
             $best = $items->sortByDesc('score')->first();
-            return (object)[
+            return (object) [
                 'best_score' => $best?->score,
                 'best_percentage' => $best?->score,
                 'last_submitted_at' => $best?->completed_at,
@@ -127,7 +129,7 @@ class MaterialController extends Controller
                 $lastSubmit = $submission->last_submitted_at ?? $fallback->last_submitted_at ?? null;
                 $attempt = $submission->attempt_number ?? null;
                 $isPassed = $bestPercentage !== null ? $bestPercentage >= $passingScore : null;
-                
+
                 return [
                     'user' => $enrollment->user,
                     'progress' => $progress,
@@ -154,32 +156,32 @@ class MaterialController extends Controller
     }
 
     public function preview(Kursus $course, Materi $material)
-{
-    if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
-        abort(403, 'Unauthorized action.');
+    {
+        if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Ambil semua materi berdasarkan urutan
+        $materials = $course->materi()->with('assignment.questions.options')->orderBy('urutan')->get();
+        $material->loadMissing('assignment.questions.options');
+
+        // Cari index materi saat ini
+        $currentIndex = $materials->search(function ($m) use ($material) {
+            return $m->id === $material->id;
+        });
+
+        // Tentukan prev & next
+        $prevMaterial = $currentIndex > 0 ? $materials[$currentIndex - 1] : null;
+        $nextMaterial = $currentIndex < $materials->count() - 1 ? $materials[$currentIndex + 1] : null;
+
+        return view('instructor.material-preview', compact(
+            'course',
+            'material',
+            'materials',
+            'prevMaterial',
+            'nextMaterial'
+        ));
     }
-
-    // Ambil semua materi berdasarkan urutan
-    $materials = $course->materi()->with('assignment.questions.options')->orderBy('urutan')->get();
-    $material->loadMissing('assignment.questions.options');
-
-    // Cari index materi saat ini
-    $currentIndex = $materials->search(function ($m) use ($material) {
-        return $m->id === $material->id;
-    });
-
-    // Tentukan prev & next
-    $prevMaterial = $currentIndex > 0 ? $materials[$currentIndex - 1] : null;
-    $nextMaterial = $currentIndex < $materials->count() - 1 ? $materials[$currentIndex + 1] : null;
-
-    return view('instructor.material-preview', compact(
-        'course',
-        'material',
-        'materials', 
-        'prevMaterial',
-        'nextMaterial'
-    ));
-}
 
 
     public function create(Kursus $course)
@@ -270,13 +272,14 @@ class MaterialController extends Controller
             'status_terkunci' => !($request->is_preview ?? false),
         ]);
 
-         if ($request->ajax() || $request->wantsJson() || $request->expectsJson()) {
-    return response()->json([
-        'success' => true,
-        'message' => 'Materi berhasil ditambahkan',
-        'redirect' => route('instructor.courses.show', $course->id),
-    ], 200);
-}
+
+        if ($request->ajax() || $request->wantsJson() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Materi berhasil ditambahkan',
+                'redirect' => route('instructor.courses.show', $course->id),
+            ], 200);
+        }
 
         return redirect()->route('instructor.courses.show', $course)
             ->with('success', 'Materi berhasil ditambahkan.');
@@ -384,7 +387,7 @@ class MaterialController extends Controller
         if ($material->file_url) {
             $storage->delete($material->file_url);
         }
-        
+
         // Backward compatibility - hapus dari url_konten juga
         if ($material->url_konten) {
             $oldPath = str_replace('/storage/', '', $material->url_konten);

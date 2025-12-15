@@ -1,6 +1,3 @@
-
-
-
 <?php
     use App\Models\MaterialCompletion;
     use App\Models\QuizAttempt;

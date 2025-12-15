@@ -50,6 +50,11 @@
                 scroll-behavior: smooth;
             }
         }
+
+        /* Toast tweaks */
+        #toast-container .toast {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+        }
     </style>
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
@@ -386,5 +391,8 @@
             @endauth
         }
     </script>
+
+    <!-- Toasts -->
+    @include('components.toast')
 </body>
 </html>

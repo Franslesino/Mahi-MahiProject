@@ -68,15 +68,28 @@
 
             <!-- User Profile with Email -->
             <div class="flex items-center gap-3">
-                <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span class="text-white text-xl font-bold">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
-                </div>
+                <img
+                    src="{{ auth()->user()->avatar_url
+                            ? auth()->user()->avatar_url
+                            : 'data:image/svg+xml;utf8,'.rawurlencode(
+                                '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'56\' height=\'56\'>
+                                    <rect width=\'100%\' height=\'100%\' rx=\'28\' fill=\'#3b82f6\'/>
+                                    <text x=\'50%\' y=\'56%\' font-size=\'24\' text-anchor=\'middle\' fill=\'white\' font-family=\'Arial, Helvetica, sans-serif\'>' .
+                                    e(auth()->user()->initials) .
+                                    '</text>
+                                </svg>'
+                            )
+                        }}"
+                    alt="Avatar"
+                    class="w-14 h-14 rounded-full object-cover ring-2 ring-blue-500/20 flex-shrink-0"
+                >
                 <div class="flex-1 min-w-0">
                     <h3 class="font-semibold text-gray-900 truncate">{{ auth()->user()->name }}</h3>
                     <p class="text-sm text-gray-500 truncate">{{ auth()->user()->email }}</p>
                     <span class="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
                         Instruktur
                     </span>
+                    
                 </div>
             </div>
         </div>
@@ -108,10 +121,20 @@
                 <span class="font-medium">Bank Soal</span>
             </a>
 
+
             <!-- Divider -->
             <div class="py-2">
                 <div class="border-t border-gray-200"></div>
             </div>
+
+            <!-- Edit Profil -->
+            <a href="{{ route('instructor.profile.edit') }}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('instructor.profile*') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                <span class="font-medium">Edit Profil</span>
+            </a>
 
             <!-- Bantuan -->
             <a href="{{ route('instructor.help') }}" 
@@ -184,9 +207,21 @@
 
                     <!-- User Avatar Mobile -->
                     <div class="lg:hidden flex items-center gap-2">
-                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                            <span class="text-white text-sm font-semibold">{{ substr(auth()->user()->name, 0, 1) }}</span>
-                        </div>
+                        <img
+                            src="{{ auth()->user()->avatar_url
+                                    ? auth()->user()->avatar_url
+                                    : 'data:image/svg+xml;utf8,'.rawurlencode(
+                                        '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\'>
+                                            <rect width=\'100%\' height=\'100%\' rx=\'16\' fill=\'#3b82f6\'/>
+                                            <text x=\'50%\' y=\'56%\' font-size=\'14\' text-anchor=\'middle\' fill=\'white\' font-family=\'Arial, Helvetica, sans-serif\'>' .
+                                            e(auth()->user()->initials) .
+                                            '</text>
+                                        </svg>'
+                                    )
+                                }}"
+                            alt="Avatar"
+                            class="w-8 h-8 rounded-full object-cover ring-1 ring-blue-500/20"
+                        >
                     </div>
                 </div>
             </div>

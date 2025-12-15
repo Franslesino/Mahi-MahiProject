@@ -93,12 +93,40 @@
                 <span class="font-medium">Dashboard</span>
             </a>
 
-            <!-- Kursus -->
-            <a href="{{ route('admin.courses.index') }}"
-               class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('admin.courses*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
-                <i class="fas fa-book w-5 text-center"></i>
-                <span class="font-medium">Kursus</span>
-            </a>
+            @php
+                $isKursusSectionActive = request()->routeIs('admin.courses*') || request()->routeIs('admin.vouchers*') || request()->routeIs('admin.question-banks*');
+            @endphp
+            <div x-data="{ open: {{ $isKursusSectionActive ? 'true' : 'false' }} }" class="space-y-1">
+                <button type="button"
+                        @click="open = !open"
+                        class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-emerald-300 {{ $isKursusSectionActive ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}"
+                        :class="open ? 'bg-emerald-50 text-emerald-700' : ''"
+                        :aria-expanded="open"
+                        aria-controls="menu-kursus">
+                    <i class="fas fa-book w-5 text-center"></i>
+                    <span class="font-medium flex-1 text-left">Kursus</span>
+                    <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div x-show="open" x-transition class="space-y-1 pl-10" id="menu-kursus">
+                    <a href="{{ route('admin.courses.index') }}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition {{ request()->routeIs('admin.courses*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                        <i class="fas fa-list-ul w-4 text-center"></i>
+                        <span class="font-medium">Daftar Kursus</span>
+                    </a>
+                    <a href="{{ route('admin.vouchers.index') }}" 
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition {{ request()->routeIs('admin.vouchers*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                        <i class="fas fa-ticket-alt w-4 text-center"></i>
+                        <span class="font-medium">Voucher</span>
+                    </a>
+                    <a href="{{ route('admin.question-banks.index') }}" 
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition {{ request()->routeIs('admin.question-banks*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                        <i class="fas fa-folder-open w-4 text-center"></i>
+                        <span class="font-medium">Bank Soal</span>
+                    </a>
+                </div>
+            </div>
 
             <a href="{{ route('admin.transactions.index') }}" 
    class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition {{ request()->routeIs('admin.transactions.*') ? 'bg-white/10' : '' }}">
@@ -118,25 +146,11 @@
                 <span class="font-medium">Pengguna</span>
             </a>
 
-            <!-- Voucher -->
-            <a href="{{ route('admin.vouchers.index') }}" 
-               class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('admin.vouchers*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
-                <i class="fas fa-ticket-alt w-5 text-center"></i>
-                <span class="font-medium">Voucher</span>
-            </a>
-
             <!-- Banner Promo -->
             <a href="{{ route('admin.promo-banners.index') }}" 
                class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('admin.promo-banners*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
                 <i class="fas fa-images w-5 text-center"></i>
                 <span class="font-medium">Banner Promo</span>
-            </a>
-
-            <!-- Bank Soal -->
-            <a href="{{ route('admin.question-banks.index') }}" 
-               class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('admin.question-banks*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
-                <i class="fas fa-folder-open w-5 text-center"></i>
-                <span class="font-medium">Bank Soal</span>
             </a>
         </nav>
 
@@ -162,8 +176,6 @@
     <main 
         class="transition-all duration-300 min-h-screen"
         :class="sidebarOpen ? 'lg:ml-80' : 'lg:ml-0'">
-        
-
         <!-- Flash Messages -->
         @if(session('success'))
         <div class="mx-8 mt-4 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg flex items-center gap-3">
@@ -218,6 +230,9 @@
             }));
         });
     </script>
+
+    <script>
+        
 
     <!-- Logout Confirmation Modal -->
     <div id="logoutModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">

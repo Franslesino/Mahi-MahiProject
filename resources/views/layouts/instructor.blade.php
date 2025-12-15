@@ -68,9 +68,21 @@
 
             <!-- User Profile with Email -->
             <div class="flex items-center gap-3">
-                <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span class="text-white text-xl font-bold">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
-                </div>
+                <img
+                    src="{{ auth()->user()->avatar_url
+                            ? auth()->user()->avatar_url
+                            : 'data:image/svg+xml;utf8,'.rawurlencode(
+                                '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'56\' height=\'56\'>
+                                    <rect width=\'100%\' height=\'100%\' rx=\'28\' fill=\'#3b82f6\'/>
+                                    <text x=\'50%\' y=\'56%\' font-size=\'24\' text-anchor=\'middle\' fill=\'white\' font-family=\'Arial, Helvetica, sans-serif\'>' .
+                                    e(auth()->user()->initials) .
+                                    '</text>
+                                </svg>'
+                            )
+                        }}"
+                    alt="Avatar"
+                    class="w-14 h-14 rounded-full object-cover ring-2 ring-blue-500/20 flex-shrink-0"
+                >
                 <div class="flex-1 min-w-0">
                     <h3 class="font-semibold text-gray-900 truncate">{{ auth()->user()->name }}</h3>
                     <p class="text-sm text-gray-500 truncate">{{ auth()->user()->email }}</p>
@@ -195,9 +207,21 @@
 
                     <!-- User Avatar Mobile -->
                     <div class="lg:hidden flex items-center gap-2">
-                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                            <span class="text-white text-sm font-semibold">{{ substr(auth()->user()->name, 0, 1) }}</span>
-                        </div>
+                        <img
+                            src="{{ auth()->user()->avatar_url
+                                    ? auth()->user()->avatar_url
+                                    : 'data:image/svg+xml;utf8,'.rawurlencode(
+                                        '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\'>
+                                            <rect width=\'100%\' height=\'100%\' rx=\'16\' fill=\'#3b82f6\'/>
+                                            <text x=\'50%\' y=\'56%\' font-size=\'14\' text-anchor=\'middle\' fill=\'white\' font-family=\'Arial, Helvetica, sans-serif\'>' .
+                                            e(auth()->user()->initials) .
+                                            '</text>
+                                        </svg>'
+                                    )
+                                }}"
+                            alt="Avatar"
+                            class="w-8 h-8 rounded-full object-cover ring-1 ring-blue-500/20"
+                        >
                     </div>
                 </div>
             </div>

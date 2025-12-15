@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
 use App\Http\Controllers\Instructor\InstructorController;
 use App\Http\Controllers\Instructor\MaterialController;
+use App\Http\Controllers\Instructor\ProfileController as InstructorProfileController;
 use App\Http\Controllers\Student\CourseController as StudentCourseController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Controllers\Student\TransactionController as StudentTransactionController;
@@ -341,6 +342,10 @@ Route::middleware('auth')->group(function () {
         ->group(function () {
 
             Route::get('/dashboard', [InstructorController::class, 'dashboard'])->name('dashboard');
+
+            // Profile Management
+            Route::get('/profile', [InstructorProfileController::class, 'edit'])->name('profile.edit');
+            Route::put('/profile', [InstructorProfileController::class, 'update'])->name('profile.update');
 
             // Course Management
             Route::get('/courses', [MaterialController::class, 'index'])->name('courses');

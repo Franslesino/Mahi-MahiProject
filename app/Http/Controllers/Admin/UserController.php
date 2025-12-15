@@ -18,17 +18,16 @@ class UserController extends Controller
     {
         $query = User::query();
 
-        // Search
-        if ($request->has('search') && $request->search) {
+        if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+                    ->orWhere('email', 'like', '%' . $request->search . '%');
             });
         }
 
-        // Filter by role
-        if ($request->has('role') && $request->role) {
-            $query->where('role', $request->role);
+        if ($request->filled('role')) {
+            $role = $request->role === 'user' ? 'student' : $request->role;
+            $query->where('role', $role);
         }
 
         $users = $query->latest()->paginate(15);
@@ -48,9 +47,10 @@ class UserController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'role'     => 'required|in:admin,instructor,user',
+            'role'     => 'required|in:admin,instructor,student,user',
         ]);
 
+        $validated['role'] = $validated['role'] === 'user' ? 'student' : $validated['role'];
         $validated['password'] = Hash::make($validated['password']);
 
         User::create($validated);
@@ -124,7 +124,7 @@ class UserController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
-            'role'     => 'required|in:admin,instructor,user',
+            'role'     => 'required|in:admin,instructor,student,user',
         ]);
 
         if ($request->filled('password')) {
@@ -132,6 +132,8 @@ class UserController extends Controller
         } else {
             unset($validated['password']);
         }
+
+        $validated['role'] = $validated['role'] === 'user' ? 'student' : $validated['role'];
 
         $user->update($validated);
 

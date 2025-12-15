@@ -56,7 +56,7 @@
                         <option value="">Pilih Role</option>
                         <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
                         <option value="instructor" {{ old('role') === 'instructor' ? 'selected' : '' }}>Instruktur</option>
-                        <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>User/Student</option>
+                        <option value="student" {{ in_array(old('role'), ['student','user']) ? 'selected' : '' }}>Student/User</option>
                     </select>
                     @error('role')
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>

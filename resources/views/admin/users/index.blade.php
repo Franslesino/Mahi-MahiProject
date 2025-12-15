@@ -21,7 +21,7 @@
                         <option value="">Semua Role</option>
                         <option value="admin" {{ request('role') === 'admin' ? 'selected' : '' }}>Admin</option>
                         <option value="instructor" {{ request('role') === 'instructor' ? 'selected' : '' }}>Instruktur</option>
-                        <option value="user" {{ request('role') === 'user' ? 'selected' : '' }}>User</option>
+                        <option value="student" {{ in_array(request('role'), ['student','user']) ? 'selected' : '' }}>Student</option>
                     </select>
                     <button type="submit" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">
                         <i class="fas fa-search"></i>

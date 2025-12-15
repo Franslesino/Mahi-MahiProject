@@ -77,6 +77,7 @@
                     <span class="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
                         Instruktur
                     </span>
+                    
                 </div>
             </div>
         </div>
@@ -107,6 +108,7 @@
                 <i class="fas fa-folder-open w-5 text-center"></i>
                 <span class="font-medium">Bank Soal</span>
             </a>
+
 
             <!-- Divider -->
             <div class="py-2">

@@ -12,24 +12,23 @@
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Total Kursus -->
-        <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
+        <a href="{{ route('admin.courses.index') }}" class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-blue-300 block">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Total Kursus</p>
                     <p class="text-3xl font-bold text-gray-800 mt-2">{{ $totalCourses }}</p>
                     <p class="text-xs text-green-600 mt-1 font-semibold">
-                        <i class="fas fa-arrow-up"></i>
-                        {{ $activeCourses }} Aktif
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full"><i class="fas fa-arrow-up"></i> {{ $activeCourses }} aktif</span>
                     </p>
                 </div>
-                <a href="{{ route('admin.courses.index') }}" class="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300 transition" aria-label="Kelola kursus">
+                <div class="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center">
                     <i class="fas fa-book text-blue-600 text-2xl"></i>
-                </a>
+                </div>
             </div>
-        </div>
+        </a>
 
         <!-- Total Pengguna -->
-        <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
+        <a href="{{ route('admin.users.index') }}" class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-emerald-300 block">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Total Pengguna</p>
@@ -38,31 +37,30 @@
                         {{ $totalStudents }} Students | {{ $totalInstructors }} Instructors
                     </p>
                 </div>
-                <a href="{{ route('admin.users.index') }}" class="w-14 h-14 bg-emerald-100 rounded-lg flex items-center justify-center hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-300 transition" aria-label="Kelola pengguna">
+                <div class="w-14 h-14 bg-emerald-100 rounded-lg flex items-center justify-center">
                     <i class="fas fa-users text-emerald-600 text-2xl"></i>
-                </a>
+                </div>
             </div>
-        </div>
+        </a>
 
         <!-- Total Transaksi -->
-        <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
+        <a href="{{ route('admin.transactions.index') }}" class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-purple-300 block">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Total Transaksi</p>
                     <p class="text-3xl font-bold text-gray-800 mt-2">{{ $totalTransactions }}</p>
                     <p class="text-xs text-yellow-600 mt-1 font-semibold">
-                        <i class="fas fa-clock"></i>
-                        {{ $pendingTransactions }} Pending
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-yellow-50 text-yellow-700 rounded-full"><i class="fas fa-clock"></i> {{ $pendingTransactions }} pending</span>
                     </p>
                 </div>
-                <a href="{{ route('admin.transactions.index') }}" class="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center hover:bg-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-300 transition" aria-label="Lihat transaksi">
+                <div class="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center">
                     <i class="fas fa-exchange-alt text-purple-600 text-2xl"></i>
-                </a>
+                </div>
             </div>
-        </div>
+        </a>
 
         <!-- Total Pendapatan -->
-        <div class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
+        <a href="{{ route('admin.transactions.index') }}" class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-amber-300 block">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Total Pendapatan</p>
@@ -70,21 +68,20 @@
                         Rp {{ number_format($totalRevenue, 0, ',', '.') }}
                     </p>
                     <p class="text-xs text-green-600 mt-1 font-semibold">
-                        <i class="fas fa-check-circle"></i>
-                        {{ $paidTransactions }} Paid
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full"><i class="fas fa-check-circle"></i> {{ $paidTransactions }} paid</span>
                     </p>
                 </div>
-                <a href="{{ route('admin.transactions.index') }}" class="w-14 h-14 bg-amber-100 rounded-lg flex items-center justify-center hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-300 transition" aria-label="Lihat pendapatan">
+                <div class="w-14 h-14 bg-amber-100 rounded-lg flex items-center justify-center">
                     <i class="fas fa-wallet text-amber-600 text-2xl"></i>
-                </a>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- Charts Row 1: Revenue & Transactions -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- Revenue by Category Chart -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="bg-white rounded-xl shadow-sm p-6" data-chart-card="revenue">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-lg font-bold text-gray-800">Pendapatan per Kategori</h3>
                 <span class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
@@ -92,15 +89,19 @@
                 </span>
             </div>
             
+            <div class="loading-skeleton space-y-3 mb-4 hidden">
+                <div class="h-6 w-40 bg-gray-200 rounded animate-pulse"></div>
+                <div class="h-48 bg-gray-200 rounded-xl animate-pulse"></div>
+            </div>
             @if($categoryData->count() > 0)
-            <div class="flex items-center justify-center mb-6">
+            <div class="flex items-center justify-center mb-6 chart-body">
                 <canvas id="revenueChart" width="250" height="250"></canvas>
             </div>
             <div class="grid grid-cols-2 gap-4">
                 @php
                     $colors = ['#F59E0B', '#3B82F6', '#06B6D4', '#EF4444', '#10B981', '#8B5CF6'];
                 @endphp
-                @foreach($categoryData->take(6) as $index => $cat)
+                @foreach($categoryData as $index => $cat)
                 <div class="flex items-center gap-2">
                     <div class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: {{ $colors[$index % 6] }}"></div>
                     <div class="flex-1 min-w-0">
@@ -120,7 +121,7 @@
         </div>
 
         <!-- Monthly Transactions Chart -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="bg-white rounded-xl shadow-sm p-6" data-chart-card="monthly">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-lg font-bold text-gray-800">Transaksi Bulanan {{ now()->year }}</h3>
                 <span class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
@@ -128,23 +129,36 @@
                 </span>
             </div>
             
-            <div class="flex items-center gap-2 mb-4">
+            <div class="loading-skeleton space-y-3 mb-4 hidden">
+                <div class="h-6 w-40 bg-gray-200 rounded animate-pulse"></div>
+                <div class="h-48 bg-gray-200 rounded-xl animate-pulse"></div>
+            </div>
+
+            @if($monthlyData->sum() > 0)
+            <div class="flex items-center gap-2 mb-4 chart-toggle">
                 <div class="flex rounded-lg border border-gray-200 overflow-hidden text-xs">
-                    <button id="chartTypeLine" class="px-3 py-1.5 bg-gray-100 text-gray-800 font-semibold">Line</button>
-                    <button id="chartTypeBar" class="px-3 py-1.5 text-gray-600 hover:bg-gray-100">Bar</button>
+                    <button id="chartTypeLine" class="px-3 py-1.5 bg-gray-100 text-gray-800 font-semibold" aria-pressed="true" aria-label="Tampilkan grafik garis">Line</button>
+                    <button id="chartTypeBar" class="px-3 py-1.5 text-gray-600 hover:bg-gray-100" aria-pressed="false" aria-label="Tampilkan grafik batang">Bar</button>
                 </div>
             </div>
 
-            <div style="height: 250px;">
+            <div style="height: 250px;" class="chart-body">
                 <canvas id="monthlyChart"></canvas>
             </div>
+            @else
+            <div class="flex flex-col items-center justify-center py-12 text-center chart-empty">
+                <i class="fas fa-chart-line text-5xl text-gray-300 mb-3"></i>
+                <p class="text-gray-600 font-semibold">Belum ada transaksi bulan ini</p>
+                <p class="text-gray-400 text-sm">Grafik akan tampil otomatis setelah ada transaksi paid.</p>
+            </div>
+            @endif
         </div>
     </div>
 
     <!-- Charts Row 2: Gender & Profession -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- Gender Distribution Chart -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="bg-white rounded-xl shadow-sm p-6" data-chart-card="gender">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-lg font-bold text-gray-800">Distribusi Gender Pengguna</h3>
                 <span class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
@@ -152,8 +166,12 @@
                 </span>
             </div>
             
+            <div class="loading-skeleton space-y-3 mb-4 hidden">
+                <div class="h-6 w-40 bg-gray-200 rounded animate-pulse"></div>
+                <div class="h-48 bg-gray-200 rounded-xl animate-pulse"></div>
+            </div>
             @if($genderData->count() > 0)
-            <div class="flex items-center justify-center mb-6">
+            <div class="flex items-center justify-center mb-6 chart-body">
                 <canvas id="genderChart" width="250" height="250"></canvas>
             </div>
             <div class="grid grid-cols-2 gap-4">
@@ -180,7 +198,7 @@
         </div>
 
         <!-- Profession Distribution Chart -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="bg-white rounded-xl shadow-sm p-6" data-chart-card="profesi">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-lg font-bold text-gray-800">Profesi Pengguna</h3>
                 <span class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
@@ -188,8 +206,12 @@
                 </span>
             </div>
             
+            <div class="loading-skeleton space-y-3 mb-4 hidden">
+                <div class="h-6 w-40 bg-gray-200 rounded animate-pulse"></div>
+                <div class="h-48 bg-gray-200 rounded-xl animate-pulse"></div>
+            </div>
             @if($profesiData->count() > 0)
-            <div style="height: 300px;">
+            <div style="height: 300px;" class="chart-body">
                 <canvas id="profesiChart"></canvas>
             </div>
             @else
@@ -334,6 +356,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const categoryData = @json($categoryData);
         
         if (categoryData.length > 0) {
+            const revenueCard = document.querySelector('[data-chart-card=\"revenue\"]');
+            revenueCard?.querySelector('.loading-skeleton')?.classList.add('hidden');
+            revenueCard?.querySelector('.chart-body')?.classList.remove('hidden');
+
             new Chart(revenueCtx, {
                 type: 'doughnut',
                 data: {
@@ -376,93 +402,107 @@ document.addEventListener('DOMContentLoaded', function() {
     // Monthly Transactions Line/Bar Chart
     // ==========================================
     const monthlyCtx = document.getElementById('monthlyChart');
-    if (monthlyCtx) {
+        if (monthlyCtx) {
         const monthlyData = @json($monthlyData->values());
-        const monthlyLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
-        let monthlyChartInstance = null;
+        const monthlySum = monthlyData.reduce((a,b)=>a+b,0);
+        const monthlyCard = document.querySelector('[data-chart-card=\"monthly\"]');
+        if (monthlySum === 0) {
+            monthlyCard?.querySelector('.loading-skeleton')?.classList.add('hidden');
+        } else {
+            monthlyCard?.querySelector('.loading-skeleton')?.classList.add('hidden');
+            monthlyCard?.querySelector('.chart-body')?.classList.remove('hidden');
+            monthlyCard?.querySelector('.chart-toggle')?.classList.remove('hidden');
 
-        const buildMonthlyChart = (type = 'line') => {
-            if (monthlyChartInstance) monthlyChartInstance.destroy();
-            const isLine = type === 'line';
-            monthlyChartInstance = new Chart(monthlyCtx, {
-                type,
-                data: {
-                    labels: monthlyLabels,
-                    datasets: [{
-                        label: 'Transaksi',
-                        data: monthlyData,
-                        borderColor: '#10B981',
-                        backgroundColor: isLine ? 'rgba(16, 185, 129, 0.1)' : '#10B981',
-                        tension: isLine ? 0.4 : 0,
-                        fill: isLine,
-                        borderWidth: 2,
-                        borderRadius: isLine ? 0 : 6,
-                        pointBackgroundColor: '#10B981',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: isLine ? 5 : 3,
-                        pointHoverRadius: isLine ? 7 : 5,
-                        pointHoverBackgroundColor: '#059669',
-                        pointHoverBorderWidth: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 12,
-                            callbacks: {
-                                label: function(context) {
-                                    return 'Transaksi: ' + context.parsed.y;
+            const monthlyLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
+            let monthlyChartInstance = null;
+
+            const buildMonthlyChart = (type = 'line') => {
+                if (monthlyChartInstance) monthlyChartInstance.destroy();
+                const isLine = type === 'line';
+                monthlyChartInstance = new Chart(monthlyCtx, {
+                    type,
+                    data: {
+                        labels: monthlyLabels,
+                        datasets: [{
+                            label: 'Transaksi',
+                            data: monthlyData,
+                            borderColor: '#10B981',
+                            backgroundColor: isLine ? 'rgba(16, 185, 129, 0.1)' : '#10B981',
+                            tension: isLine ? 0.4 : 0,
+                            fill: isLine,
+                            borderWidth: 2,
+                            borderRadius: isLine ? 0 : 6,
+                            pointBackgroundColor: '#10B981',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: isLine ? 5 : 3,
+                            pointHoverRadius: isLine ? 7 : 5,
+                            pointHoverBackgroundColor: '#059669',
+                            pointHoverBorderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Transaksi: ' + context.parsed.y;
+                                    }
                                 }
                             }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1 },
-                            grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false }
                         },
-                        x: {
-                            grid: { display: false, drawBorder: false }
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { stepSize: 1 },
+                                grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false }
+                            },
+                            x: {
+                                grid: { display: false, drawBorder: false }
+                            }
                         }
                     }
-                }
-            });
-        };
+                });
+            };
 
-        const setChartToggleState = (type) => {
-            const btnLine = document.getElementById('chartTypeLine');
-            const btnBar = document.getElementById('chartTypeBar');
-            if (btnLine && btnBar) {
-                if (type === 'line') {
-                    btnLine.classList.add('bg-gray-100', 'text-gray-800', 'font-semibold');
-                    btnBar.classList.remove('bg-gray-100', 'text-gray-800', 'font-semibold');
-                    btnBar.classList.add('text-gray-600');
-                } else {
-                    btnBar.classList.add('bg-gray-100', 'text-gray-800', 'font-semibold');
-                    btnLine.classList.remove('bg-gray-100', 'text-gray-800', 'font-semibold');
-                    btnLine.classList.add('text-gray-600');
+            const setChartToggleState = (type) => {
+                const btnLine = document.getElementById('chartTypeLine');
+                const btnBar = document.getElementById('chartTypeBar');
+                if (btnLine && btnBar) {
+                    if (type === 'line') {
+                        btnLine.classList.add('bg-gray-100', 'text-gray-800', 'font-semibold');
+                        btnLine.setAttribute('aria-pressed', 'true');
+                        btnBar.classList.remove('bg-gray-100', 'text-gray-800', 'font-semibold');
+                        btnBar.classList.add('text-gray-600');
+                        btnBar.setAttribute('aria-pressed', 'false');
+                    } else {
+                        btnBar.classList.add('bg-gray-100', 'text-gray-800', 'font-semibold');
+                        btnBar.setAttribute('aria-pressed', 'true');
+                        btnLine.classList.remove('bg-gray-100', 'text-gray-800', 'font-semibold');
+                        btnLine.classList.add('text-gray-600');
+                        btnLine.setAttribute('aria-pressed', 'false');
+                    }
                 }
-            }
-        };
+            };
 
-        buildMonthlyChart('line');
-        setChartToggleState('line');
-        document.getElementById('chartTypeLine')?.addEventListener('click', () => {
-            setChartToggleState('line');
             buildMonthlyChart('line');
-        });
-        document.getElementById('chartTypeBar')?.addEventListener('click', () => {
-            setChartToggleState('bar');
-            buildMonthlyChart('bar');
-        });
+            setChartToggleState('line');
+            document.getElementById('chartTypeLine')?.addEventListener('click', () => {
+                setChartToggleState('line');
+                buildMonthlyChart('line');
+            });
+            document.getElementById('chartTypeBar')?.addEventListener('click', () => {
+                setChartToggleState('bar');
+                buildMonthlyChart('bar');
+            });
+        }
     }
 
     // ==========================================
@@ -473,6 +513,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const genderData = @json($genderData);
         
         if (genderData.length > 0) {
+            const genderCard = document.querySelector('[data-chart-card=\"gender\"]');
+            genderCard?.querySelector('.loading-skeleton')?.classList.add('hidden');
+            genderCard?.querySelector('.chart-body')?.classList.remove('hidden');
+
             new Chart(genderCtx, {
                 type: 'pie',
                 data: {
@@ -518,6 +562,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const profesiData = @json($profesiData);
         
         if (profesiData.length > 0) {
+            const profesiCard = document.querySelector('[data-chart-card=\"profesi\"]');
+            profesiCard?.querySelector('.loading-skeleton')?.classList.add('hidden');
+            profesiCard?.querySelector('.chart-body')?.classList.remove('hidden');
+
             new Chart(profesiCtx, {
                 type: 'bar',
                 data: {

@@ -31,7 +31,7 @@ Route::get('/', function (Request $request) {
         $search = $request->search;
         $query->where(function ($q) use ($search) {
             $q->where('judul', 'ilike', "%{$search}%")
-              ->orWhere('deskripsi', 'ilike', "%{$search}%");
+                ->orWhere('deskripsi', 'ilike', "%{$search}%");
         });
     }
 
@@ -126,7 +126,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/courses/{course}/materials/{material}/complete', [StudentController::class, 'markMaterialComplete'])->name('courses.materials.complete');
         Route::get('/courses/{course}/materials/{material}/quiz', [StudentController::class, 'quiz'])->name('courses.materials.quiz');
         Route::post('/courses/{course}/materials/{material}/quiz/submit', [StudentController::class, 'quizSubmit'])->name('courses.materials.quiz.submit');
-        
+
         // Final Quiz Routes
         Route::get('/courses/{kursus}/final-quiz', [\App\Http\Controllers\Student\FinalQuizController::class, 'show'])->name('courses.final-quiz.show');
         Route::post('/courses/{kursus}/final-quiz/start', [\App\Http\Controllers\Student\FinalQuizController::class, 'start'])->name('courses.final-quiz.start');
@@ -177,26 +177,26 @@ Route::middleware('auth')->group(function () {
             // Download Certificate
             Route::get('/enrollment/{enrollment}/certificate/download', [StudentController::class, 'downloadCertificate'])
                 ->name('certificate.download');
-            
+
             // Preview Certificate (AJAX)
             Route::get('/enrollment/{enrollment}/certificate-preview', function (Enrollment $enrollment) {
-                // Verify ownership
-                if ($enrollment->user_id !== Auth::id()) {
-                    return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+                // Verify ownership with integer casting
+                if ((int) $enrollment->user_id !== (int) Auth::id()) {
+                    return response()->json(['success' => false, 'message' => 'Unauthorized - Enrollment bukan milik Anda'], 403);
                 }
-                
+
                 $certificate = $enrollment->sertifikat;
-                
+
                 if (!$certificate) {
                     return response()->json([
-                        'success' => false, 
-                        'message' => 'Sertifikat belum tersedia'
+                        'success' => false,
+                        'message' => 'Sertifikat belum tersedia. Pastikan semua materi sudah selesai.'
                     ], 404);
                 }
-                
+
                 $issuedAt = $certificate->tanggal_terbit ?? $certificate->tanggal_diterbitkan ?? $certificate->created_at;
                 $certificateNumber = $certificate->kode_sertifikat ?? $certificate->nomor_sertifikat ?? 'N/A';
-                
+
                 return response()->json([
                     'success' => true,
                     'url' => asset($certificate->url_unduhan),
@@ -229,13 +229,13 @@ Route::middleware('auth')->group(function () {
 
             // Dashboard (using controller)
             Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-            
+
             // Users management
             Route::resource('users', UserController::class);
 
             // Courses management
             Route::resource('courses', AdminCourseController::class);
-            
+
             // Admin Course Panel (like instructor panel)
             Route::prefix('courses/{course}')->name('courses.')->group(function () {
                 Route::get('detail', [AdminCourseController::class, 'courseDetail'])->name('detail');
@@ -249,10 +249,10 @@ Route::middleware('auth')->group(function () {
                 Route::get('modules/{section}/materials/{material}/edit', [AdminCourseController::class, 'editMaterial'])->name('modules.materials.edit');
                 Route::put('modules/{section}/materials/{material}', [AdminCourseController::class, 'updateMaterial'])->name('modules.materials.update');
                 Route::delete('modules/{section}/materials/{material}', [AdminCourseController::class, 'destroyMaterial'])->name('modules.materials.destroy');
-                
+
                 // Preview material
                 Route::get('materials/{material}/preview', [AdminCourseController::class, 'previewMaterial'])->name('materials.preview');
-                
+
                 // Quiz routes
                 Route::post('quizzes', [AdminCourseController::class, 'storeQuiz'])->name('quizzes.store');
             });
@@ -319,13 +319,13 @@ Route::middleware('auth')->group(function () {
                 'update' => 'bank-soal.update',
                 'destroy' => 'bank-soal.destroy',
             ]);
-            
+
             // Question Bank Management
             Route::resource('question-banks', \App\Http\Controllers\Admin\QuestionBankController::class);
             Route::get('/question-banks/{questionBank}/create-question', [\App\Http\Controllers\Admin\QuestionBankController::class, 'createQuestion'])->name('question-banks.create-question');
             Route::post('/question-banks/{questionBank}/questions', [\App\Http\Controllers\Admin\QuestionBankController::class, 'storeQuestion'])->name('question-banks.questions.store');
             Route::delete('/question-banks/{questionBank}/questions/{question}', [\App\Http\Controllers\Admin\QuestionBankController::class, 'destroyQuestion'])->name('question-banks.questions.destroy');
-            
+
             // Question Import/Export (Old System)
             Route::get('/question-banks/export/template', [\App\Http\Controllers\Admin\QuestionBankController::class, 'exportTemplate'])->name('question-banks.export-template');
             Route::post('/question-banks/{questionBank}/import', [\App\Http\Controllers\Admin\QuestionBankController::class, 'importQuestions'])->name('question-banks.import-questions');
@@ -424,7 +424,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/courses/{kursus}/final-quiz/store-new-question', [\App\Http\Controllers\Instructor\FinalQuizController::class, 'storeNewQuestion'])->name('courses.final-quiz.store-new-question');
             Route::delete('/courses/{kursus}/final-quiz/remove-question/{question}', [\App\Http\Controllers\Instructor\FinalQuizController::class, 'removeQuestion'])->name('courses.final-quiz.remove-question');
             Route::post('/courses/{kursus}/final-quiz/toggle-activation', [\App\Http\Controllers\Instructor\FinalQuizController::class, 'toggleActivation'])->name('courses.final-quiz.toggle-activation');
-            
+
             Route::resource('bank-soal', \App\Http\Controllers\Instructor\BankSoalController::class)->names([
                 'index' => 'bank-soal.index',
                 'create' => 'bank-soal.create',

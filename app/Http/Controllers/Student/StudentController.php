@@ -45,7 +45,11 @@ class StudentController extends Controller
         $course->load([
             'pembuat',
             'sections.materials' => function ($query) {
-                $query->orderBy('urutan', 'asc');
+                // Show materials that are NOT draft (including NULL status = published)
+                $query->where(function ($q) {
+                    $q->whereNull('status')
+                        ->orWhere('status', '!=', 'draft');
+                })->orderBy('urutan', 'asc');
             },
         ]);
 
@@ -68,6 +72,33 @@ class StudentController extends Controller
         }
         if (!$currentMaterial) {
             $currentMaterial = $materials->first();
+        }
+
+        // Load final exam data
+        $finalExam = null;
+        $finalExamStatus = null;
+
+        if ($course->require_final_quiz && $course->final_quiz_id) {
+            $finalExam = $course->finalQuiz;
+
+            // Check if student has passed the final quiz
+            $passedAttempt = QuizAttempt::where('user_id', Auth::id())
+                ->where('quiz_id', $course->final_quiz_id)
+                ->where('kursus_id', $course->id)
+                ->where('is_passed', true)
+                ->first();
+
+            if ($passedAttempt) {
+                $finalExamStatus = 'passed';
+            } else {
+                $latestAttempt = QuizAttempt::where('user_id', Auth::id())
+                    ->where('quiz_id', $course->final_quiz_id)
+                    ->where('kursus_id', $course->id)
+                    ->latest()
+                    ->first();
+
+                $finalExamStatus = $latestAttempt ? 'attempted' : 'not_started';
+            }
         }
 
         return view('student.learn', [
@@ -141,7 +172,7 @@ class StudentController extends Controller
             $this->generateCertificateIfNeeded($enrollment, $course);
         }
 
-    return back()->with('success', 'Materi ditandai selesai.');
+        return back()->with('success', 'Materi ditandai selesai.');
     }
 
     public function quiz(Request $request, Kursus $course, Materi $material)
@@ -323,7 +354,11 @@ class StudentController extends Controller
     {
         $course->loadMissing([
             'sections.materials' => function ($query) {
-                $query->orderBy('urutan', 'asc');
+                // Show materials that are NOT draft (including NULL status = published)
+                $query->where(function ($q) {
+                    $q->whereNull('status')
+                        ->orWhere('status', '!=', 'draft');
+                })->orderBy('urutan', 'asc');
             },
         ]);
 
@@ -369,6 +404,8 @@ class StudentController extends Controller
                     $query->withCount('materi');
                 },
                 'kursus.pembuat',
+                'kursus.materi',
+                'kursus.sections.materials', // Load materials through sections
                 // Load certificate only if FK is known to avoid invalid column errors
                 ...($certificateFk ? ['sertifikat'] : []),
             ])
@@ -424,7 +461,7 @@ class StudentController extends Controller
 
         $user = Auth::user();
         $certificateNumber = 'CERT-' . strtoupper(uniqid());
-        
+
         // Get instructor name
         $instructorName = $course->pembuat->name ?? $course->instructor->name ?? 'Bagus Fransislino';
 
@@ -453,9 +490,9 @@ class StudentController extends Controller
         // For now, we'll just create a path reference
         // In a real application, you'd generate an actual image/PDF here
         // using tools like: Puppeteer, wkhtmltopdf, or Intervention Image
-        
+
         $filename = 'certificates/' . $certificateNumber . '.html';
-        
+
         // Create certificates directory if it doesn't exist
         $certificatesPath = storage_path('app/public/certificates');
         if (!file_exists($certificatesPath)) {
@@ -464,7 +501,7 @@ class StudentController extends Controller
 
         // Generate certificate HTML
         $html = $this->getCertificateHtml($studentName, $courseName, $certificateNumber, $date, $instructorName);
-        
+
         // Save HTML file (in production, convert this to PDF/PNG)
         file_put_contents(storage_path('app/public/' . $filename), $html);
 
@@ -647,7 +684,7 @@ HTML;
      */
     public function downloadCertificate(Enrollment $enrollment)
     {
-        if ($enrollment->user_id !== Auth::id()) {
+        if ((int) $enrollment->user_id !== (int) Auth::id()) {
             abort(403, 'Unauthorized');
         }
 

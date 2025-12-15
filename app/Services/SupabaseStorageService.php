@@ -14,8 +14,9 @@ class SupabaseStorageService
         $bucket = config('services.supabase.bucket', 'course-uploads');
         $isPublic = (bool) config('services.supabase.public', true);
 
+        // Fallback ke local storage jika Supabase tidak dikonfigurasi
         if (!$baseUrl || !$serviceKey || !$bucket) {
-            throw new \RuntimeException('Supabase storage belum dikonfigurasi.');
+            return $this->uploadToLocalStorage($file, $folder);
         }
 
         $key = trim($folder, '/') . '/' . $this->generateFilename($file);
@@ -30,12 +31,30 @@ class SupabaseStorageService
             ->put($endpoint);
 
         if ($response->failed()) {
-            throw new \RuntimeException('Gagal upload ke Supabase: ' . $response->body());
+            // Jika gagal upload ke Supabase, fallback ke local storage
+            return $this->uploadToLocalStorage($file, $folder);
         }
 
         return [
             'path' => $key,
             'public_url' => $isPublic ? $this->publicUrl($key) : null,
+        ];
+    }
+
+    /**
+     * Fallback upload ke local storage
+     */
+    protected function uploadToLocalStorage(UploadedFile $file, string $folder): array
+    {
+        $filename = $this->generateFilename($file);
+        $path = trim($folder, '/') . '/' . $filename;
+
+        // Simpan ke storage/app/public
+        $storedPath = $file->storeAs($folder, $filename, 'public');
+
+        return [
+            'path' => $storedPath,
+            'public_url' => asset('storage/' . $storedPath),
         ];
     }
 

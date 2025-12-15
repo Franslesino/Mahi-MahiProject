@@ -49,10 +49,10 @@ class TransactionController extends Controller
 
         // Calculate pricing
         $hargaAsli = $course->harga ?? $course->price ?? 0;
-        $hargaDiskon = ($course->discount_price && $course->discount_price > 0) 
-            ? $course->discount_price 
+        $hargaDiskon = ($course->discount_price && $course->discount_price > 0)
+            ? $course->discount_price
             : null;
-        
+
         $totalBayar = $hargaDiskon ?? $hargaAsli;
         $diskonPersen = ($hargaDiskon && $hargaAsli > 0)
             ? round((($hargaAsli - $hargaDiskon) / $hargaAsli) * 100)
@@ -85,10 +85,10 @@ class TransactionController extends Controller
 
             // Calculate pricing
             $hargaAsli = $course->harga ?? $course->price ?? 0;
-            $hargaDiskon = ($course->discount_price && $course->discount_price > 0) 
-                ? $course->discount_price 
+            $hargaDiskon = ($course->discount_price && $course->discount_price > 0)
+                ? $course->discount_price
                 : null;
-            
+
             $totalBayar = $hargaDiskon ?? $hargaAsli;
             $diskonPersen = ($hargaDiskon && $hargaAsli > 0)
                 ? round((($hargaAsli - $hargaDiskon) / $hargaAsli) * 100)
@@ -159,7 +159,7 @@ class TransactionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Transaction Process Error: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
@@ -211,7 +211,7 @@ class TransactionController extends Controller
                 if ($course) {
                     // Prioritas: instructor_id, jika tidak ada baru pembuat (admin)
                     $instructorId = $course->instructor_id ?: $course->pembuat;
-                    
+
                     // Hanya kirim notifikasi ke instructor, bukan admin
                     if ($instructorId && $instructorId != $course->pembuat) {
                         Notification::create([
@@ -251,7 +251,7 @@ class TransactionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Complete Payment Error: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
@@ -336,7 +336,7 @@ class TransactionController extends Controller
             if ($course) {
                 // Prioritas: instructor_id, jika tidak ada baru pembuat (admin)
                 $instructorId = $course->instructor_id ?: $course->pembuat;
-                
+
                 // Hanya kirim notifikasi ke instructor, bukan admin
                 if ($instructorId && $instructorId != $course->pembuat) {
                     Notification::create([
@@ -473,7 +473,7 @@ class TransactionController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Get Payment Details Error: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengambil detail pembayaran: ' . $e->getMessage(),
@@ -522,5 +522,82 @@ class TransactionController extends Controller
                 'trace' => $e->getTraceAsString(),
             ], 500);
         }
+    }
+
+    /**
+     * Handler untuk callback sukses dari Midtrans (finish)
+     */
+    public function finish(Request $request)
+    {
+        $transactionCode = $request->query('order_id');
+        $transactionStatus = $request->query('transaction_status');
+
+        if (!$transactionCode) {
+            return redirect()->route('home')
+                ->with('error', 'Transaksi tidak ditemukan.');
+        }
+
+        $transaction = Transaction::where('transaction_code', $transactionCode)->first();
+
+        if (!$transaction) {
+            return redirect()->route('home')
+                ->with('error', 'Transaksi tidak ditemukan.');
+        }
+
+        // Redirect ke halaman transaksi dengan pesan sukses
+        if ($transaction->status === 'paid') {
+            return redirect()->route('student.course.learn', $transaction->kursus)
+                ->with('success', 'Pembayaran berhasil! Selamat belajar!');
+        }
+
+        return redirect()->route('transactions.show', $transaction)
+            ->with('info', 'Transaksi sedang diproses. Status: ' . ($transactionStatus ?? 'pending'));
+    }
+
+    /**
+     * Handler untuk callback pembayaran belum selesai dari Midtrans (unfinish)
+     */
+    public function unfinish(Request $request)
+    {
+        $transactionCode = $request->query('order_id');
+
+        if (!$transactionCode) {
+            return redirect()->route('home')
+                ->with('info', 'Pembayaran belum diselesaikan.');
+        }
+
+        $transaction = Transaction::where('transaction_code', $transactionCode)->first();
+
+        if (!$transaction) {
+            return redirect()->route('home')
+                ->with('info', 'Pembayaran belum diselesaikan.');
+        }
+
+        return redirect()->route('transactions.show', $transaction)
+            ->with('warning', 'Pembayaran belum diselesaikan. Silakan selesaikan pembayaran Anda.');
+    }
+
+    /**
+     * Handler untuk callback error dari Midtrans
+     */
+    public function error(Request $request)
+    {
+        $transactionCode = $request->query('order_id');
+        $statusMessage = $request->query('status_message', 'Terjadi kesalahan pada pembayaran.');
+
+        if (!$transactionCode) {
+            return redirect()->route('home')
+                ->with('error', $statusMessage);
+        }
+
+        $transaction = Transaction::where('transaction_code', $transactionCode)->first();
+
+        if (!$transaction) {
+            return redirect()->route('home')
+                ->with('error', $statusMessage);
+        }
+
+        return redirect()->route('transactions.show', $transaction)
+            ->with('error', 'Pembayaran gagal: ' . $statusMessage);
     }
 }

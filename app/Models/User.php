@@ -38,9 +38,15 @@ class User extends Authenticatable
         'no_telepon',
         'profile_url',
         'avatar',
+        'avatar_path',
         'google_id',
         'jenis_kelamin',
         'profesi',
+        'first_name',
+        'last_name',
+        'dob',
+        'gender',
+        'nim',
     ];
 
     protected $hidden = [
@@ -100,16 +106,34 @@ class User extends Authenticatable
     }
 
     /**
-     * Get avatar URL
+     * Get avatar URL (checks multiple sources: avatar_path, avatar from Google, profile_url)
      */
     public function getAvatarUrlAttribute()
     {
+        // Priority 1: avatar_path (uploaded photos)
         if ($this->avatar_path) {
             if (str_starts_with($this->avatar_path, 'http')) {
                 return $this->avatar_path;
             }
             return asset('storage/' . $this->avatar_path);
         }
+
+        // Priority 2: avatar (usually from Google OAuth)
+        if ($this->avatar) {
+            if (str_starts_with($this->avatar, 'http')) {
+                return $this->avatar;
+            }
+            return asset('storage/' . $this->avatar);
+        }
+
+        // Priority 3: profile_url (legacy)
+        if ($this->profile_url) {
+            if (str_starts_with($this->profile_url, 'http')) {
+                return $this->profile_url;
+            }
+            return asset('storage/' . $this->profile_url);
+        }
+
         return null;
     }
 
@@ -139,7 +163,7 @@ class User extends Authenticatable
 
 
 
-    
+
 
     // --- Relasi ke Notifications ---
     public function notifications()

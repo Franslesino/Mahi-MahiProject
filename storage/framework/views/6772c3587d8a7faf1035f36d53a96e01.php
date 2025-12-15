@@ -1,7 +1,9 @@
+
+
+
 <?php
     use App\Models\MaterialCompletion;
-    use App\Models\Assignment;
-    use App\Models\Submission;
+    use App\Models\QuizAttempt;
     use Illuminate\Support\Facades\Auth;
 ?>
 
@@ -16,43 +18,64 @@
 
     foreach ($enrollments as $enrollment) {
         $course = $enrollment->kursus;
-        $materiIds = $course->materi ? $course->materi->pluck('id')->toArray() : [];
+
+        // Ambil daftar materi dari relasi sections->materials jika ada, fallback ke relasi materi bawaan
+        $materialIdsCollection = collect();
+        if (method_exists($course, 'sections')) {
+            $materialIdsCollection = $course->sections
+                ? $course->sections->flatMap(function ($section) {
+                    return $section->materials ?? collect();
+                })->pluck('id')
+                : collect();
+        }
+        if ($materialIdsCollection->isEmpty() && $course->materi) {
+            $materialIdsCollection = $course->materi->pluck('id');
+        }
+        $materiIds = $materialIdsCollection->unique()->values()->toArray();
         $materiCount = count($materiIds);
         $completedMaterialCount = (!empty($materiIds))
             ? MaterialCompletion::where('user_id', Auth::id())
                 ->whereIn('materi_id', $materiIds)
                 ->count()
             : 0;
-        $progress = $materiCount > 0 ? round(($completedMaterialCount / $materiCount) * 100) : 0;
-        $materialsCompleted = $materiCount > 0 && $completedMaterialCount >= $materiCount;
+        // Final quiz (new flow) status
+        $finalQuizId = $course->final_quiz_id ?? null;
+        $finalQuizRequired = (bool) ($course->require_final_quiz && $finalQuizId);
+        $finalQuizAttempt = null;
+        $finalQuizScore = null;
+        $finalQuizPassed = false;
 
-        // Final quiz status (assignment type exam yang sudah publish)
-        $finalExam = Assignment::where('kursus_id', $course->id)
-            ->where('type', 'exam')
-            ->where('is_published', true)
-            ->first();
-        $finalExamScore = null;
-        $finalExamPassed = false;
-        if ($finalExam) {
-            $latestFinal = Submission::where('assignment_id', $finalExam->id)
-                ->where('user_id', Auth::id())
-                ->latest()
+        if ($finalQuizId) {
+            $finalQuizAttempt = QuizAttempt::where('user_id', Auth::id())
+                ->where('quiz_id', $finalQuizId)
+                ->where('kursus_id', $course->id)
+                ->latest('created_at')
                 ->first();
-            $finalExamScore = $latestFinal->percentage ?? $latestFinal->score;
-            $finalExamPassed = $latestFinal && $finalExamScore !== null && $finalExamScore >= ($finalExam->passing_score ?? 70);
+
+            $finalQuizScore = $finalQuizAttempt->score ?? null;
+            $finalQuizPassed = $finalQuizAttempt?->is_passed ?? false;
         }
 
-        $isCompleted = $materialsCompleted && (!$finalExam || $finalExamPassed);
+        // Hitung progres dengan memasukkan final quiz sebagai step tambahan jika wajib
+        $requiresFinalStep = $finalQuizRequired;
+        $totalSteps = $materiCount + ($requiresFinalStep ? 1 : 0);
+        $completedSteps = $completedMaterialCount + (($requiresFinalStep && $finalQuizPassed) ? 1 : 0);
+        $progress = $totalSteps > 0 ? round(($completedSteps / $totalSteps) * 100) : 0;
+
+        $materialsCompleted = $materiCount > 0 && $completedMaterialCount >= $materiCount;
+        $isCompleted = $progress >= 100;
 
         $courseProgressMap[$course->id] = [
             'materiCount' => $materiCount,
             'completedCount' => $completedMaterialCount,
             'progress' => $progress,
             'isCompleted' => $isCompleted,
-            'finalExamRequired' => (bool) $finalExam,
-            'finalExamPassed' => $finalExamPassed,
-            'finalExamScore' => $finalExamScore,
+            'finalQuizRequired' => $requiresFinalStep,
+            'finalQuizPassed' => $finalQuizPassed,
+            'finalQuizScore' => $finalQuizScore,
             'materialsCompleted' => $materialsCompleted,
+            'completedSteps' => $completedSteps,
+            'totalSteps' => $totalSteps,
         ];
 
         if ($isCompleted) {
@@ -143,18 +166,24 @@
                         $course = $enrollment->kursus;
                         $judul = $course->judul ?? $course->title ?? 'Untitled';
                         $kategori = $course->kategori ?? 'General';
-                        $progressData = $courseProgressMap[$course->id] ?? ['materiCount' => 0, 'completedCount' => 0, 'progress' => 0, 'isCompleted' => false];
+                        $instructorName = $course->pembuat->name ?? $course->instructor->name ?? 'Instruktur';
+                        $progressData = $courseProgressMap[$course->id] ?? [
+                            'materiCount' => 0,
+                            'completedCount' => 0,
+                            'progress' => 0,
+                            'isCompleted' => false,
+                            'completedSteps' => 0,
+                            'totalSteps' => 0,
+                        ];
                         $progress = $progressData['progress'];
                         $isCompleted = $progressData['isCompleted'];
                         $certificate = $enrollment->sertifikat;
-                        $finalExamRequired = $progressData['finalExamRequired'] ?? false;
-                        $finalExamPassed = $progressData['finalExamPassed'] ?? false;
-                        $finalExamScore = $progressData['finalExamScore'] ?? null;
+                        $finalQuizRequired = $progressData['finalQuizRequired'] ?? false;
+                        $finalQuizPassed = $progressData['finalQuizPassed'] ?? false;
+                        $finalQuizScore = $progressData['finalQuizScore'] ?? null;
                         $materialsCompleted = $progressData['materialsCompleted'] ?? false;
-
-                        if ($finalExamRequired && !$finalExamPassed && $progress >= 100) {
-                            $progress = 95;
-                        }
+                        $completedSteps = $progressData['completedSteps'] ?? $progressData['completedCount'] ?? 0;
+                        $totalSteps = $progressData['totalSteps'] ?? ($progressData['materiCount'] ?? 0);
                     ?>
 
                     <div class="course-item bg-white rounded-2xl shadow-sm hover:shadow-md transition p-4"
@@ -201,6 +230,11 @@
                                     <?php echo e($judul); ?>
 
                                 </h3>
+                                <p class="text-sm text-gray-600 mb-2">
+                                    <span class="font-semibold text-gray-700">Instruktur:</span>
+                                    <?php echo e($instructorName); ?>
+
+                                </p>
 
                                 <?php if($isCompleted): ?>
                                     <!-- Completed Status -->
@@ -215,27 +249,29 @@
                                             </span>
                                         </div>
                                         
-                                        <?php if($certificate): ?>
-                                            <!-- Certificate Available -->
-                                            <div class="flex items-center gap-2">
-                                                <button onclick="viewCertificate(<?php echo e($enrollment->id); ?>)" 
-                                                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition shadow-sm">
-                                                    <i class="fas fa-eye mr-2"></i>
-                                                    Lihat Sertifikat
-                                                </button>
-                                                <a href="<?php echo e(route('student.certificate.download', $enrollment)); ?>" 
-                                                   class="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 transition shadow-sm">
-                                                    <i class="fas fa-download mr-2"></i>
-                                                    Unduh
-                                                </a>
-                                            </div>
-                                        <?php else: ?>
-                                            <!-- Certificate Processing -->
-                                            <div class="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
-                                                <i class="fas fa-clock animate-pulse"></i>
-                                                <span class="font-medium">Sertifikat sedang diproses...</span>
-                                            </div>
-                                        <?php endif; ?>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <?php if($certificate): ?>
+                                                <!-- Certificate Available -->
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <button onclick="viewCertificate(<?php echo e($enrollment->id); ?>)" 
+                                                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition shadow-sm hover:-translate-y-0.5 active:scale-95">
+                                                        <i class="fas fa-eye mr-2"></i>
+                                                        Lihat Sertifikat
+                                                    </button>
+                                                    <a href="<?php echo e(route('student.certificate.download', $enrollment)); ?>" 
+                                                       class="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 transition shadow-sm hover:-translate-y-0.5 active:scale-95">
+                                                        <i class="fas fa-download mr-2"></i>
+                                                        Unduh
+                                                    </a>
+                                                </div>
+                                            <?php else: ?>
+                                                <!-- Certificate Processing -->
+                                                <div class="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+                                                    <i class="fas fa-clock animate-pulse"></i>
+                                                    <span class="font-medium">Sertifikat sedang diproses...</span>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 <?php else: ?>
                                     <!-- Progress Bar -->
@@ -248,19 +284,44 @@
                                             <span class="text-sm font-bold text-gray-700 min-w-[45px]"><?php echo e($progress); ?>%</span>
                                         </div>
                                         <p class="text-xs text-gray-500">
-                                            <?php echo e($progressData['completedCount']); ?>/<?php echo e($progressData['materiCount']); ?> Materi Selesai
+                                            <?php echo e($completedSteps); ?>/<?php echo e($totalSteps); ?> Langkah Selesai
                                         </p>
-                                        <?php if($finalExamRequired && !$finalExamPassed && $materialsCompleted): ?>
+                                        <?php if($finalQuizRequired && !$finalQuizPassed && $materialsCompleted): ?>
                                             <p class="text-xs text-amber-600 font-semibold">
                                                 Final quiz belum lulus. Selesaikan untuk mendapatkan sertifikat.
                                             </p>
                                         <?php endif; ?>
-                                        <a href="<?php echo e(route('student.course.learn', $course)); ?>" 
-                                           class="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 transition shadow-sm">
-                                            <i class="fas fa-play mr-2"></i>
-                                            <?php echo e($finalExamRequired && $materialsCompleted ? 'Kerjakan Final Quiz' : 'Lanjutkan Belajar'); ?>
+                                        <div class="flex flex-wrap gap-2 pt-1">
+                                            <a href="<?php echo e(route('student.course.learn', $course)); ?>" 
+                                               class="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 transition shadow-sm hover:-translate-y-0.5 active:scale-95">
+                                                <i class="fas fa-play mr-2"></i>
+                                                <?php echo e($finalQuizRequired && $materialsCompleted ? 'Kerjakan Final Quiz' : 'Lanjutkan Belajar'); ?>
 
-                                        </a>
+                                            </a>
+                                            <?php if($finalQuizRequired): ?>
+                                                <?php if($finalQuizPassed): ?>
+                                                    <span class="inline-flex items-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-semibold">
+                                                        <i class="fas fa-check-circle"></i> Final quiz lulus
+                                                    </span>
+                                                <?php else: ?>
+                                                    <a href="<?php echo e(route('courses.final-quiz.show', $course->id)); ?>"
+                                                       class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition shadow-sm hover:-translate-y-0.5 active:scale-95">
+                                                        <i class="fas fa-flag-checkered"></i> Final Quiz
+                                                    </a>
+                                                    <?php if(!is_null($finalQuizScore)): ?>
+                                                        <span class="inline-flex items-center gap-2 px-3 py-2 bg-amber-50 text-amber-700 rounded-lg text-xs font-semibold">
+                                                            <i class="fas fa-chart-line"></i> Nilai terakhir: <?php echo e(number_format($finalQuizScore, 2)); ?>%
+                                                        </span>
+                                                    <?php endif; ?>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+                                            <?php if($certificate): ?>
+                                                <button onclick="viewCertificate(<?php echo e($enrollment->id); ?>)"
+                                                        class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-800 rounded-lg text-xs font-semibold hover:shadow-sm transition hover:-translate-y-0.5 active:scale-95">
+                                                    <i class="fas fa-eye"></i> Sertifikat
+                                                </button>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -472,19 +533,11 @@ function viewCertificate(enrollmentId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                const url = data.url || '';
+                const url = data.stream_url || data.url || '';
                 const isHtml = url.toLowerCase().endsWith('.html');
-                if (isHtml) {
-                    preview.innerHTML = `
-                        <iframe src="${url}" class="w-full h-[70vh] rounded-lg border-4 border-blue-100 shadow-lg" title="Certificate"></iframe>
-                    `;
-                } else {
-                    preview.innerHTML = `
-                        <img src="${url}" 
-                             alt="Certificate" 
-                             class="max-w-full h-auto rounded-lg shadow-lg border-4 border-blue-100">
-                    `;
-                }
+                preview.innerHTML = `
+                    <iframe src="${url}" class="w-full h-[70vh] rounded-lg border-4 border-blue-100 shadow-lg" title="Certificate"></iframe>
+                `;
             } else {
                 preview.innerHTML = `
                     <div class="text-center text-red-600">

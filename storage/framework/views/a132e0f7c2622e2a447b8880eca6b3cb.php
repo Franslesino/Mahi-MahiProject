@@ -3,10 +3,6 @@
     <!-- Header -->
     <div class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div class="flex-1">
-            <a href="<?php echo e(route('instructor.courses')); ?>" class="text-blue-600 hover:text-blue-700 mb-2 inline-flex items-center gap-2">
-                <i class="fas fa-arrow-left"></i>
-                <span>Kembali ke Daftar Kursus</span>
-            </a>
             <h2 class="text-2xl font-bold text-gray-800 mt-2"><?php echo e($course->title); ?></h2>
             <p class="text-gray-600 mt-1"><?php echo e($course->description); ?></p>
         </div>
@@ -83,10 +79,22 @@
     <!-- Final Quiz Statistics (if exists) -->
     <?php if($course->require_final_quiz && $course->final_quiz_id): ?>
         <?php
-            $finalQuizStats = DB::table('quiz_attempts')
+            // Hitung total peserta unik dan peserta lulus unik
+            $totalParticipants = DB::table('quiz_attempts')
+                ->where('kursus_id', $course->id)
+                ->where('quiz_id', $course->final_quiz_id)
+                ->distinct('user_id')
+                ->count('user_id');
+
+            $passedCount = DB::table('quiz_attempts')
+                ->where('kursus_id', $course->id)
+                ->where('quiz_id', $course->final_quiz_id)
+                ->where('is_passed', true)
+                ->distinct('user_id')
+                ->count('user_id');
+
+            $scoreAggregate = DB::table('quiz_attempts')
                 ->select(
-                    DB::raw('COUNT(DISTINCT user_id) as total_participants'),
-                    DB::raw('SUM(CASE WHEN is_passed = true THEN 1 ELSE 0 END) as passed_count'),
                     DB::raw('AVG(score) as avg_score'),
                     DB::raw('MAX(score) as max_score'),
                     DB::raw('MIN(score) as min_score')
@@ -95,12 +103,10 @@
                 ->where('quiz_id', $course->final_quiz_id)
                 ->first();
             
-            $totalParticipants = $finalQuizStats->total_participants ?? 0;
-            $passedCount = $finalQuizStats->passed_count ?? 0;
-            $failedCount = $totalParticipants - $passedCount;
-            $avgScore = $finalQuizStats->avg_score ?? 0;
-            $maxScore = $finalQuizStats->max_score ?? 0;
-            $minScore = $finalQuizStats->min_score ?? 0;
+            $failedCount = max($totalParticipants - $passedCount, 0);
+            $avgScore = $scoreAggregate->avg_score ?? 0;
+            $maxScore = $scoreAggregate->max_score ?? 0;
+            $minScore = $scoreAggregate->min_score ?? 0;
             $passRate = $totalParticipants > 0 ? ($passedCount / $totalParticipants) * 100 : 0;
         ?>
 

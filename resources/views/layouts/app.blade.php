@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Pelayanan TIK PNJ')</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -48,6 +49,11 @@
             * {
                 scroll-behavior: smooth;
             }
+        }
+
+        /* Toast tweaks */
+        #toast-container .toast {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
         }
     </style>
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
@@ -385,5 +391,8 @@
             @endauth
         }
     </script>
+
+    <!-- Toasts -->
+    @include('components.toast')
 </body>
 </html>

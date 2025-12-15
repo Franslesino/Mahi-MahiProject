@@ -17,14 +17,13 @@ use App\Models\JawabanPeserta;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class StudentController extends Controller
 {
-    protected $middleware = ['auth', 'role:student'];
-
     public function __construct()
     {
-        // Middleware already applied in routes
+        $this->middleware(['auth', 'role:student']);
     }
 
     /**
@@ -45,7 +44,7 @@ class StudentController extends Controller
         $course->load([
             'pembuat',
             'sections.materials' => function ($query) {
-                $query->orderBy('urutan', 'asc');
+                $query->where('status', 'published')->orderBy('urutan', 'asc');
             },
         ]);
 
@@ -161,11 +160,29 @@ class StudentController extends Controller
             ->first();
 
         if (!$enrollment) {
-            return redirect()->route('courses.show', $course)
-                ->with('error', 'Anda belum membeli kursus ini. Silakan beli terlebih dahulu.');
+            $msg = 'Anda belum membeli kursus ini. Silakan beli terlebih dahulu.';
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => $msg], 403)
+                : redirect()->route('courses.show', $course)->with('error', $msg);
         }
 
-        $material = $course->materi()->where('id', $materialId)->firstOrFail();
+        // Cari materi dari sections->materials, fallback ke relasi materi()
+        $material = $course->sections()
+            ->with(['materials' => fn($q) => $q->where('status', 'published')])
+            ->get()
+            ->flatMap->materials
+            ->firstWhere('id', $materialId);
+
+        if (!$material) {
+            $material = $course->materi()->where('id', $materialId)->where('status', 'published')->first();
+        }
+
+        if (!$material) {
+            $msg = 'Materi tidak ditemukan.';
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => $msg], 404)
+                : back()->with('error', $msg);
+        }
 
         MaterialCompletion::firstOrCreate(
             [
@@ -185,7 +202,86 @@ class StudentController extends Controller
             $this->generateCertificateIfNeeded($enrollment, $course);
         }
 
-    return back()->with('success', 'Materi ditandai selesai.');
+        $msg = 'Materi ditandai selesai.';
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'progress' => $materialStats['progress'],
+            ]);
+        }
+
+        return back()->with('success', $msg);
+    }
+
+    /**
+     * Download material file with correct Content-Disposition
+     */
+    public function downloadMaterial(Request $request, Kursus $course, $materialId)
+    {
+        $enrollment = Enrollment::where('user_id', Auth::id())
+            ->where('kursus_id', $course->id)
+            ->whereIn('status_pendaftaran', ['active', 'completed', 'paid'])
+            ->first();
+
+        if (!$enrollment) {
+            abort(403, 'Unauthorized');
+        }
+
+        $material = $course->sections()
+            ->with('materials')
+            ->get()
+            ->flatMap->materials
+            ->firstWhere('id', $materialId);
+
+        if (!$material) {
+            $material = $course->materi()->where('id', $materialId)->first();
+        }
+
+        if (!$material) {
+            abort(404, 'Material not found');
+        }
+
+        $source = $material->file_url_full ?? $material->url_konten;
+        if (!$source) {
+            abort(404, 'File tidak ditemukan');
+        }
+
+        $filenameBase = Str::slug($material->judul ?? $material->title ?? 'material');
+
+        // Jika sumber adalah URL eksternal, arahkan langsung
+        if (Str::startsWith($source, ['http://', 'https://'])) {
+            $ext = pathinfo(parse_url($source, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION);
+            $downloadName = $filenameBase . ($ext ? '.' . $ext : '');
+            return redirect()->away($source . (Str::contains($source, '?') ? '&' : '?') . 'download=' . $downloadName);
+        }
+
+        // If stored in public storage
+        if (Str::startsWith($source, ['/storage/', 'storage/'])) {
+            $path = ltrim(str_replace('/storage/', '', $source), '/');
+            if (Storage::disk('public')->exists($path)) {
+                $ext = pathinfo($path, PATHINFO_EXTENSION);
+                $downloadName = $filenameBase . ($ext ? '.' . $ext : '');
+                return Storage::disk('public')->download($path, $downloadName);
+            }
+        }
+
+        // If it's a local relative path
+        if (!Str::startsWith($source, ['http://', 'https://'])) {
+            $path = ltrim($source, '/');
+            if (Storage::exists($path)) {
+                $ext = pathinfo($path, PATHINFO_EXTENSION);
+                $downloadName = $filenameBase . ($ext ? '.' . $ext : '');
+                return Storage::download($path, $downloadName);
+            }
+        }
+
+        // If it's a remote URL, cannot force download reliably; just redirect
+        if (filter_var($source, FILTER_VALIDATE_URL)) {
+            return redirect()->away($source);
+        }
+
+        abort(404, 'File tidak ditemukan');
     }
 
     public function quiz(Request $request, Kursus $course, Materi $material)
@@ -367,7 +463,7 @@ class StudentController extends Controller
     {
         $course->loadMissing([
             'sections.materials' => function ($query) {
-                $query->orderBy('urutan', 'asc');
+                $query->where('status', 'published')->orderBy('urutan', 'asc');
             },
         ]);
 
@@ -709,12 +805,41 @@ HTML;
             return Storage::disk('public')->download($filePath, $certificateNumber . '.pdf');
         }
 
-        // Ambil HTML sertifikat
+        // Ambil HTML sertifikat (atau buat ulang jika hilang)
         $htmlContent = null;
         if (Storage::disk('public')->exists($filePath)) {
             $htmlContent = Storage::disk('public')->get($filePath);
         } elseif (filter_var($certificate->url_unduhan, FILTER_VALIDATE_URL)) {
             $htmlContent = @file_get_contents($certificate->url_unduhan);
+        }
+
+        // Jika file hilang, regenerasi HTML lalu perbarui url_unduhan
+        if (!$htmlContent) {
+            $course = $enrollment->kursus ?? $enrollment->course ?? null;
+            $user = $enrollment->user ?? Auth::user();
+
+            if ($course && $user) {
+                $instructorName = $course->pembuat->name ?? $course->instructor->name ?? 'Instructor';
+                $issuedDate = $certificate->tanggal_terbit ?? $certificate->tanggal_diterbitkan ?? $certificate->created_at ?? now();
+                $issuedDateString = $issuedDate instanceof \Illuminate\Support\Carbon
+                    ? $issuedDate->format('F d, Y')
+                    : now()->format('F d, Y');
+
+                $newPath = $this->generateCertificateImage(
+                    $user->name ?? 'Student',
+                    $course->judul ?? $course->title ?? 'Course',
+                    $certificateNumber,
+                    $issuedDateString,
+                    $instructorName
+                );
+
+                $certificate->url_unduhan = Storage::url($newPath);
+                $certificate->save();
+
+                if (Storage::disk('public')->exists($newPath)) {
+                    $htmlContent = Storage::disk('public')->get($newPath);
+                }
+            }
         }
 
         if (!$htmlContent) {
@@ -724,6 +849,46 @@ HTML;
         // Render ke PDF dan unduh
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($htmlContent)->setPaper('a4', 'landscape');
         return $pdf->download($certificateNumber . '.pdf');
+    }
+
+    /**
+     * Stream certificate inline (hindari 403 akses langsung ke storage)
+     */
+    public function streamCertificate(Enrollment $enrollment)
+    {
+        if ($enrollment->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized');
+        }
+
+        $certificate = $enrollment->sertifikat;
+        if (!$certificate || !$certificate->url_unduhan) {
+            abort(404, 'Certificate not found');
+        }
+
+        $url = $certificate->url_unduhan;
+        $publicPath = str_replace('/storage/', '', $url);
+
+        if (Storage::disk('public')->exists($publicPath)) {
+            $mime = Storage::disk('public')->mimeType($publicPath) ?? 'application/octet-stream';
+            $stream = Storage::disk('public')->readStream($publicPath);
+            if (!$stream) {
+                abort(404, 'Certificate file not readable');
+            }
+
+            return response()->stream(function () use ($stream) {
+                fpassthru($stream);
+            }, 200, [
+                'Content-Type' => $mime,
+                'Content-Disposition' => 'inline; filename="' . basename($publicPath) . '"',
+            ]);
+        }
+
+        // If stored remotely, redirect
+        if (filter_var($url, FILTER_VALIDATE_URL)) {
+            return redirect()->away($url);
+        }
+
+        abort(404, 'Certificate file not found');
     }
 
     /**

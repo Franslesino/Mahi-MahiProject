@@ -35,15 +35,6 @@
 <div class="bg-gray-50 min-h-screen transition-all duration-300" id="main-content">
     <!-- Main Content -->
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Back Button -->
-        <div class="mb-6">
-            <a href="{{ url()->previous() }}" 
-               class="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 hover:border-teal-500 hover:text-teal-600 transition-all shadow-sm hover:shadow-md group">
-                <i class="fas fa-arrow-left transition-transform group-hover:-translate-x-1"></i>
-                <span class="font-medium">Kembali ke Daftar Kursus</span>
-            </a>
-        </div>
-
         <!-- Purchase Deadline Alert -->
         @if($course->purchase_deadline_date && $course->purchase_deadline_date->isFuture() && !$isEnrolled)
             @php

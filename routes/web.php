@@ -124,6 +124,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/courses', [StudentCourseController::class, 'index'])->name('courses.index');
         Route::get('/courses/{course}', [StudentCourseController::class, 'show'])->name('courses.show');
         Route::get('/courses/{course}/materials/{material}', [StudentController::class, 'viewMaterial'])->name('courses.materials.view');
+        Route::get('/courses/{course}/materials/{material}/download', [StudentController::class, 'downloadMaterial'])->name('courses.materials.download');
         Route::post('/courses/{course}/materials/{material}/complete', [StudentController::class, 'markMaterialComplete'])->name('courses.materials.complete');
         Route::get('/courses/{course}/materials/{material}/quiz', [StudentController::class, 'quiz'])->name('courses.materials.quiz');
         Route::post('/courses/{course}/materials/{material}/quiz/submit', [StudentController::class, 'quizSubmit'])->name('courses.materials.quiz.submit');
@@ -175,14 +176,20 @@ Route::middleware('auth')->group(function () {
         // Certificate Routes (NEW!)
         // ========================================
         Route::prefix('student')->name('student.')->group(function () {
-            // Download Certificate
+            // Download / stream Certificate
             Route::get('/enrollment/{enrollment}/certificate/download', [StudentController::class, 'downloadCertificate'])
                 ->name('certificate.download');
+            Route::get('/enrollment/{enrollment}/certificate/stream', [StudentController::class, 'streamCertificate'])
+                ->name('certificate.stream');
             
             // Preview Certificate (AJAX)
             Route::get('/enrollment/{enrollment}/certificate-preview', function (Enrollment $enrollment) {
-                // Verify ownership
-                if ($enrollment->user_id !== Auth::id()) {
+                // Pastikan enrollment milik user
+                $enrollment = Enrollment::where('id', $enrollment->id)
+                    ->where('user_id', Auth::id())
+                    ->first();
+
+                if (!$enrollment) {
                     return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
                 }
                 
@@ -201,6 +208,7 @@ Route::middleware('auth')->group(function () {
                 return response()->json([
                     'success' => true,
                     'url' => asset($certificate->url_unduhan),
+                    'stream_url' => route('student.certificate.stream', $enrollment),
                     'number' => $certificateNumber,
                     'issued_date' => $issuedAt ? $issuedAt->format('d F Y') : null
                 ]);
@@ -218,7 +226,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
         Route::delete('/notifications/{notification}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
         Route::delete('/notifications', [\App\Http\Controllers\NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
+
     });
+
 
     // ======================
     // Admin Routes

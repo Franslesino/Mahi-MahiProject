@@ -110,6 +110,14 @@ class CourseController extends Controller
             ]);
         }
 
+        // Notifikasi ke admin yang membuat
+        Notification::create([
+            'user_id' => Auth::id(),
+            'title'   => 'Kursus berhasil dibuat',
+            'message' => 'Kursus "' . ($validated['title'] ?? 'Tanpa judul') . '" telah berhasil dibuat.',
+            'type'    => 'success',
+        ]);
+
         return redirect()
             ->route('admin.courses.index')
             ->with('success', 'Kursus berhasil ditambahkan!');

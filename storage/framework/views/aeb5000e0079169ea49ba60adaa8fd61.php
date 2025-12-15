@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('content'); ?>
 <div class="p-8" data-loaded="false">
     <!-- Header -->

@@ -67,13 +67,25 @@
             </div>
 
             <!-- User Profile with Email -->
+            @php
+                $sidebarUser = auth()->user();
+                $sidebarInitial = strtoupper(substr($sidebarUser->first_name ?? $sidebarUser->name, 0, 1));
+            @endphp
             <div class="flex items-center gap-3">
-                <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span class="text-white text-xl font-bold">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
+                <div class="w-14 h-14 rounded-full overflow-hidden ring-2 ring-blue-500/20 bg-gray-100 flex-shrink-0">
+                    @if($sidebarUser?->avatar_url)
+                        <img src="{{ $sidebarUser->avatar_url }}" alt="Avatar" class="w-full h-full object-cover">
+                    @else
+                        <div class="w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                            <span class="text-white text-xl font-bold">{{ $sidebarInitial }}</span>
+                        </div>
+                    @endif
                 </div>
                 <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-gray-900 truncate">{{ auth()->user()->name }}</h3>
-                    <p class="text-sm text-gray-500 truncate">{{ auth()->user()->email }}</p>
+                    <h3 class="font-semibold text-gray-900 truncate">
+                        {{ trim(($sidebarUser->first_name ?? '') . ' ' . ($sidebarUser->last_name ?? '')) ?: $sidebarUser->name }}
+                    </h3>
+                    <p class="text-sm text-gray-500 truncate">{{ $sidebarUser->email }}</p>
                     <span class="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
                         Instruktur
                     </span>
@@ -107,6 +119,13 @@
                class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('instructor.question-banks*') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
                 <i class="fas fa-folder-open w-5 text-center"></i>
                 <span class="font-medium">Bank Soal</span>
+            </a>
+
+            <!-- Edit Profile -->
+            <a href="{{ route('instructor.profile') }}" 
+               class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('instructor.profile*') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                <i class="fas fa-user-cog w-5 text-center"></i>
+                <span class="font-medium">Edit Profile</span>
             </a>
 
 

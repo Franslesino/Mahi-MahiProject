@@ -61,15 +61,47 @@ class DashboardController extends Controller
 
         // Calculate percentages for donut chart
         $totalCategoryRevenue = $revenueByCategory->sum('total');
-        $categoryData = $revenueByCategory->map(function($item) use ($totalCategoryRevenue) {
-            return [
-                'category' => $item->kategori ?? 'Unknown',
-                'total' => $item->total ?? 0,
-                'percentage' => $totalCategoryRevenue > 0 
-                    ? round(($item->total / $totalCategoryRevenue) * 100, 1) 
-                    : 0
-            ];
-        });
+        $categoryData = $revenueByCategory
+            ->map(function($item) use ($totalCategoryRevenue) {
+                return [
+                    'category' => $item->kategori ?? 'Unknown',
+                    'total' => $item->total ?? 0,
+                    'percentage' => $totalCategoryRevenue > 0 
+                        ? round(($item->total / $totalCategoryRevenue) * 100, 1) 
+                        : 0
+                ];
+            })
+            ->sortByDesc('total')
+            ->values();
+
+        // Tampilkan 6 kategori teratas + "Lainnya", dan pastikan total persentase = 100%
+        if ($categoryData->count() > 6) {
+            $topCategories = $categoryData->take(6);
+            $othersTotal = $categoryData->skip(6)->sum('total');
+
+            if ($othersTotal > 0 && $totalCategoryRevenue > 0) {
+                $topCategories->push([
+                    'category' => 'Lainnya',
+                    'total' => $othersTotal,
+                    'percentage' => round(($othersTotal / $totalCategoryRevenue) * 100, 1)
+                ]);
+            }
+
+            $categoryData = $topCategories->values();
+        }
+
+        // Koreksi pembulatan agar genap 100%
+        $sumPercentage = $categoryData->sum('percentage');
+        if ($sumPercentage > 0 && $categoryData->isNotEmpty()) {
+            $adjustment = round(100 - $sumPercentage, 1);
+            $lastIndex = $categoryData->count() - 1;
+            $categoryData = $categoryData->map(function ($item, $index) use ($lastIndex, $adjustment) {
+                if ($index === $lastIndex) {
+                    $item['percentage'] = max(0, round(($item['percentage'] ?? 0) + $adjustment, 1));
+                }
+                return $item;
+            });
+        }
 
         // 📈 Monthly Transactions (for Line Chart)
         try {

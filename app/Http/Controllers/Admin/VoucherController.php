@@ -43,12 +43,21 @@ class VoucherController extends Controller
             'is_active' => 'boolean',
             'allowed_courses' => 'nullable|array',
             'allowed_courses.*' => 'exists:kursus,id',
+        ], [
+            'end_date.after' => 'Tanggal Mulai lebih besar dari Tanggal Berakhir.',
         ]);
 
         // Validasi khusus untuk percentage
         if ($validated['type'] === 'percentage' && $validated['value'] > 100) {
-            return back()->withErrors(['value' => 'Nilai persentase tidak boleh lebih dari 100%'])->withInput();
+            return back()
+                ->withErrors(['value' => 'Nilai diskon untuk tipe Persentase maksimal adalah 100%'])
+                ->withInput();
         }
+
+        // Default nilai yang nullable agar tidak null violation
+        $validated['min_purchase'] = $validated['min_purchase'] ?? 0;
+        $validated['max_usage'] = $validated['max_usage'] ?? null;
+        $validated['max_discount'] = $validated['max_discount'] ?? null;
 
         $validated['is_active'] = $request->has('is_active');
         $validated['used_count'] = 0;
@@ -86,12 +95,20 @@ class VoucherController extends Controller
             'is_active' => 'boolean',
             'allowed_courses' => 'nullable|array',
             'allowed_courses.*' => 'exists:kursus,id',
+        ], [
+            'end_date.after' => 'Tanggal Mulai lebih besar dari Tanggal Berakhir.',
         ]);
 
         // Validasi khusus untuk percentage
         if ($validated['type'] === 'percentage' && $validated['value'] > 100) {
-            return back()->withErrors(['value' => 'Nilai persentase tidak boleh lebih dari 100%'])->withInput();
+            return back()
+                ->withErrors(['value' => 'Nilai diskon untuk tipe Persentase maksimal adalah 100%'])
+                ->withInput();
         }
+
+        $validated['min_purchase'] = $validated['min_purchase'] ?? 0;
+        $validated['max_usage'] = $validated['max_usage'] ?? null;
+        $validated['max_discount'] = $validated['max_discount'] ?? null;
 
         $validated['is_active'] = $request->has('is_active');
         $validated['code'] = strtoupper($validated['code']);

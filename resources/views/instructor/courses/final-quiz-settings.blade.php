@@ -59,7 +59,8 @@
                     </small>
                 </div>
 
-                <div id="finalQuizSettings" style="display: {{ old('require_final_quiz', $kursus->require_final_quiz) ? 'block' : 'none' }};" class="space-y-6">
+                <!-- Selalu tampilkan blok pengaturan agar instruktur jelas melihat dropdown quiz -->
+                <div id="finalQuizSettings" class="space-y-6" style="display:block;">
                     <!-- Pilih Quiz -->
                     <div>
                         <div class="flex items-center justify-between mb-2">
@@ -77,7 +78,7 @@
                                 </span>
                             @endif
                         </div>
-                        <select id="final_quiz_id" name="final_quiz_id" required
+                        <select id="final_quiz_id" name="final_quiz_id"
                                 {{ $kursus->final_quiz_id ? 'disabled' : '' }}
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('final_quiz_id') border-red-500 @enderror disabled:bg-gray-100 disabled:cursor-not-allowed">
                             <option value="">-- Pilih Quiz --</option>
@@ -191,7 +192,7 @@
                     <div>
                         <p class="text-gray-700"><strong>Maksimal Percobaan:</strong> {{ $kursus->max_quiz_attempts }}x</p>
                         <p class="text-gray-700"><strong>Status Quiz:</strong> 
-                            @if($kursus->finalQuiz->is_active)
+                            @if(optional($kursus->finalQuiz)->is_active)
                                 <span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-semibold">
                                     <i class="fas fa-check-circle"></i> Aktif
                                 </span>
@@ -205,7 +206,7 @@
                 </div>
 
                 <!-- Warning if Quiz is Active -->
-                @if($kursus->finalQuiz->is_active)
+                @if(optional($kursus->finalQuiz)->is_active)
                     <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                         <div class="flex items-start gap-3">
                             <i class="fas fa-exclamation-triangle text-yellow-600 text-xl mt-1"></i>
@@ -224,10 +225,10 @@
                     <form action="{{ route('instructor.courses.final-quiz.toggle-activation', $kursus->id) }}" method="POST" class="inline">
                         @csrf
                         <button type="submit" 
-                                class="px-6 py-2 {{ $kursus->finalQuiz->is_active ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700' }} text-white rounded-lg transition inline-flex items-center gap-2"
-                                onclick="return confirm('Apakah Anda yakin ingin {{ $kursus->finalQuiz->is_active ? 'menonaktifkan' : 'mengaktifkan' }} final quiz?')">
-                            <i class="fas fa-{{ $kursus->finalQuiz->is_active ? 'pause' : 'play' }}-circle"></i>
-                            {{ $kursus->finalQuiz->is_active ? 'Nonaktifkan Quiz' : 'Aktifkan Quiz' }}
+                                class="px-6 py-2 {{ optional($kursus->finalQuiz)->is_active ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700' }} text-white rounded-lg transition inline-flex items-center gap-2"
+                                onclick="return confirm('Apakah Anda yakin ingin {{ optional($kursus->finalQuiz)->is_active ? 'menonaktifkan' : 'mengaktifkan' }} final quiz?')">
+                            <i class="fas fa-{{ optional($kursus->finalQuiz)->is_active ? 'pause' : 'play' }}-circle"></i>
+                            {{ optional($kursus->finalQuiz)->is_active ? 'Nonaktifkan Quiz' : 'Aktifkan Quiz' }}
                         </button>
                     </form>
 
@@ -238,14 +239,14 @@
                     
                     <button type="button" 
                             onclick="openCreateQuestionModal()"
-                            {{ $kursus->finalQuiz->is_active ? 'disabled' : '' }}
+                            {{ optional($kursus->finalQuiz)->is_active ? 'disabled' : '' }}
                             class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                         <i class="fas fa-plus-circle"></i> Tambah Soal Baru
                     </button>
                     
                     <button type="button" 
                             onclick="openImportModal()"
-                            {{ $kursus->finalQuiz->is_active ? 'disabled' : '' }}
+                            {{ optional($kursus->finalQuiz)->is_active ? 'disabled' : '' }}
                             class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                         <i class="fas fa-file-import"></i> Tambah Soal dari Bank Soal
                     </button>
@@ -322,7 +323,7 @@
 
                                     <!-- Action Buttons -->
                                     <div class="flex-shrink-0">
-                                        @if($kursus->finalQuiz->is_active)
+                                        @if(optional($kursus->finalQuiz)->is_active)
                                             <button type="button" 
                                                     disabled
                                                     title="Quiz sedang aktif. Nonaktifkan terlebih dahulu untuk menghapus soal"
@@ -576,15 +577,16 @@
                 </form>
             </div>
         </div>
-    @endif
+@endif
 </div>
 
 <script>
+const finalQuizActive = @json(optional($kursus->finalQuiz)->is_active ?? false);
 function openImportModal() {
-    @if($kursus->finalQuiz->is_active)
+    if (finalQuizActive) {
         alert('Final quiz sedang aktif. Nonaktifkan terlebih dahulu untuk menambah soal.');
         return;
-    @endif
+    }
     document.getElementById('importModal').classList.remove('hidden');
 }
 
@@ -613,25 +615,27 @@ function filterImportQuestions() {
 function toggleFinalQuizSettings() {
     const checkbox = document.getElementById('require_final_quiz');
     const settings = document.getElementById('finalQuizSettings');
-    const quizSelect = document.getElementById('final_quiz_id');
     
     if (checkbox.checked) {
         settings.style.display = 'block';
-        quizSelect.required = true;
+        settings.classList.remove('hidden');
     } else {
         settings.style.display = 'none';
-        quizSelect.required = false;
+        settings.classList.add('hidden');
     }
 }
+
+// Blok pengaturan selalu ditampilkan; fungsi ini dipertahankan jika ingin sembunyikan/ tampilkan secara manual
+document.addEventListener('DOMContentLoaded', () => {});
 
 // Create Question Modal Functions
 let optionCounter = 0;
 
 function openCreateQuestionModal() {
-    @if($kursus->finalQuiz->is_active)
+    if (finalQuizActive) {
         alert('Final quiz sedang aktif. Nonaktifkan terlebih dahulu untuk menambah soal.');
         return;
-    @endif
+    }
     document.getElementById('createQuestionModal').classList.remove('hidden');
     optionCounter = 0;
     updateOptionsCount();

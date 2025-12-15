@@ -3,14 +3,6 @@
 
 @section('content')
 <div class="p-8">
-    <div class="mb-6">
-      <a href="{{ route('admin.courses.index') }}" class="text-emerald-600 hover:text-emerald-700 flex items-center gap-2">
-
-            <i class="fas fa-arrow-left"></i>
-            <span>Kembali ke Daftar Kursus</span>
-        </a>
-    </div>
-
     <div class="bg-white rounded-lg shadow-sm p-6">
         <h2 class="text-2xl font-bold text-gray-800 mb-6">Tambah Kursus Baru</h2>
 

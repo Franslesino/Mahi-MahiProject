@@ -21,7 +21,7 @@
                         <option value="">Semua Role</option>
                         <option value="admin" {{ request('role') === 'admin' ? 'selected' : '' }}>Admin</option>
                         <option value="instructor" {{ request('role') === 'instructor' ? 'selected' : '' }}>Instruktur</option>
-                        <option value="user" {{ request('role') === 'user' ? 'selected' : '' }}>User</option>
+                        <option value="student" {{ request('role') === 'student' ? 'selected' : '' }}>Student</option>
                     </select>
                     <button type="submit" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">
                         <i class="fas fa-search"></i>
@@ -66,7 +66,9 @@
                             @elseif($user->role === 'instructor')
                             <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">Instruktur</span>
                             @else
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">User</span>
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">
+                                {{ $user->role === 'student' ? 'Student' : ucfirst($user->role) }}
+                            </span>
                             @endif
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ $user->created_at->format('d M Y') }}</td>

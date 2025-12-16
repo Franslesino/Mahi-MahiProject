@@ -203,7 +203,8 @@ Route::post('/api/midtrans/notification', [App\Http\Controllers\MidtransNotifica
 // ==========================
 
 // Login & Register (Manual) - guest middleware prevents logged-in users from accessing
-Route::middleware('guest')->group(function () {
+// nocache middleware prevents browser from caching these pages
+Route::middleware(['guest', 'nocache'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
@@ -219,6 +220,44 @@ Route::get('/password/reset', [\App\Http\Controllers\Auth\ForgotPasswordControll
 Route::post('/password/email', [\App\Http\Controllers\Auth\ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
 Route::get('/password/reset/{token}', [\App\Http\Controllers\Auth\ResetPasswordController::class, 'showResetForm'])->name('password.reset');
 Route::post('/password/reset', [\App\Http\Controllers\Auth\ResetPasswordController::class, 'reset'])->name('password.update');
+
+// Email Verification Routes
+Route::get('/email/verify', function () {
+    return view('auth.verify-email');
+})->middleware('guest')->name('verification.notice');
+
+Route::get('/email/verify/{id}/{hash}', function (\Illuminate\Http\Request $request, $id, $hash) {
+    $user = \App\Models\User::findOrFail($id);
+
+    // Verify the hash matches
+    if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+        abort(403, 'Link verifikasi tidak valid.');
+    }
+
+    // Check if URL signature is valid
+    if (!$request->hasValidSignature()) {
+        abort(403, 'Link verifikasi sudah kadaluarsa.');
+    }
+
+    // Mark email as verified if not already
+    if (!$user->hasVerifiedEmail()) {
+        $user->markEmailAsVerified();
+    }
+
+    return redirect('/login')->with('success', 'Email berhasil diverifikasi! Silakan login.');
+})->name('verification.verify');
+
+Route::post('/email/verification-notification', function (\Illuminate\Http\Request $request) {
+    $email = $request->input('email');
+    $user = \App\Models\User::where('email', $email)->first();
+
+    if ($user && !$user->hasVerifiedEmail()) {
+        $user->sendEmailVerificationNotification();
+        return back()->with('success', 'Link verifikasi baru telah dikirim ke email Anda.');
+    }
+
+    return back()->withErrors(['email' => 'Email tidak ditemukan atau sudah diverifikasi.']);
+})->middleware('throttle:6,1')->name('verification.send');
 
 // Logout
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

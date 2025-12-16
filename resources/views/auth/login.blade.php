@@ -4,7 +4,20 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>Login - UpGreenius</title>
+
+    <script>
+        // Prevent back button to this page after login
+        if (window.history && window.history.pushState) {
+            window.history.pushState('forward', null, window.location.href);
+            window.onpopstate = function () {
+                window.history.pushState('forward', null, window.location.href);
+            };
+        }
+    </script>
 
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>

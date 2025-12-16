@@ -49,6 +49,14 @@ class AuthController extends Controller
         ];
 
         if (Auth::attempt($credentials, $request->remember)) {
+            // Check if email is verified
+            if (!Auth::user()->hasVerifiedEmail()) {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Email Anda belum diverifikasi. Silakan cek email Anda untuk link verifikasi.'
+                ])->withInput();
+            }
+
             $request->session()->regenerate();
 
             return $this->redirectBasedOnRole();
@@ -64,7 +72,16 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => [
+                'required',
+                'email',
+                'unique:users,email',
+                function ($attribute, $value, $fail) {
+                    if (!str_ends_with(strtolower($value), '@gmail.com')) {
+                        $fail('Email harus menggunakan akun Gmail (@gmail.com).');
+                    }
+                },
+            ],
             'phone' => 'nullable|string|max:15',
             'password' => 'required|min:8|confirmed',
         ]);
@@ -79,19 +96,23 @@ class AuthController extends Controller
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
             'role' => 'student',
+            // email_verified_at tetap null
         ]);
 
         // Create notification for new account
         Notification::create([
             'user_id' => $user->id,
             'title' => 'Akun Berhasil Dibuat',
-            'message' => 'Selamat datang di UpGreenius! Akun Anda telah berhasil dibuat. Silakan login untuk mulai belajar.',
+            'message' => 'Selamat datang di UpGreenius! Silakan cek email Anda untuk verifikasi akun.',
             'type' => 'success',
         ]);
 
+        // Send email verification
+        $user->sendEmailVerificationNotification();
+
         return redirect()
-            ->route('login')
-            ->with('success', 'Registrasi berhasil, silakan login.');
+            ->route('verification.notice')
+            ->with('success', 'Registrasi berhasil! Silakan cek email Anda untuk verifikasi akun.');
     }
 
     /**

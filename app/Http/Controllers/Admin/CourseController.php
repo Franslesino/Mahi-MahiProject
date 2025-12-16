@@ -25,12 +25,12 @@ class CourseController extends Controller
         // Search: judul, kategori, instructor name
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
+            $query->where(function($q) use ($search) {
                 $q->where('judul', 'ILIKE', "%{$search}%")
-                    ->orWhere('kategori', 'ILIKE', "%{$search}%")
-                    ->orWhereHas('instructor', function ($q) use ($search) {
-                        $q->where('name', 'ILIKE', "%{$search}%");
-                    });
+                  ->orWhere('kategori', 'ILIKE', "%{$search}%")
+                  ->orWhereHas('instructor', function($q) use ($search) {
+                      $q->where('name', 'ILIKE', "%{$search}%");
+                  });
             });
         }
 
@@ -53,43 +53,41 @@ class CourseController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'category' => 'required|string|max:100',
-            'price' => 'required|numeric|min:0',
+            'title'          => 'required|string|max:255',
+            'description'    => 'required|string',
+            'category'       => 'required|string|max:100',
+            'price'          => 'required|numeric|min:0',
             'discount_price' => 'nullable|numeric|min:0|lt:price',
-            'mode' => 'required|in:Online,Offline,Hybrid',
-            'learning' => 'nullable|string',
-            'badge' => 'nullable|string|max:50',
-            'badge_color' => 'nullable|string|max:50',
-            'status' => 'required|in:active,inactive,draft',
-            'instructor_id' => 'required|exists:users,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'signature_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'signature_name' => 'nullable|string|max:255',
+            'mode'           => 'required|in:Online,Offline,Hybrid',
+            'learning'       => 'nullable|string',
+            'badge'          => 'nullable|string|max:50',
+            'badge_color'    => 'nullable|string|max:50',
+            'status'         => 'required|in:active,inactive,draft',
+            'instructor_id'  => 'required|exists:users,id',
+            'image'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'access_duration_days' => 'nullable|integer|min:1',
             'purchase_deadline_date' => 'nullable|date|after:now',
         ]);
 
         $data = [
-            'judul' => $validated['title'],
-            'deskripsi' => $validated['description'],
-            'kategori' => $validated['category'],
-            'harga' => $validated['price'],
-            'status' => $validated['status'],
-            'status_berbayar' => $validated['price'] > 0,
+            'judul'              => $validated['title'],
+            'deskripsi'          => $validated['description'],
+            'kategori'           => $validated['category'],
+            'harga'              => $validated['price'],
+            'status'             => $validated['status'],
+            'status_berbayar'    => $validated['price'] > 0,
             'status_diterbitkan' => $validated['status'] === 'active',
-            'pembuat' => Auth::id(),
+            'pembuat'            => Auth::id(),
 
-            'mode' => $validated['mode'],
+            'mode'           => $validated['mode'],
             'discount_price' => $validated['discount_price'] ?? 0,
-            'learning' => $validated['learning'] ?? null,
-            'badge' => $validated['badge'] ?? null,
-            'badge_color' => $validated['badge_color'] ?? 'blue',
-            'instructor_id' => $validated['instructor_id'],
-            'created_by' => Auth::id(),
-            'rating' => 0,
-            'videos' => 0,
+            'learning'       => $validated['learning'] ?? null,
+            'badge'          => $validated['badge'] ?? null,
+            'badge_color'    => $validated['badge_color'] ?? 'blue',
+            'instructor_id'  => $validated['instructor_id'],
+            'created_by'     => Auth::id(),
+            'rating'         => 0,
+            'videos'         => 0,
             'access_duration_days' => $validated['access_duration_days'] ?? null,
             'purchase_deadline_date' => $validated['purchase_deadline_date'] ?? null,
         ];
@@ -100,35 +98,24 @@ class CourseController extends Controller
             $data['image'] = $upload['public_url'] ?? $upload['path'];
         }
 
-        // Handle signature image upload
-        if ($request->hasFile('signature_image')) {
-            $signaturePath = $request->file('signature_image')->store('signatures', 'public');
-            $data['signature_image'] = $signaturePath;
-        }
-
-        // Signature name
-        if ($request->filled('signature_name')) {
-            $data['signature_name'] = $request->input('signature_name');
-        }
-
         $course = Kursus::create($data);
 
         // Notifikasi ke instruktur
         if (!empty($validated['instructor_id'])) {
             Notification::create([
                 'user_id' => $validated['instructor_id'],
-                'title' => 'Kursus baru ditugaskan',
+                'title'   => 'Kursus baru ditugaskan',
                 'message' => 'Anda ditugaskan sebagai instruktur untuk kursus "' . $validated['title'] . '".',
-                'type' => 'info',
+                'type'    => 'info',
             ]);
         }
 
         // Notifikasi ke admin yang membuat
         Notification::create([
             'user_id' => Auth::id(),
-            'title' => 'Kursus berhasil dibuat',
+            'title'   => 'Kursus berhasil dibuat',
             'message' => 'Kursus "' . ($validated['title'] ?? 'Tanpa judul') . '" telah berhasil dibuat.',
-            'type' => 'success',
+            'type'    => 'success',
         ]);
 
         return redirect()
@@ -146,39 +133,37 @@ class CourseController extends Controller
     public function update(Request $request, Kursus $course)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'category' => 'required|string|max:100',
-            'price' => 'required|numeric|min:0',
+            'title'          => 'required|string|max:255',
+            'description'    => 'required|string',
+            'category'       => 'required|string|max:100',
+            'price'          => 'required|numeric|min:0',
             'discount_price' => 'nullable|numeric|min:0|lt:price',
-            'mode' => 'required|in:Online,Offline,Hybrid',
-            'learning' => 'nullable|string',
-            'badge' => 'nullable|string|max:50',
-            'badge_color' => 'nullable|string|max:50',
-            'status' => 'required|in:active,inactive,draft',
-            'instructor_id' => 'required|exists:users,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'signature_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'signature_name' => 'nullable|string|max:255',
+            'mode'           => 'required|in:Online,Offline,Hybrid',
+            'learning'       => 'nullable|string',
+            'badge'          => 'nullable|string|max:50',
+            'badge_color'    => 'nullable|string|max:50',
+            'status'         => 'required|in:active,inactive,draft',
+            'instructor_id'  => 'required|exists:users,id',
+            'image'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'access_duration_days' => 'nullable|integer|min:1',
             'purchase_deadline_date' => 'nullable|date|after:now',
         ]);
 
         $data = [
-            'judul' => $validated['title'],
-            'deskripsi' => $validated['description'],
-            'kategori' => $validated['category'],
-            'harga' => $validated['price'],
-            'status' => $validated['status'],
-            'status_berbayar' => $validated['price'] > 0,
+            'judul'              => $validated['title'],
+            'deskripsi'          => $validated['description'],
+            'kategori'           => $validated['category'],
+            'harga'              => $validated['price'],
+            'status'             => $validated['status'],
+            'status_berbayar'    => $validated['price'] > 0,
             'status_diterbitkan' => $validated['status'] === 'active',
 
-            'mode' => $validated['mode'],
+            'mode'           => $validated['mode'],
             'discount_price' => $validated['discount_price'] ?? 0,
-            'learning' => $validated['learning'] ?? null,
-            'badge' => $validated['badge'] ?? null,
-            'badge_color' => $validated['badge_color'] ?? 'blue',
-            'instructor_id' => $validated['instructor_id'],
+            'learning'       => $validated['learning'] ?? null,
+            'badge'          => $validated['badge'] ?? null,
+            'badge_color'    => $validated['badge_color'] ?? 'blue',
+            'instructor_id'  => $validated['instructor_id'],
             'access_duration_days' => $validated['access_duration_days'] ?? null,
             'purchase_deadline_date' => $validated['purchase_deadline_date'] ?? null,
         ];
@@ -197,34 +182,19 @@ class CourseController extends Controller
             $data['image'] = $upload['public_url'] ?? $upload['path'];
         }
 
-        // Handle signature image upload
-        if ($request->hasFile('signature_image')) {
-            // Delete old signature if exists
-            if ($course->signature_image && !str_starts_with($course->signature_image, 'http') && Storage::disk('public')->exists($course->signature_image)) {
-                Storage::disk('public')->delete($course->signature_image);
-            }
-            $signaturePath = $request->file('signature_image')->store('signatures', 'public');
-            $data['signature_image'] = $signaturePath;
-        }
-
-        // Signature name
-        if ($request->filled('signature_name')) {
-            $data['signature_name'] = $request->input('signature_name');
-        }
-
         // Cek apakah instructor berubah
         $oldInstructorId = $course->instructor_id;
         $newInstructorId = $validated['instructor_id'];
-
+        
         $course->update($data);
 
         // Notifikasi jika instructor berganti
         if ($oldInstructorId != $newInstructorId && !empty($newInstructorId)) {
             Notification::create([
                 'user_id' => $newInstructorId,
-                'title' => 'Kursus baru ditugaskan',
+                'title'   => 'Kursus baru ditugaskan',
                 'message' => 'Anda ditugaskan sebagai instruktur untuk kursus "' . $validated['title'] . '".',
-                'type' => 'info',
+                'type'    => 'info',
             ]);
         }
 
@@ -253,10 +223,10 @@ class CourseController extends Controller
     public function show(Kursus $course)
     {
         $course->load([
-            'pembuat',
-            'materi' => function ($query) {
+            'pembuat', 
+            'materi' => function($query) {
                 $query->orderBy('urutan');
-            },
+            }, 
             'instructor',
             'enrollments.user'
         ]);
@@ -295,7 +265,7 @@ class CourseController extends Controller
                 ->get();
             $submissionStats = $submissions->groupBy('user_id')->map(function ($items) {
                 $best = $items->first();
-                return (object) [
+                return (object)[
                     'best_score' => $best?->score,
                     'best_percentage' => $best?->percentage,
                     'last_submitted_at' => $best?->submitted_at,
@@ -305,7 +275,7 @@ class CourseController extends Controller
         }
 
         // Fallback dari MaterialCompletion (quiz) bila belum ada submissions
-        $quizAssignments = Assignment::where('kursus_id', $course->id)->where('type', 'quiz')->get(['id', 'materi_id']);
+        $quizAssignments = Assignment::where('kursus_id', $course->id)->where('type', 'quiz')->get(['id','materi_id']);
         $quizMaterialIds = $quizAssignments->pluck('materi_id');
         $assignmentByMaterial = $quizAssignments->pluck('id', 'materi_id');
 
@@ -319,7 +289,7 @@ class CourseController extends Controller
 
         $completionAggregated = $completionScores->map(function ($items) use ($assignmentByMaterial) {
             $best = $items->sortByDesc('score')->first();
-            return (object) [
+            return (object)[
                 'best_score' => $best?->score,
                 'best_percentage' => $best?->score,
                 'last_submitted_at' => $best?->completed_at,
@@ -361,11 +331,9 @@ class CourseController extends Controller
     {
         // Load sections dengan materials
         $sections = $course->sections()
-            ->with([
-                'materials' => function ($query) {
-                    $query->orderBy('urutan')->with('assignment');
-                }
-            ])
+            ->with(['materials' => function($query) {
+                $query->orderBy('urutan')->with('assignment');
+            }])
             ->orderBy('order')
             ->get();
 
@@ -377,10 +345,10 @@ class CourseController extends Controller
             ->distinct('user_id')
             ->count('user_id');
 
-        $questionBanks = \App\Models\QuestionBank::where(function ($query) {
-            $query->where('created_by', Auth::id())
-                ->orWhere('is_public', true);
-        })
+        $questionBanks = \App\Models\QuestionBank::where(function($query) {
+                $query->where('created_by', Auth::id())
+                      ->orWhere('is_public', true);
+            })
             ->withCount('questions')
             ->get();
 
@@ -406,7 +374,7 @@ class CourseController extends Controller
                 ->get();
             $submissionStats = $submissions->groupBy('user_id')->map(function ($items) {
                 $best = $items->first();
-                return (object) [
+                return (object)[
                     'best_score' => $best?->score,
                     'best_percentage' => $best?->percentage,
                     'last_submitted_at' => $best?->submitted_at,
@@ -416,7 +384,7 @@ class CourseController extends Controller
         }
 
         // Fallback nilai dari MaterialCompletion (quiz)
-        $quizAssignments = \App\Models\Assignment::where('kursus_id', $course->id)->where('type', 'quiz')->get(['id', 'materi_id']);
+        $quizAssignments = \App\Models\Assignment::where('kursus_id', $course->id)->where('type', 'quiz')->get(['id','materi_id']);
         $quizMaterialIds = $quizAssignments->pluck('materi_id');
         $assignmentByMaterial = $quizAssignments->pluck('id', 'materi_id');
 
@@ -430,7 +398,7 @@ class CourseController extends Controller
 
         $completionAggregated = $completionScores->map(function ($items) use ($assignmentByMaterial) {
             $best = $items->sortByDesc('score')->first();
-            return (object) [
+            return (object)[
                 'best_score' => $best?->score,
                 'best_percentage' => $best?->score,
                 'last_submitted_at' => $best?->completed_at,
@@ -451,7 +419,7 @@ class CourseController extends Controller
                 $lastSubmit = $submission->last_submitted_at ?? $fallback->last_submitted_at ?? null;
                 $attempt = $submission->attempt_number ?? null;
                 $isPassed = $bestPercentage !== null ? $bestPercentage >= $passingScore : null;
-
+                
                 return [
                     'user' => $enrollment->user,
                     'progress' => $progress,
@@ -499,15 +467,15 @@ class CourseController extends Controller
             ->get();
 
         // Participant progress
-        $participantProgress = $course->enrollments()->with('user')->get()->map(function ($enrollment) use ($course) {
+        $participantProgress = $course->enrollments()->with('user')->get()->map(function($enrollment) use ($course) {
             $totalMaterials = $course->materi->count();
             $completedMaterials = \App\Models\MaterialCompletion::where('user_id', $enrollment->user_id)
                 ->whereIn('materi_id', $course->materi->pluck('id'))
                 ->whereNotNull('completed_at')
                 ->count();
-
+            
             $progress = $totalMaterials > 0 ? round(($completedMaterials / $totalMaterials) * 100) : 0;
-
+            
             return [
                 'user' => $enrollment->user,
                 'progress' => $progress,
@@ -527,11 +495,9 @@ class CourseController extends Controller
     {
         // Get all sections (modules) for this course
         $sections = \App\Models\CourseSection::where('course_id', $course->id)
-            ->with([
-                'materials' => function ($query) {
-                    $query->orderBy('urutan');
-                }
-            ])
+            ->with(['materials' => function($query) {
+                $query->orderBy('urutan');
+            }])
             ->orderBy('order')
             ->get();
 
@@ -550,7 +516,7 @@ class CourseController extends Controller
         ]);
 
         $order = $validated['order'] ?? null;
-
+        
         if ($order === null) {
             $lastSection = \App\Models\CourseSection::where('course_id', $course->id)
                 ->orderBy('order', 'desc')
@@ -599,145 +565,6 @@ class CourseController extends Controller
 
         return redirect()->route('admin.courses.detail', $course)
             ->with('success', 'Modul berhasil dihapus!');
-    }
-
-    /**
-     * Display materials in a module
-     */
-    public function moduleMaterials(Kursus $course, \App\Models\CourseSection $section)
-    {
-        $materials = \App\Models\Materi::where('section_id', $section->id)
-            ->orderBy('urutan')
-            ->get();
-
-        return view('admin.courses.materials', compact('course', 'section', 'materials'));
-    }
-
-    /**
-     * Store new material in module
-     */
-    public function storeMaterial(Request $request, Kursus $course, \App\Models\CourseSection $section)
-    {
-        $validated = $request->validate([
-            'judul' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'content' => 'nullable|string',
-            'type' => 'required|in:video,text,document,quiz,pdf,reading',
-            'file' => 'nullable|file|mimes:pdf,mp4,avi,mov|max:102400', // 100MB
-            'section_id' => 'required|exists:course_sections,id',
-        ]);
-
-        $lastMaterial = \App\Models\Materi::where('section_id', $section->id)
-            ->orderBy('urutan', 'desc')
-            ->first();
-
-        $filePath = null;
-        if ($request->hasFile('file')) {
-            $filePath = $request->file('file')->store('materials', 'public');
-        }
-
-        \App\Models\Materi::create([
-            'kursus_id' => $course->id,
-            'section_id' => $section->id,
-            'judul' => $validated['judul'],
-            'description' => $validated['description'],
-            'content' => $validated['content'],
-            'type' => $validated['type'],
-            'url_konten' => $filePath,
-            'duration' => 0,
-            'urutan' => $lastMaterial ? $lastMaterial->urutan + 1 : 1,
-            'status_terkunci' => false,
-        ]);
-
-        return redirect()->route('admin.courses.detail', $course)
-            ->with('success', 'Materi berhasil ditambahkan!');
-    }
-
-    /**
-     * Update material
-     */
-    public function updateMaterial(Request $request, Kursus $course, \App\Models\CourseSection $section, \App\Models\Materi $material)
-    {
-        $validated = $request->validate([
-            'judul' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'file_path' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,mp4,avi,mov|max:51200',
-            'video_url' => 'nullable|url',
-            'type' => 'required|in:video,document,text,quiz',
-            'is_preview' => 'nullable|boolean',
-            'status_terkunci' => 'nullable|boolean',
-        ]);
-
-        $data = [
-            'judul' => $validated['judul'],
-            'description' => $validated['description'] ?? null,
-            'type' => $validated['type'],
-            'is_preview' => $request->boolean('is_preview'),
-            'status_terkunci' => $request->boolean('status_terkunci'),
-        ];
-
-        // Handle file upload
-        if ($request->hasFile('file_path')) {
-            $storage = app(SupabaseStorageService::class);
-            $upload = $storage->upload($request->file('file_path'), 'materials');
-            $data['file_path'] = $upload['public_url'] ?? $upload['path'];
-        }
-
-        // Handle video URL
-        if ($request->filled('video_url')) {
-            $data['video_url'] = $validated['video_url'];
-        }
-
-        $material->update($data);
-
-        return redirect()->route('admin.courses.detail', $course)
-            ->with('success', 'Materi berhasil diperbarui!');
-    }
-
-    /**
-     * Delete material
-     */
-    public function destroyMaterial(Kursus $course, \App\Models\CourseSection $section, \App\Models\Materi $material)
-    {
-        $material->delete();
-
-        return redirect()->route('admin.courses.detail', $course)
-            ->with('success', 'Materi berhasil dihapus!');
-    }
-
-    /**
-     * Preview material
-     */
-    public function previewMaterial(Kursus $course, \App\Models\Materi $material)
-    {
-        // Ambil semua materi berdasarkan urutan
-        $materials = $course->materi()->with('assignment.questions.options')->orderBy('urutan')->get();
-        $material->loadMissing('assignment.questions.options');
-
-        // Cari index materi saat ini
-        $currentIndex = $materials->search(function ($m) use ($material) {
-            return $m->id === $material->id;
-        });
-
-        // Tentukan prev & next
-        $prevMaterial = $currentIndex > 0 ? $materials[$currentIndex - 1] : null;
-        $nextMaterial = $currentIndex < $materials->count() - 1 ? $materials[$currentIndex + 1] : null;
-
-        return view('admin.courses.material-preview', compact(
-            'course',
-            'material',
-            'materials',
-            'prevMaterial',
-            'nextMaterial'
-        ));
-    }
-
-    /**
-     * Edit material
-     */
-    public function editMaterial(Kursus $course, \App\Models\CourseSection $section, \App\Models\Materi $material)
-    {
-        return view('admin.courses.edit-material', compact('course', 'section', 'material'));
     }
 
     /**

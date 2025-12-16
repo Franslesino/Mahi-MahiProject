@@ -216,8 +216,6 @@
         });
     </script>
 
-    <script>
-
 
     <!-- Logout Confirmation Modal -->
     <div id="logoutModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -249,24 +247,24 @@
         function showLogoutModal() {
             document.getElementById('logoutModal').classList.remove('hidden');
         }
-        
+
         function hideLogoutModal() {
             document.getElementById('logoutModal').classList.add('hidden');
         }
-        
+
         function confirmLogout() {
             document.getElementById('logout-form').submit();
         }
-        
+
         // Close modal when clicking outside
-        document.getElementById('logoutModal')?.addEventListener('click', function(e) {
+        document.getElementById('logoutModal')?.addEventListener('click', function (e) {
             if (e.target === this) {
                 hideLogoutModal();
             }
         });
-        
+
         // Close modal with Escape key
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 hideLogoutModal();
             }

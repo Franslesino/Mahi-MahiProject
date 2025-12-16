@@ -326,6 +326,67 @@
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
                                focus:outline-none focus:ring-2 focus:ring-emerald-500">{{ old('learning', $course->learning) }}</textarea>
                 </div>
+
+                {{-- Tanda Tangan Sertifikat Section --}}
+                <div class="md:col-span-2 border-t border-gray-200 pt-6 mt-2">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fas fa-signature text-emerald-600"></i>
+                        Tanda Tangan Sertifikat
+                    </h3>
+                    <p class="text-sm text-gray-500 mb-4">
+                        Upload gambar tanda tangan yang akan ditampilkan di sertifikat kelulusan kursus ini.
+                    </p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {{-- Nama Penanda Tangan --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Nama Penanda Tangan
+                            </label>
+                            <input
+                                type="text"
+                                name="signature_name"
+                                value="{{ old('signature_name', $course->signature_name) }}"
+                                placeholder="Contoh: Dr. Ahmad Sudirman, M.Kom"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
+                                       focus:outline-none focus:ring-2 focus:ring-emerald-500
+                                       @error('signature_name') border-red-500 @enderror">
+                            <p class="text-xs text-gray-500 mt-1">
+                                Nama yang akan ditampilkan di bawah tanda tangan pada sertifikat.
+                            </p>
+                            @error('signature_name')
+                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- Gambar Tanda Tangan --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Gambar Tanda Tangan
+                            </label>
+                            @if($course->signature_image_url)
+                                <div class="mb-2 p-3 bg-gray-50 rounded-lg inline-block">
+                                    <img src="{{ $course->signature_image_url }}"
+                                         alt="Current Signature"
+                                         class="h-16 w-auto object-contain">
+                                </div>
+                            @endif
+                            <input
+                                type="file"
+                                name="signature_image"
+                                accept="image/jpeg,image/png,image/jpg,image/webp"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
+                                       focus:outline-none focus:ring-2 focus:ring-emerald-500
+                                       @error('signature_image') border-red-500 @enderror">
+                            <p class="text-xs text-gray-500 mt-1">
+                                Format: PNG (transparan disarankan), JPG, WEBP. Maksimal 2MB.
+                            </p>
+                            @error('signature_image')
+                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {{-- BUTTONS --}}

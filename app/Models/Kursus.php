@@ -33,6 +33,8 @@ class Kursus extends Model
         'created_by',
         'rating',
         'videos',
+        'signature_image',
+        'signature_name',
 
         // final quiz settings
         'final_quiz_id',
@@ -46,17 +48,17 @@ class Kursus extends Model
     ];
 
     protected $casts = [
-        'harga'             => 'decimal:2',
-        'discount_price'    => 'decimal:2',
-        'status_berbayar'   => 'boolean',
-        'status_diterbitkan'=> 'boolean',
-        'rating'            => 'decimal:1',
-        'videos'            => 'integer',
+        'harga' => 'decimal:2',
+        'discount_price' => 'decimal:2',
+        'status_berbayar' => 'boolean',
+        'status_diterbitkan' => 'boolean',
+        'rating' => 'decimal:1',
+        'videos' => 'integer',
         'access_duration_days' => 'integer',
         'purchase_deadline_date' => 'datetime',
         'min_passing_score' => 'decimal:2',
         'max_quiz_attempts' => 'integer',
-        'require_final_quiz'=> 'boolean',
+        'require_final_quiz' => 'boolean',
     ];
 
     /*
@@ -97,6 +99,18 @@ class Kursus extends Model
         return asset('storage/' . $this->image);
     }
 
+    public function getSignatureImageUrlAttribute()
+    {
+        if (!$this->signature_image) {
+            return null;
+        }
+        if (str_starts_with($this->signature_image, 'http')) {
+            return $this->signature_image;
+        }
+
+        return asset('storage/' . $this->signature_image);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | RELASI
@@ -109,7 +123,7 @@ class Kursus extends Model
         return $this->belongsTo(User::class, 'pembuat');
     }
 
-     public function transactions()
+    public function transactions()
     {
         return $this->hasMany(Transaction::class);
     }
@@ -150,9 +164,9 @@ class Kursus extends Model
     }
 
     public function sections(): HasMany
-{
-    return $this->hasMany(CourseSection::class, 'course_id')->orderBy('order');
-}
+    {
+        return $this->hasMany(CourseSection::class, 'course_id')->orderBy('order');
+    }
 
     // quiz
     public function quizzes()

@@ -72,10 +72,10 @@ class StudentController extends Controller
         // Get final exam if course requires it
         $finalExam = null;
         $finalExamStatus = [];
-        
+
         if ($course->final_quiz_id) {
             $finalExam = $course->finalQuiz;
-            
+
             if ($finalExam) {
                 // Get the latest quiz attempt for this student
                 $latestAttempt = \App\Models\QuizAttempt::where('user_id', Auth::id())
@@ -509,6 +509,11 @@ class StudentController extends Controller
                     $query->withCount('materi');
                 },
                 'kursus.pembuat',
+                'kursus.materi', // Fallback untuk kursus tanpa sections
+                // Load sections.materials seperti di learn page untuk konsistensi penghitungan progress
+                'kursus.sections.materials' => function ($query) {
+                    $query->where('status', 'published')->orderBy('urutan', 'asc');
+                },
                 // Load certificate only if FK is known to avoid invalid column errors
                 ...($certificateFk ? ['sertifikat'] : []),
             ])
@@ -530,7 +535,20 @@ class StudentController extends Controller
             }
         }
 
-        return view('my-courses', compact('enrollments'));
+        // Get pending transactions (not expired and not cancelled)
+        $pendingTransactions = \App\Models\Transaction::where('user_id', Auth::id())
+            ->where('status', 'pending')
+            ->where('payment_deadline', '>', now())
+            ->with([
+                'kursus' => function ($query) {
+                    $query->withCount('materi');
+                },
+                'kursus.pembuat'
+            ])
+            ->latest()
+            ->get();
+
+        return view('my-courses', compact('enrollments', 'pendingTransactions'));
     }
 
     /**
@@ -564,9 +582,12 @@ class StudentController extends Controller
 
         $user = Auth::user();
         $certificateNumber = 'CERT-' . strtoupper(uniqid());
-        
-        // Get instructor name
-        $instructorName = $course->pembuat->name ?? $course->instructor->name ?? 'Bagus Fransislino';
+
+        // Get instructor/signer name from course signature or fallback to instructor
+        $signerName = $course->signature_name ?? $course->instructor->name ?? $course->pembuat->name ?? 'Instructor';
+
+        // Get signature image URL
+        $signatureImageUrl = $course->signature_image_url;
 
         // Generate certificate image
         $certificatePath = $this->generateCertificateImage(
@@ -574,7 +595,8 @@ class StudentController extends Controller
             $course->judul ?? $course->title,
             $certificateNumber,
             now()->format('F d, Y'),
-            $instructorName
+            $signerName,
+            $signatureImageUrl
         );
 
         // Create certificate record with flexible column detection
@@ -588,14 +610,14 @@ class StudentController extends Controller
      * Generate certificate HTML (for now, just save path reference)
      * In production, you would use a service like Puppeteer or wkhtmltopdf
      */
-    private function generateCertificateImage($studentName, $courseName, $certificateNumber, $date, $instructorName)
+    private function generateCertificateImage($studentName, $courseName, $certificateNumber, $date, $signerName, $signatureImageUrl = null)
     {
         // For now, we'll just create a path reference
         // In a real application, you'd generate an actual image/PDF here
         // using tools like: Puppeteer, wkhtmltopdf, or Intervention Image
-        
+
         $filename = 'certificates/' . $certificateNumber . '.html';
-        
+
         // Create certificates directory if it doesn't exist
         $certificatesPath = storage_path('app/public/certificates');
         if (!file_exists($certificatesPath)) {
@@ -603,8 +625,8 @@ class StudentController extends Controller
         }
 
         // Generate certificate HTML
-        $html = $this->getCertificateHtml($studentName, $courseName, $certificateNumber, $date, $instructorName);
-        
+        $html = $this->getCertificateHtml($studentName, $courseName, $certificateNumber, $date, $signerName, $signatureImageUrl);
+
         // Save HTML file (in production, convert this to PDF/PNG)
         file_put_contents(storage_path('app/public/' . $filename), $html);
 
@@ -614,8 +636,13 @@ class StudentController extends Controller
     /**
      * Get certificate HTML template
      */
-    private function getCertificateHtml($studentName, $courseName, $certificateNumber, $date, $instructorName)
+    private function getCertificateHtml($studentName, $courseName, $certificateNumber, $date, $signerName, $signatureImageUrl = null)
     {
+        // Build signature HTML - use image if available, otherwise use text
+        $signatureHtml = $signatureImageUrl
+            ? "<img src=\"{$signatureImageUrl}\" alt=\"Signature\" class=\"signature-image\">"
+            : "<div class=\"signature\">{$signerName}</div>";
+
         return <<<HTML
 <!DOCTYPE html>
 <html>
@@ -637,13 +664,13 @@ class StudentController extends Controller
             width: 842px;
             height: 595px;
             background: white;
-            border: 8px solid #1e40af;
+            border: 8px solid #005F56;
             position: relative;
             padding: 40px 60px;
             box-shadow: 0 0 30px rgba(0,0,0,0.1);
         }
         .inner-border {
-            border: 2px solid #3b82f6;
+            border: 2px solid #00897B;
             height: 100%;
             padding: 30px;
             position: relative;
@@ -652,31 +679,31 @@ class StudentController extends Controller
             position: absolute;
             width: 150px;
             height: 150px;
-            background: #f59e0b;
+            background: #4CAF50;
             border-radius: 50%;
             top: 120px;
             left: 40px;
-            opacity: 0.8;
+            opacity: 0.3;
         }
         .circle-right {
             position: absolute;
             width: 150px;
             height: 150px;
-            background: #f59e0b;
+            background: #4CAF50;
             border-radius: 50%;
             bottom: 80px;
             right: 40px;
-            opacity: 0.8;
+            opacity: 0.3;
         }
         .ellipse-top {
             position: absolute;
             width: 220px;
             height: 120px;
-            background: #5b7fc7;
+            background: #00897B;
             border-radius: 50%;
             top: 50px;
             right: 80px;
-            opacity: 0.8;
+            opacity: 0.3;
         }
         .content {
             position: relative;
@@ -688,10 +715,10 @@ class StudentController extends Controller
             justify-content: center;
         }
         .title {
-            font-size: 48px;
-            color: #1e3a8a;
+            font-size: 42px;
+            color: #005F56;
             font-weight: bold;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             text-transform: uppercase;
             letter-spacing: 4px;
         }
@@ -701,8 +728,8 @@ class StudentController extends Controller
             margin-bottom: 15px;
         }
         .name {
-            font-size: 42px;
-            color: #5b7fc7;
+            font-size: 38px;
+            color: #00897B;
             font-weight: bold;
             margin: 15px 0 20px;
             font-style: italic;
@@ -714,15 +741,15 @@ class StudentController extends Controller
             line-height: 1.5;
         }
         .course-name {
-            font-size: 26px;
-            color: #1e3a8a;
+            font-size: 24px;
+            color: #005F56;
             font-weight: bold;
-            margin: 20px 0 10px;
+            margin: 15px 0 10px;
         }
         .date {
             font-size: 13px;
             color: #6b7280;
-            margin: 8px 0 25px;
+            margin: 8px 0 20px;
         }
         .certificate-number {
             font-size: 11px;
@@ -731,20 +758,32 @@ class StudentController extends Controller
             margin-bottom: 15px;
         }
         .signature-section {
-            margin-top: 25px;
+            margin-top: 20px;
+        }
+        .signature-image {
+            max-height: 60px;
+            max-width: 180px;
+            object-fit: contain;
+            margin-bottom: 5px;
         }
         .signature {
-            font-size: 28px;
-            color: #5b7fc7;
+            font-size: 26px;
+            color: #00897B;
             font-style: italic;
             margin-bottom: 3px;
             font-weight: 600;
         }
         .signature-name {
-            font-size: 15px;
-            color: #1e3a8a;
+            font-size: 14px;
+            color: #005F56;
             font-weight: bold;
             margin-bottom: 3px;
+        }
+        .signature-line {
+            width: 180px;
+            height: 1px;
+            background: #374151;
+            margin: 0 auto 5px;
         }
         .signature-date {
             font-size: 12px;
@@ -763,15 +802,16 @@ class StudentController extends Controller
                 <div class="subtitle">This Certifies that</div>
                 <div class="name">{$studentName}</div>
                 <div class="description">
-                    Has Successfully Completed the Webace Training<br>
+                    Has Successfully Completed the UpGreenius Training<br>
                     Program, Entitled
                 </div>
                 <div class="course-name">{$courseName}</div>
                 <div class="date">on {$date}</div>
                 <div class="certificate-number">{$certificateNumber}</div>
                 <div class="signature-section">
-                    <div class="signature">{$instructorName}</div>
-                    <div class="signature-name">Mr. {$instructorName}</div>
+                    {$signatureHtml}
+                    <div class="signature-line"></div>
+                    <div class="signature-name">{$signerName}</div>
                     <div class="signature-date">on {$date}</div>
                 </div>
             </div>

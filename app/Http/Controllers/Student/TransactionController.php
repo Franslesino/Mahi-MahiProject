@@ -49,10 +49,10 @@ class TransactionController extends Controller
 
         // Calculate pricing
         $hargaAsli = $course->harga ?? $course->price ?? 0;
-        $hargaDiskon = ($course->discount_price && $course->discount_price > 0) 
-            ? $course->discount_price 
+        $hargaDiskon = ($course->discount_price && $course->discount_price > 0)
+            ? $course->discount_price
             : null;
-        
+
         $totalBayar = $hargaDiskon ?? $hargaAsli;
         $diskonPersen = ($hargaDiskon && $hargaAsli > 0)
             ? round((($hargaAsli - $hargaDiskon) / $hargaAsli) * 100)
@@ -85,10 +85,10 @@ class TransactionController extends Controller
 
             // Calculate pricing
             $hargaAsli = $course->harga ?? $course->price ?? 0;
-            $hargaDiskon = ($course->discount_price && $course->discount_price > 0) 
-                ? $course->discount_price 
+            $hargaDiskon = ($course->discount_price && $course->discount_price > 0)
+                ? $course->discount_price
                 : null;
-            
+
             $totalBayar = $hargaDiskon ?? $hargaAsli;
             $diskonPersen = ($hargaDiskon && $hargaAsli > 0)
                 ? round((($hargaAsli - $hargaDiskon) / $hargaAsli) * 100)
@@ -159,7 +159,7 @@ class TransactionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Transaction Process Error: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
@@ -211,7 +211,7 @@ class TransactionController extends Controller
                 if ($course) {
                     // Prioritas: instructor_id, jika tidak ada baru pembuat (admin)
                     $instructorId = $course->instructor_id ?: $course->pembuat;
-                    
+
                     // Hanya kirim notifikasi ke instructor, bukan admin
                     if ($instructorId && $instructorId != $course->pembuat) {
                         Notification::create([
@@ -251,7 +251,7 @@ class TransactionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Complete Payment Error: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
@@ -336,7 +336,7 @@ class TransactionController extends Controller
             if ($course) {
                 // Prioritas: instructor_id, jika tidak ada baru pembuat (admin)
                 $instructorId = $course->instructor_id ?: $course->pembuat;
-                
+
                 // Hanya kirim notifikasi ke instructor, bukan admin
                 if ($instructorId && $instructorId != $course->pembuat) {
                     Notification::create([
@@ -473,7 +473,7 @@ class TransactionController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Get Payment Details Error: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengambil detail pembayaran: ' . $e->getMessage(),
@@ -522,5 +522,186 @@ class TransactionController extends Controller
                 'trace' => $e->getTraceAsString(),
             ], 500);
         }
+    }
+
+    /**
+     * Regenerate Snap Token for changing payment method
+     * This creates a new snap token so user can select a different payment method
+     */
+    public function regenerateSnapToken(Transaction $transaction)
+    {
+        // Authorization check
+        if ($transaction->user_id !== Auth::id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized',
+            ], 403);
+        }
+
+        // Only for pending transactions
+        if (!$transaction->isPending()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaksi sudah diproses.',
+            ], 400);
+        }
+
+        // Check if expired
+        if ($transaction->isExpired()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaksi sudah expired.',
+            ], 400);
+        }
+
+        try {
+            // Generate new Snap Token
+            $midtransService = new MidtransService();
+            $newSnapToken = $midtransService->generateSnapToken($transaction);
+
+            // Update transaction with new snap token
+            $transaction->update(['snap_token' => $newSnapToken]);
+
+            return response()->json([
+                'success' => true,
+                'snap_token' => $newSnapToken,
+                'message' => 'Snap token berhasil di-regenerate',
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Regenerate Snap Token Error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal regenerate snap token: ' . $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Handle Midtrans finish callback (payment successful or pending)
+     */
+    public function finish(Request $request)
+    {
+        $orderId = $request->query('order_id');
+        $statusCode = $request->query('status_code');
+        $transactionStatus = $request->query('transaction_status');
+
+        \Log::info('Midtrans Finish Callback', [
+            'order_id' => $orderId,
+            'status_code' => $statusCode,
+            'transaction_status' => $transactionStatus,
+        ]);
+
+        // Find transaction by order_id (transaction_code)
+        $transaction = Transaction::where('transaction_code', $orderId)->first();
+
+        if (!$transaction) {
+            return redirect()->route('my-transactions')->with('error', 'Transaksi tidak ditemukan.');
+        }
+
+        // Handle based on transaction status
+        if ($transactionStatus === 'settlement' || $transactionStatus === 'capture') {
+            // Payment successful
+            if ($transaction->status === 'pending') {
+                try {
+                    DB::beginTransaction();
+
+                    $transaction->markAsPaid();
+
+                    // Create enrollment if not exists
+                    $existingEnrollment = Enrollment::where('user_id', $transaction->user_id)
+                        ->where('kursus_id', $transaction->kursus_id)
+                        ->first();
+
+                    if (!$existingEnrollment) {
+                        Enrollment::create([
+                            'user_id' => $transaction->user_id,
+                            'kursus_id' => $transaction->kursus_id,
+                            'status_pendaftaran' => 'active',
+                            'tanggal_daftar' => now(),
+                        ]);
+
+                        // Create notification for user
+                        Notification::create([
+                            'user_id' => $transaction->user_id,
+                            'title' => 'Pembayaran Berhasil',
+                            'message' => 'Pembayaran untuk kursus "' . ($transaction->kursus->judul ?? $transaction->kursus->title) . '" telah berhasil. Selamat belajar!',
+                            'type' => 'success',
+                        ]);
+                    }
+
+                    DB::commit();
+
+                    return redirect()->route('student.course.learn', $transaction->kursus)
+                        ->with('success', 'Pembayaran berhasil! Selamat belajar!');
+
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    \Log::error('Finish Callback Error: ' . $e->getMessage());
+                    return redirect()->route('transactions.show', $transaction)
+                        ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+                }
+            }
+
+            // Already paid, redirect to course
+            return redirect()->route('student.course.learn', $transaction->kursus)
+                ->with('info', 'Anda sudah terdaftar di kursus ini.');
+
+        } elseif ($transactionStatus === 'pending') {
+            // Payment pending
+            return redirect()->route('transactions.show', $transaction)
+                ->with('info', 'Pembayaran sedang diproses. Silakan tunggu konfirmasi.');
+        } else {
+            // Payment failed or other status
+            return redirect()->route('transactions.show', $transaction)
+                ->with('warning', 'Status pembayaran: ' . $transactionStatus);
+        }
+    }
+
+    /**
+     * Handle Midtrans unfinish callback (payment cancelled/not completed)
+     */
+    public function unfinish(Request $request)
+    {
+        $orderId = $request->query('order_id');
+
+        \Log::info('Midtrans Unfinish Callback', [
+            'order_id' => $orderId,
+        ]);
+
+        $transaction = Transaction::where('transaction_code', $orderId)->first();
+
+        if ($transaction) {
+            return redirect()->route('transactions.show', $transaction)
+                ->with('info', 'Pembayaran belum selesai. Anda dapat melanjutkan pembayaran kapan saja.');
+        }
+
+        return redirect()->route('my-transactions')
+            ->with('info', 'Pembayaran belum selesai.');
+    }
+
+    /**
+     * Handle Midtrans error callback (payment error)
+     */
+    public function error(Request $request)
+    {
+        $orderId = $request->query('order_id');
+        $statusCode = $request->query('status_code');
+
+        \Log::error('Midtrans Error Callback', [
+            'order_id' => $orderId,
+            'status_code' => $statusCode,
+        ]);
+
+        $transaction = Transaction::where('transaction_code', $orderId)->first();
+
+        if ($transaction) {
+            return redirect()->route('transactions.show', $transaction)
+                ->with('error', 'Terjadi kesalahan pada proses pembayaran. Silakan coba lagi.');
+        }
+
+        return redirect()->route('my-transactions')
+            ->with('error', 'Terjadi kesalahan pada proses pembayaran.');
     }
 }

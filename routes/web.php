@@ -220,8 +220,8 @@ Route::post('/password/email', [\App\Http\Controllers\Auth\ForgotPasswordControl
 Route::get('/password/reset/{token}', [\App\Http\Controllers\Auth\ResetPasswordController::class, 'showResetForm'])->name('password.reset');
 Route::post('/password/reset', [\App\Http\Controllers\Auth\ResetPasswordController::class, 'reset'])->name('password.update');
 
-// Logout
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+// Logout (allow POST/GET to avoid stuck sessions on some UIs)
+Route::match(['post', 'get'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
 // ==========================
 // Protected Routes (AUTH)

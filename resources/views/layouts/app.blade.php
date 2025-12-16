@@ -3,13 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<<< HEAD:resources/views/layouts/app.blade.php
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Pelayanan TIK PNJ')</title>
-========
-    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
-    <title><?php echo $__env->yieldContent('title', 'Pelayanan TIK PNJ'); ?></title>
->>>>>>>> origin/sabil0:storage/framework/views/2e666892b0e340728e0bc455366fbff6.php
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
@@ -398,10 +393,6 @@
     </script>
 
     <!-- Toasts -->
-<<<<<<<< HEAD:resources/views/layouts/app.blade.php
     @include('components.toast')
-========
-    <?php echo $__env->make('components.toast', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
->>>>>>>> origin/sabil0:storage/framework/views/2e666892b0e340728e0bc455366fbff6.php
 </body>
 </html>

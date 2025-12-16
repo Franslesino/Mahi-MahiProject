@@ -59,7 +59,7 @@
                                     class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     value="{{ old('voucher_code') }}">
                                 <button type="button" id="applyVoucher"
-                                    class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+                                    class="px-6 py-3 bg-[#005F56] text-white rounded-lg font-semibold hover:bg-[#014a45] transition">
                                     Gunakan
                                 </button>
                             </div>
@@ -153,7 +153,7 @@
                                 <div class="border-t pt-3">
                                     <div class="flex justify-between items-center">
                                         <span class="text-lg font-bold text-gray-900">Total</span>
-                                        <span class="text-2xl font-bold text-blue-900" id="totalDisplay">
+                                        <span class="text-2xl font-bold text-[#005F56]" id="totalDisplay">
                                             Rp {{ number_format($totalBayar, 0, ',', '.') }}
                                         </span>
                                     </div>
@@ -176,7 +176,7 @@
 
                             <!-- Action Buttons -->
                             <button type="submit" id="payButton"
-                                class="w-full px-6 py-4 bg-blue-900 text-white rounded-lg font-semibold hover:bg-blue-800 transition shadow-lg mb-3">
+                                class="w-full px-6 py-4 bg-[#005F56] text-white rounded-lg font-semibold hover:bg-[#014a45] transition shadow-lg mb-3">
                                 <i class="fas fa-lock mr-2"></i>
                                 Bayar Sekarang
                             </button>
@@ -406,20 +406,18 @@
                     },
                     onPending: function (result) {
                         console.log('Payment Pending:', result);
-                        showLoading(true);
-                        // Check status setiap 2 detik
-                        setTimeout(() => {
-                            checkPaymentStatus(transactionCode);
-                        }, 2000);
+                        // Langsung redirect ke halaman transaksi untuk cek status
+                        alert('Pembayaran sedang diproses. Anda akan diarahkan ke halaman detail transaksi.');
+                        window.location.href = '/transactions/' + transactionId;
                     },
                     onError: function (result) {
                         console.log('Payment Error:', result);
                         alert('Terjadi kesalahan pada proses pembayaran.');
-                        payButton.disabled = false;
+                        window.location.href = '/transactions/' + transactionId;
                     },
                     onClose: function () {
-                        console.log('Customer closed the popup');
-                        // Redirect ke halaman detail transaksi
+                        console.log('Customer closed the popup without completing payment');
+                        // Langsung redirect ke halaman detail transaksi
                         window.location.href = '/transactions/' + transactionId;
                     }
                 });

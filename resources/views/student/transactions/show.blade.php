@@ -111,9 +111,9 @@
                                             <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
                                                 <i
                                                     class="fas fa-{{ 
-                                                                                                                                                                                        $transaction->payment_method === 'bank_transfer' ? 'university' :
+                                                                                                                                                                                                            $transaction->payment_method === 'bank_transfer' ? 'university' :
                             ($transaction->payment_method === 'e_wallet' ? 'mobile-alt' : 'receipt')
-                                                                                                                                                                                    }} text-white text-xl"></i>
+                                                                                                                                                                                                        }} text-white text-xl"></i>
                                             </div>
                                             <div>
                                                 <div class="font-bold text-gray-900">
@@ -243,7 +243,7 @@
                             <div class="border-t pt-3">
                                 <div class="flex justify-between items-center">
                                     <span class="text-lg font-bold text-gray-900">Total Pembayaran</span>
-                                    <span class="text-2xl font-bold text-blue-900">
+                                    <span class="text-2xl font-bold text-[#005F56]">
                                         Rp {{ number_format($transaction->total_bayar, 0, ',', '.') }}
                                     </span>
                                 </div>
@@ -338,9 +338,9 @@
                             window.location.reload();
                         },
                         onClose: function () {
-                            console.log('Customer closed the popup');
-                            // Reload untuk mendapatkan status terbaru
-                            window.location.reload();
+                            console.log('Customer closed the popup without completing payment');
+                            // Langsung redirect ke halaman detail transaksi tanpa refresh
+                            window.location.replace('/transactions/' + transactionId);
                         }
                     });
                 }

@@ -30,25 +30,40 @@
             $allMaterials = $course->sections
                 ->flatMap(function ($section) {
                     return $section->materials ?? collect();
-                })->pluck('id')
-                : collect();
-        }
-        if ($materialIdsCollection->isEmpty() && $course->materi) {
-            $materialIdsCollection = $course->materi->pluck('id');
-        }
-        $materiIds = $materialIdsCollection->unique()->values()->toArray();
-        $materiCount = count($materiIds);
-        $completedMaterialCount = (!empty($materiIds))
-            ? MaterialCompletion::where('user_id', Auth::id())
-                ->whereIn('materi_id', $materiIds)
-                ->count()
-            : 0;
-        // Final quiz (new flow) status
-        $finalQuizId = $course->final_quiz_id ?? null;
-        $finalQuizRequired = (bool) ($course->require_final_quiz && $finalQuizId);
-        $finalQuizAttempt = null;
-        $finalQuizScore = null;
-        $finalQuizPassed = false;
+                })
+                ->values();
+
+            // Pisahkan materi dan quiz
+            $nonQuizMaterials = $allMaterials->filter(fn($m) => $m->type !== 'quiz');
+            $quizMaterials = $allMaterials->filter(fn($m) => $m->type === 'quiz');
+
+            $materiCount = $nonQuizMaterials->count();
+            $quizCount = $quizMaterials->count();
+
+            // Ambil IDs untuk cek completion
+            $materiIds = $nonQuizMaterials->pluck('id')->toArray();
+            $quizIds = $quizMaterials->pluck('id')->toArray();
+
+            // Hitung completed materials (non-quiz)
+            $completedMaterialCount = (!empty($materiIds))
+                ? MaterialCompletion::where('user_id', Auth::id())
+                    ->whereIn('materi_id', $materiIds)
+                    ->count()
+                : 0;
+
+            // Hitung completed quizzes
+            $completedQuizCount = (!empty($quizIds))
+                ? MaterialCompletion::where('user_id', Auth::id())
+                    ->whereIn('materi_id', $quizIds)
+                    ->count()
+                : 0;
+
+            // Final quiz (new flow) status
+            $finalQuizId = $course->final_quiz_id ?? null;
+            $finalQuizRequired = (bool) ($course->require_final_quiz && $finalQuizId);
+            $finalQuizAttempt = null;
+            $finalQuizScore = null;
+            $finalQuizPassed = false;
 
             if ($finalQuizId) {
                 $finalQuizAttempt = QuizAttempt::where('user_id', Auth::id())

@@ -80,9 +80,8 @@ class InstructorController extends Controller
         })
         ->withCount([
             'materi',
-            'enrollments as enrollments_count' => function($q) {
-                $q->whereIn('status_pendaftaran', ['paid', 'active', 'completed']);
-            }
+            // Hitung semua enrollments tanpa memfilter status, agar tidak 0 bila kolom status beda-beda
+            'enrollments as enrollments_count',
         ])
         ->latest()
         ->paginate(12);

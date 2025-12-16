@@ -270,7 +270,7 @@ Route::middleware('auth')->group(function () {
     // ==========================
     // Voucher Validation (AJAX)
     // ==========================
-    Route::post('/voucher/validate', [VoucherController::class, 'validate'])->name('voucher.validate');
+    Route::post('/voucher/validate', [VoucherController::class, 'validateVoucher'])->name('voucher.validate');
 
     // ======================
     // Student Routes
@@ -511,7 +511,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/dashboard', [InstructorController::class, 'dashboard'])->name('dashboard');
 
             // Profile Management
-            Route::get('/profile', [InstructorProfileController::class, 'edit'])->name('profile.edit');
+            Route::get('/profile', [InstructorProfileController::class, 'edit'])->name('profile');
             Route::put('/profile', [InstructorProfileController::class, 'update'])->name('profile.update');
 
             // Course Management

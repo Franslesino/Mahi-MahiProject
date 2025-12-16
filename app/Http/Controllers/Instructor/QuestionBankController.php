@@ -183,6 +183,11 @@ class QuestionBankController extends Controller
             abort(403, 'Anda tidak dapat menambah soal ke bank ini.');
         }
 
+        // Jika bukan pilihan ganda, hapus options agar aturan min tidak men-trigger
+        if ($request->input('type') !== 'multiple_choice') {
+            $request->request->remove('options');
+        }
+
         $validated = $request->validate([
             'type' => 'required|in:multiple_choice,true_false,essay,short_answer',
             'question_text' => 'required|string',

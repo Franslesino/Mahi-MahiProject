@@ -5,8 +5,6 @@
     <!-- Header -->
     <div class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div class="flex-1">
-            <h2 class="text-2xl font-bold text-gray-800 mt-2">{{ $course->title }}</h2>
-            <p class="text-gray-600 mt-1">{{ $course->description }}</p>
         </div>
         <div class="flex gap-3">
             <a href="{{ route('instructor.courses.final-quiz.edit', $course->id) }}" 
@@ -79,7 +77,7 @@
     </div>
 
     <!-- Final Quiz Statistics (if exists) -->
-    @if($course->require_final_quiz && $course->final_quiz_id)
+    @if($course->final_quiz_id && $course->finalQuiz)
         @php
             // Hitung total peserta unik dan peserta lulus unik
             $totalParticipants = DB::table('quiz_attempts')

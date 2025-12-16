@@ -101,7 +101,19 @@
                             @foreach($sections as $section)
                                 @php
                                     $materialCount = $section->materials->count();
-                                    $completedCount = $section->materials->whereIn('id', $completedIds)->count();
+                                    // Count completed materials including class_session with hadir attendance
+                                    $completedCount = 0;
+                                    foreach($section->materials as $mat) {
+                                        if (in_array($mat->id, $completedIds)) {
+                                            $completedCount++;
+                                        } elseif ($mat->type === 'class_session') {
+                                            // Check if student has hadir attendance
+                                            $att = $mat->attendances()->where('user_id', auth()->id())->first();
+                                            if ($att && $att->status === 'hadir') {
+                                                $completedCount++;
+                                            }
+                                        }
+                                    }
                                     $sectionId = 'section-'.$loop->index;
                                 @endphp
                                 <div class="space-y-2" data-section-container="{{ $sectionId }}">
@@ -123,8 +135,19 @@
                                             @php
                                                 $isCompleted = !empty($completedIds) && in_array($material->id, $completedIds);
                                                 $isActive = ($currentMaterial && $currentMaterial->id === $material->id);
+                                                $isClassSession = $material->type === 'class_session';
+                                                
+                                                // Get attendance status for class_session
+                                                $attendanceStatus = null;
+                                                if ($isClassSession) {
+                                                    $attendance = $material->attendances()->where('user_id', auth()->id())->first();
+                                                    $attendanceStatus = $attendance ? $attendance->status : null;
+                                                }
+                                                
                                                 $rowClass = 'w-full text-left px-4 py-3 flex items-center gap-3 transition rounded-xl border ';
-                                                if ($isCompleted) {
+                                                if ($isClassSession) {
+                                                    $rowClass .= 'bg-orange-50 border-orange-100';
+                                                } elseif ($isCompleted) {
                                                     $rowClass .= 'bg-emerald-50 border-emerald-100 text-emerald-900';
                                                 } elseif ($isActive) {
                                                     $rowClass .= 'bg-white border-emerald-200 shadow-[0_8px_30px_rgba(16,185,129,0.15)] ring-1 ring-emerald-100';
@@ -135,34 +158,112 @@
                                                     ? route('courses.materials.quiz', [$course, $material->id])
                                                     : route('courses.materials.view', [$course, $material->id]);
                                             @endphp
-                                            <a href="{{ $targetUrl }}"
-                                                    class="{{ trim($rowClass) }}"
-                                                    aria-current="{{ $isActive ? 'step' : 'false' }}">
-                                                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 text-gray-700 font-semibold">
-                                                    {{ sprintf('%02d', $index) }}
+                                            
+                                            @if($isClassSession)
+                                                {{-- Special display for class session --}}
+                                                @php
+                                                    $isSessionComplete = $attendanceStatus === 'hadir';
+                                                    $sessionClass = $isSessionComplete 
+                                                        ? 'w-full text-left px-4 py-3 flex items-center gap-3 transition rounded-xl border bg-emerald-50 border-emerald-200'
+                                                        : 'w-full text-left px-4 py-3 flex items-center gap-3 transition rounded-xl border bg-orange-50 border-orange-100';
+                                                @endphp
+                                                <div class="{{ $sessionClass }}">
+                                                    <div class="w-10 h-10 rounded-full flex items-center justify-center {{ $isSessionComplete ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700' }} font-semibold">
+                                                        <i class="fas {{ $isSessionComplete ? 'fa-check-circle' : 'fa-users' }}"></i>
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-sm font-semibold text-gray-800 truncate">{{ $material->judul ?? $material->title }}</p>
+                                                        <div class="flex flex-wrap gap-2 mt-1 text-xs text-gray-600">
+                                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full {{ ($material->session_type ?? 'offline') === 'online' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700' }}">
+                                                                <i class="fas {{ ($material->session_type ?? 'offline') === 'online' ? 'fa-video' : 'fa-building' }}"></i>
+                                                                {{ ucfirst($material->session_type ?? 'offline') }}
+                                                            </span>
+                                                            @if($material->session_date)
+                                                                <span class="inline-flex items-center gap-1">
+                                                                    <i class="fas fa-calendar-alt text-gray-400"></i>
+                                                                    {{ $material->session_date->format('d M Y') }}
+                                                                </span>
+                                                            @endif
+                                                            @if($material->session_start_time)
+                                                                <span class="inline-flex items-center gap-1">
+                                                                    <i class="fas fa-clock text-gray-400"></i>
+                                                                    {{ \Carbon\Carbon::parse($material->session_start_time)->format('H:i') }}
+                                                                    @if($material->session_end_time)
+                                                                        - {{ \Carbon\Carbon::parse($material->session_end_time)->format('H:i') }}
+                                                                    @endif
+                                                                </span>
+                                                            @endif
+                                                            @if($material->session_location)
+                                                                <span class="inline-flex items-center gap-1">
+                                                                    <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                                                    {{ Str::limit($material->session_location, 30) }}
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                        @if($material->session_meeting_link && ($material->session_type ?? 'offline') === 'online')
+                                                            <a href="{{ $material->session_meeting_link }}" target="_blank" class="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline mt-1">
+                                                                <i class="fas fa-external-link-alt"></i> Link Meeting
+                                                            </a>
+                                                        @endif
+                                                    </div>
+                                                    <div class="flex flex-col items-end gap-1">
+                                                        <span class="text-xs text-orange-600 font-medium">Sesi Tatap Muka</span>
+                                                        @if($attendanceStatus)
+                                                            <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full
+                                                                {{ $attendanceStatus === 'hadir' ? 'bg-green-100 text-green-700' : '' }}
+                                                                {{ $attendanceStatus === 'tidak_hadir' ? 'bg-red-100 text-red-700' : '' }}
+                                                                {{ in_array($attendanceStatus, ['izin', 'sakit']) ? 'bg-yellow-100 text-yellow-700' : '' }}
+                                                                {{ $attendanceStatus === 'terlambat' ? 'bg-blue-100 text-blue-700' : '' }}">
+                                                                @if($attendanceStatus === 'hadir')
+                                                                    <i class="fas fa-check-circle"></i> Hadir
+                                                                @elseif($attendanceStatus === 'tidak_hadir')
+                                                                    <i class="fas fa-times-circle"></i> Tidak Hadir
+                                                                @elseif($attendanceStatus === 'izin')
+                                                                    <i class="fas fa-envelope"></i> Izin
+                                                                @elseif($attendanceStatus === 'sakit')
+                                                                    <i class="fas fa-medkit"></i> Sakit
+                                                                @elseif($attendanceStatus === 'terlambat')
+                                                                    <i class="fas fa-clock"></i> Terlambat
+                                                                @endif
+                                                            </span>
+                                                        @else
+                                                            <span class="inline-flex items-center gap-1 px-2 py-1 text-xs text-gray-500 bg-gray-100 rounded-full">
+                                                                <i class="fas fa-hourglass-half"></i> Belum Tercatat
+                                                            </span>
+                                                        @endif
+                                                    </div>
                                                 </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <p class="text-sm font-semibold text-gray-800 truncate">{{ $material->judul ?? $material->title }}</p>
-                                                    <p class="text-xs text-gray-500 truncate">
-                                                        {{ $material->duration ? $material->duration . ' menit' : ' ' }}
-                                                    </p>
-                                                </div>
-                                                <div class="flex items-center gap-2">
-                                                    <span class="text-xs text-gray-400 capitalize">{{ $material->type }}</span>
-                                                    @if(!empty($completedIds) && in_array($material->id, $completedIds))
-                                                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">
-                                                            <i class="fas fa-check-circle"></i> Selesai
-                                                        </span>
-                                                    @else
-                                                        <button type="button"
-                                                                class="mark-btn text-xs px-2 py-1 border border-gray-200 rounded-lg text-gray-600 hover:text-emerald-700 hover:border-emerald-300 transition"
-                                                                data-url="{{ route('courses.materials.complete', [$course, $material->id]) }}"
-                                                                data-material="{{ $material->id }}">
-                                                            Tandai selesai
-                                                        </button>
-                                                    @endif
-                                                </div>
-                                            </a>
+                                            @else
+                                                {{-- Regular material display --}}
+                                                <a href="{{ $targetUrl }}"
+                                                        class="{{ trim($rowClass) }}"
+                                                        aria-current="{{ $isActive ? 'step' : 'false' }}">
+                                                    <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 text-gray-700 font-semibold">
+                                                        {{ sprintf('%02d', $index) }}
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-sm font-semibold text-gray-800 truncate">{{ $material->judul ?? $material->title }}</p>
+                                                        <p class="text-xs text-gray-500 truncate">
+                                                            {{ $material->duration ? $material->duration . ' menit' : ' ' }}
+                                                        </p>
+                                                    </div>
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-xs text-gray-400 capitalize">{{ $material->type }}</span>
+                                                        @if(!empty($completedIds) && in_array($material->id, $completedIds))
+                                                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">
+                                                                <i class="fas fa-check-circle"></i> Selesai
+                                                            </span>
+                                                        @else
+                                                            <button type="button"
+                                                                    class="mark-btn text-xs px-2 py-1 border border-gray-200 rounded-lg text-gray-600 hover:text-emerald-700 hover:border-emerald-300 transition"
+                                                                    data-url="{{ route('courses.materials.complete', [$course, $material->id]) }}"
+                                                                    data-material="{{ $material->id }}">
+                                                                Tandai selesai
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                </a>
+                                            @endif
                                             @php $index++; @endphp
                                         @empty
                                             <div class="px-4 py-3 text-sm text-gray-500">Belum ada materi.</div>

@@ -331,11 +331,11 @@
                                     <div class="mb-2">
                                         <span
                                             class="inline-block px-3 py-1 text-xs font-bold rounded-full
-                                                                                                                                                                    {{ in_array($kategori, ['Graphic Design', 'Digital Marketing']) ? 'bg-orange-100 text-orange-600' : '' }}
-                                                                                                                                                                    {{ in_array($kategori, ['Web Development', 'Frontend', 'Backend']) ? 'bg-blue-100 text-blue-600' : '' }}
-                                                                                                                                                                    {{ $kategori === 'Programming' ? 'bg-purple-100 text-purple-600' : '' }}
-                                                                                                                                                                    {{ $kategori === 'business' ? 'bg-green-100 text-green-600' : '' }}
-                                                                                                                                                                    {{ !in_array($kategori, ['Graphic Design', 'Digital Marketing', 'Web Development', 'Frontend', 'Backend', 'Programming', 'business']) ? 'bg-gray-100 text-gray-600' : '' }}">
+                                                                                                                                                                                {{ in_array($kategori, ['Graphic Design', 'Digital Marketing']) ? 'bg-orange-100 text-orange-600' : '' }}
+                                                                                                                                                                                {{ in_array($kategori, ['Web Development', 'Frontend', 'Backend']) ? 'bg-blue-100 text-blue-600' : '' }}
+                                                                                                                                                                                {{ $kategori === 'Programming' ? 'bg-purple-100 text-purple-600' : '' }}
+                                                                                                                                                                                {{ $kategori === 'business' ? 'bg-green-100 text-green-600' : '' }}
+                                                                                                                                                                                {{ !in_array($kategori, ['Graphic Design', 'Digital Marketing', 'Web Development', 'Frontend', 'Backend', 'Programming', 'business']) ? 'bg-gray-100 text-gray-600' : '' }}">
                                             {{ ucwords($kategori) }}
                                         </span>
                                     </div>
@@ -348,6 +348,75 @@
                                         <span class="font-semibold text-gray-700">Instruktur:</span>
                                         {{ $instructorName }}
                                     </p>
+
+                                    {{-- Method Badge & Info for Offline/Hybrid --}}
+                                    @if(in_array($course->metode, ['offline', 'hybrid']))
+                                        <div
+                                            class="mb-3 p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-100">
+                                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                                                {!! $course->metode_badge !!}
+                                                @if($course->lokasi)
+                                                    <span class="text-xs text-gray-600">
+                                                        <i class="fas fa-map-marker-alt mr-1"></i>{{ $course->lokasi }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            @php
+                                                // Get upcoming sessions for this course
+                                                $upcomingSessions = $course->classSessions()
+                                                    ->where('tanggal', '>=', now()->toDateString())
+                                                    ->where('status', 'scheduled')
+                                                    ->orderBy('tanggal')
+                                                    ->orderBy('waktu_mulai')
+                                                    ->take(2)
+                                                    ->get();
+
+                                                // Get attendance stats
+                                                $totalSessions = $course->classSessions()->count();
+                                                $attendedSessions = \App\Models\Attendance::where('user_id', Auth::id())
+                                                    ->whereHas('classSession', fn($q) => $q->where('kursus_id', $course->id))
+                                                    ->where('status', 'hadir')
+                                                    ->count();
+                                            @endphp
+
+                                            @if($upcomingSessions->count() > 0)
+                                                <div class="text-xs space-y-1">
+                                                    <p class="font-semibold text-gray-700 mb-1">
+                                                        <i class="fas fa-calendar-alt mr-1"></i>Sesi Mendatang:
+                                                    </p>
+                                                    @foreach($upcomingSessions as $session)
+                                                        <div class="flex items-center gap-2 text-gray-600">
+                                                            <span
+                                                                class="px-1.5 py-0.5 rounded text-[10px] font-medium {{ $session->tipe === 'online' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700' }}">
+                                                                {{ ucfirst($session->tipe) }}
+                                                            </span>
+                                                            <span>{{ $session->tanggal->format('d M') }} •
+                                                                {{ $session->waktu_mulai->format('H:i') }}</span>
+                                                            @if($session->lokasi)
+                                                                <span class="truncate max-w-[100px]">- {{ $session->lokasi }}</span>
+                                                            @endif
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <p class="text-xs text-gray-500">
+                                                    <i class="fas fa-info-circle mr-1"></i>Belum ada sesi kelas terjadwal
+                                                </p>
+                                            @endif
+
+                                            @if($totalSessions > 0)
+                                                <div class="mt-2 flex items-center gap-2 text-xs">
+                                                    <span class="text-gray-600">
+                                                        <i class="fas fa-user-check mr-1"></i>Kehadiran:
+                                                    </span>
+                                                    <span
+                                                        class="font-semibold {{ $attendedSessions >= $totalSessions * 0.8 ? 'text-green-600' : ($attendedSessions >= $totalSessions * 0.5 ? 'text-amber-600' : 'text-red-600') }}">
+                                                        {{ $attendedSessions }}/{{ $totalSessions }} sesi
+                                                    </span>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
 
                                     @if($isCompleted)
                                         <!-- Completed Status -->
@@ -694,24 +763,24 @@
                         const url = data.stream_url || data.url || '';
                         const isHtml = url.toLowerCase().endsWith('.html');
                         preview.innerHTML = `
-                                                                        <iframe src="${url}" class="w-full h-[70vh] rounded-lg border-4 border-blue-100 shadow-lg" title="Certificate"></iframe>
-                                                                    `;
+                                                                            <iframe src="${url}" class="w-full h-[70vh] rounded-lg border-4 border-blue-100 shadow-lg" title="Certificate"></iframe>
+                                                                        `;
                     } else {
                         preview.innerHTML = `
-                                                                        <div class="text-center text-red-600">
-                                                                            <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
-                                                                            <p class="font-semibold">Gagal memuat sertifikat</p>
-                                                                        </div>
-                                                                    `;
+                                                                            <div class="text-center text-red-600">
+                                                                                <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
+                                                                                <p class="font-semibold">Gagal memuat sertifikat</p>
+                                                                            </div>
+                                                                        `;
                     }
                 })
                 .catch(error => {
                     preview.innerHTML = `
-                                                                    <div class="text-center text-red-600">
-                                                                        <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
-                                                                        <p class="font-semibold">Terjadi kesalahan</p>
-                                                                    </div>
-                                                                `;
+                                                                        <div class="text-center text-red-600">
+                                                                            <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
+                                                                            <p class="font-semibold">Terjadi kesalahan</p>
+                                                                        </div>
+                                                                    `;
                 });
         }
 

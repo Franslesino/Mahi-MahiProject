@@ -31,7 +31,7 @@
                 @endphp
                 <a href="{{ route('courses.all', array_merge(request()->only('search'), ['category' => $cat])) }}"
                     class="px-5 py-2.5 rounded-lg font-medium whitespace-nowrap transition shadow-sm flex items-center gap-2
-                                  {{ $currentCategory === $cat ? 'bg-pnj-teal text-white' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200' }}">
+                                          {{ $currentCategory === $cat ? 'bg-pnj-teal text-white' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200' }}">
                     <span>{{ $cat }}</span>
                     <span
                         class="text-xs px-2 py-0.5 rounded-full {{ $currentCategory === $cat ? 'bg-white/20' : 'bg-gray-100 text-gray-600' }}">
@@ -55,6 +55,10 @@
                                 <i class="fas fa-graduation-cap text-white text-5xl opacity-50"></i>
                             </div>
                         @endif
+                        {{-- Method Badge --}}
+                        <div class="absolute top-2 left-2">
+                            {!! $course->metode_badge !!}
+                        </div>
                     </div>
                     <div class="p-4 space-y-2">
                         <h4 class="font-bold text-gray-900 line-clamp-2 group-hover:text-pnj-teal transition-colors">

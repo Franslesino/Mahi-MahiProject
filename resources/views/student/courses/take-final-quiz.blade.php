@@ -274,9 +274,9 @@
                         const wrap = document.createElement('label');
                         wrap.className = 'flex items-center gap-3 text-gray-800 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition';
                         wrap.innerHTML = `
-                            <input type="radio" name="question_${q.id}" id="${id}" value="${opt.id}" class="text-emerald-600 w-4 h-4">
-                            <span>${opt.text}</span>
-                        `;
+                                        <input type="radio" name="question_${q.id}" id="${id}" value="${opt.id}" class="text-emerald-600 w-4 h-4">
+                                        <span>${opt.text}</span>
+                                    `;
                         if (answers[q.id] == opt.id) {
                             wrap.querySelector('input').checked = true;
                             wrap.classList.add('bg-emerald-50');
@@ -362,6 +362,22 @@
                 finishModal.classList.remove('flex');
             });
 
+            // Flag to track if quiz is being submitted
+            let isSubmitting = false;
+
+            // Named function for beforeunload so we can remove it later
+            function handleBeforeUnload(e) {
+                // Don't show alert if quiz is being submitted successfully
+                if (isSubmitting) {
+                    return;
+                }
+                e.preventDefault();
+                e.returnValue = '';
+            }
+
+            // Prevent accidental page close
+            window.addEventListener('beforeunload', handleBeforeUnload);
+
             function submitQuiz() {
                 @if($quiz->durasi_quiz)
                     clearInterval(timerInterval);
@@ -382,6 +398,9 @@
                     .then(data => {
                         if (data.success && data.redirect) {
                             clearQuizData();
+                            // Disable beforeunload alert before redirect
+                            isSubmitting = true;
+                            window.removeEventListener('beforeunload', handleBeforeUnload);
                             window.location.href = data.redirect;
                         } else {
                             alert(data.error || 'Terjadi kesalahan');
@@ -398,12 +417,6 @@
             }
 
             modalFinishBtn.addEventListener('click', submitQuiz);
-
-            // Prevent accidental page close
-            window.addEventListener('beforeunload', (e) => {
-                e.preventDefault();
-                e.returnValue = '';
-            });
 
             renderQuestion(current);
         });

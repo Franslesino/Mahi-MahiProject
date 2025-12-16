@@ -525,8 +525,8 @@ class TransactionController extends Controller
     }
 
     /**
-     * Regenerate Snap Token for changing payment method
-     * This creates a new snap token so user can select a different payment method
+     * Regenerate Snap Token for expired payment token
+     * This creates a new snap token with unique order_id suffix
      */
     public function regenerateSnapToken(Transaction $transaction)
     {
@@ -546,7 +546,7 @@ class TransactionController extends Controller
             ], 400);
         }
 
-        // Check if expired
+        // Check if expired based on payment_deadline
         if ($transaction->isExpired()) {
             return response()->json([
                 'success' => false,
@@ -555,17 +555,18 @@ class TransactionController extends Controller
         }
 
         try {
-            // Generate new Snap Token
+            // Generate new Snap Token with unique order_id
             $midtransService = new MidtransService();
-            $newSnapToken = $midtransService->generateSnapToken($transaction);
+            $newSnapToken = $midtransService->regenerateSnapToken($transaction);
 
-            // Update transaction with new snap token
-            $transaction->update(['snap_token' => $newSnapToken]);
+            // Reload transaction to get updated transaction_code
+            $transaction->refresh();
 
             return response()->json([
                 'success' => true,
                 'snap_token' => $newSnapToken,
-                'message' => 'Snap token berhasil di-regenerate',
+                'transaction_code' => $transaction->transaction_code,
+                'message' => 'Token pembayaran berhasil diperbarui',
             ]);
 
         } catch (\Exception $e) {

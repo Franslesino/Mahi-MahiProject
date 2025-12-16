@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Assignment;
+use App\Models\Attendance;
 
 class Materi extends Model
 {
@@ -26,6 +27,13 @@ class Materi extends Model
         'status_terkunci',
         'is_preview',
         'status',
+        // Class session fields
+        'session_date',
+        'session_start_time',
+        'session_end_time',
+        'session_location',
+        'session_meeting_link',
+        'session_type',
     ];
 
     protected $casts = [
@@ -33,6 +41,9 @@ class Materi extends Model
         'is_preview' => 'boolean',
         'duration' => 'integer',
         'urutan' => 'integer',
+        'session_date' => 'date',
+        'session_start_time' => 'datetime:H:i',
+        'session_end_time' => 'datetime:H:i',
     ];
 
     // Accessor untuk title
@@ -163,6 +174,12 @@ class Materi extends Model
         return $this->hasOne(Assignment::class, 'materi_id');
     }
 
+    // Relasi ke Attendances (for class_session type)
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class, 'materi_id');
+    }
+
     protected function materialsDisk(): string
     {
         return config('filesystems.materials_disk', 'public');
@@ -195,6 +212,7 @@ class Materi extends Model
             'pdf' => 'fas fa-file-pdf',
             'quiz' => 'fas fa-question-circle',
             'text' => 'fas fa-align-left',
+            'class_session' => 'fas fa-users',
             default => 'fas fa-file',
         };
     }
@@ -206,7 +224,46 @@ class Materi extends Model
             'pdf' => 'red',
             'quiz' => 'yellow',
             'text' => 'green',
+            'class_session' => 'orange',
             default => 'gray',
         };
+    }
+
+    // Check if this is a class session
+    public function isClassSession(): bool
+    {
+        return $this->type === 'class_session';
+    }
+
+    // Get formatted session datetime
+    public function getFormattedSessionDateAttribute(): ?string
+    {
+        if (!$this->session_date)
+            return null;
+        return $this->session_date->locale('id')->isoFormat('dddd, D MMMM YYYY');
+    }
+
+    // Get formatted session time
+    public function getFormattedSessionTimeAttribute(): ?string
+    {
+        if (!$this->session_start_time || !$this->session_end_time)
+            return null;
+        return $this->session_start_time->format('H:i') . ' - ' . $this->session_end_time->format('H:i');
+    }
+
+    // Check if session is upcoming
+    public function isUpcoming(): bool
+    {
+        if (!$this->session_date)
+            return false;
+        return $this->session_date->gte(now()->startOfDay());
+    }
+
+    // Check if session is today
+    public function isToday(): bool
+    {
+        if (!$this->session_date)
+            return false;
+        return $this->session_date->isToday();
     }
 }

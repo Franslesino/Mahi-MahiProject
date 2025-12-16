@@ -49,7 +49,7 @@
         <!-- Header Sidebar -->
         <div class="flex-shrink-0 p-6 border-b border-gray-200">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-blue-900">Menu Instruktur</h2>
+                <h2 class="text-xl font-bold text-[#005F56]">Menu Instruktur</h2>
                 <button @click="sidebarOpen = false" class="lg:hidden text-gray-500 hover:text-gray-700 transition">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -126,7 +126,7 @@ $sidebarInitial = strtoupper(substr($sidebarUser->first_name ?? $sidebarUser->na
             </div>
 
             <!-- Edit Profil -->
-            <a href="{{ route('instructor.profile.edit') }}"
+            <a href="{{ route('instructor.profile') }}"
                 class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('instructor.profile*') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

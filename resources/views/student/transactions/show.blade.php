@@ -111,9 +111,9 @@
                                             <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
                                                 <i
                                                     class="fas fa-{{ 
-                                                                                                                                                                                                            $transaction->payment_method === 'bank_transfer' ? 'university' :
+                                                                                                                                                                                                                                                                                                                                                        $transaction->payment_method === 'bank_transfer' ? 'university' :
                             ($transaction->payment_method === 'e_wallet' ? 'mobile-alt' : 'receipt')
-                                                                                                                                                                                                        }} text-white text-xl"></i>
+                                                                                                                                                                                                                                                                                                                                                    }} text-white text-xl"></i>
                                             </div>
                                             <div>
                                                 <div class="font-bold text-gray-900">
@@ -173,6 +173,16 @@
                                     <i class="fas fa-check mr-2"></i>
                                     Konfirmasi Pembayaran
                                 </button>
+
+                                {{-- Link to regenerate token if expired --}}
+                                <div class="mt-3 text-center">
+                                    <p class="text-xs text-gray-500 mb-2">Token pembayaran kadaluarsa?</p>
+                                    <button type="button" id="regenerateTokenBtn"
+                                        class="inline-flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-sm font-medium">
+                                        <i class="fas fa-sync-alt mr-2"></i>
+                                        Buat Token Pembayaran Baru
+                                    </button>
+                                </div>
                             @else
                                 {{-- No snap token yet, show button to create new --}}
                                 <button type="button" id="createNewPaymentBtn"
@@ -308,8 +318,8 @@
         }
     </script>
 
-    {{-- Midtrans Snap for Continue Payment --}}
-    @if($transaction->isPending() && !$transaction->isExpired() && $transaction->snap_token)
+    {{-- Midtrans Snap for Continue Payment and Regenerate Token --}}
+    @if($transaction->isPending() && !$transaction->isExpired())
         <script src="https://app.sandbox.midtrans.com/snap/snap.js"
             data-client-key="{{ config('midtrans.client_key') }}"></script>
 
@@ -318,7 +328,28 @@
                 const continuePaymentBtn = document.getElementById('continuePaymentBtn');
                 let snapToken = '{{ $transaction->snap_token }}';
                 const transactionId = {{ $transaction->id }};
-                const transactionCode = '{{ $transaction->transaction_code }}';
+                let transactionCode = '{{ $transaction->transaction_code }}';
+                let tokenFresh = true; // Track if current token is fresh (not expired)
+
+                // Function to reset button to normal state
+                function resetButtonToNormal() {
+                    tokenFresh = true;
+                    if (continuePaymentBtn) {
+                        continuePaymentBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Konfirmasi Pembayaran';
+                        continuePaymentBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+                        continuePaymentBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                    }
+                }
+
+                // Function to show that token might be expired
+                function markTokenAsExpired() {
+                    tokenFresh = false;
+                    if (continuePaymentBtn) {
+                        continuePaymentBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Coba Lagi';
+                        continuePaymentBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                        continuePaymentBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+                    }
+                }
 
                 function openMidtransPopup(token) {
                     snap.pay(token, {
@@ -334,19 +365,21 @@
                         },
                         onError: function (result) {
                             console.log('Payment Error:', result);
-                            alert('Terjadi kesalahan pada proses pembayaran.');
-                            window.location.reload();
+                            // Any error from Midtrans - token might be expired
+                            alert('Terjadi kesalahan. Token mungkin sudah kadaluarsa. Klik "Buat Token Pembayaran Baru" untuk membuat token baru.');
+                            markTokenAsExpired();
                         },
                         onClose: function () {
                             console.log('Customer closed the popup without completing payment');
-                            // Langsung redirect ke halaman detail transaksi tanpa refresh
-                            window.location.replace('/transactions/' + transactionId);
+                            // Don't automatically mark as expired - let user decide
+                            // They can use the dedicated "Buat Token Pembayaran Baru" button if needed
                         }
                     });
                 }
 
                 if (continuePaymentBtn) {
                     continuePaymentBtn.addEventListener('click', function () {
+                        // Always try to open popup with current token
                         openMidtransPopup(snapToken);
                     });
                 }
@@ -356,6 +389,14 @@
                 if (createNewPaymentBtn) {
                     createNewPaymentBtn.addEventListener('click', function () {
                         regenerateAndOpenPopup(createNewPaymentBtn, '<i class="fas fa-credit-card mr-2"></i>Buat Pembayaran');
+                    });
+                }
+
+                // Handler for regenerate token button (always visible when snap_token exists)
+                const regenerateTokenBtn = document.getElementById('regenerateTokenBtn');
+                if (regenerateTokenBtn) {
+                    regenerateTokenBtn.addEventListener('click', function () {
+                        regenerateAndOpenPopup(regenerateTokenBtn, '<i class="fas fa-sync-alt mr-2"></i>Buat Token Pembayaran Baru');
                     });
                 }
 
@@ -375,7 +416,17 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.success && data.snap_token) {
+                                // Update the global snapToken variable
                                 snapToken = data.snap_token;
+                                // Update transaction code if new one is provided
+                                if (data.transaction_code) {
+                                    transactionCode = data.transaction_code;
+                                }
+                                // Reset the main button to normal state
+                                resetButtonToNormal();
+                                // Show success message
+                                alert('Token pembayaran baru berhasil dibuat! Popup pembayaran akan terbuka.');
+                                // Open Midtrans popup with new token
                                 openMidtransPopup(snapToken);
                             } else {
                                 alert(data.message || 'Gagal memperbarui token pembayaran');

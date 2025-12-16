@@ -527,6 +527,12 @@ Route::middleware('auth')->group(function () {
             Route::put('/courses/{course}/materials/{material}', [MaterialController::class, 'update'])->name('materials.update');
             Route::delete('/courses/{course}/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
 
+            // Material-based Attendance Management (for class_session type materials)
+            Route::get('/courses/{course}/materials/{material}/attendance', [MaterialController::class, 'attendance'])->name('materials.attendance');
+            Route::put('/courses/{course}/materials/{material}/attendance/{attendance}', [MaterialController::class, 'updateAttendance'])->name('materials.attendance.update');
+            Route::post('/courses/{course}/materials/{material}/attendance/generate', [MaterialController::class, 'generateAttendance'])->name('materials.attendance.generate');
+            Route::post('/courses/{course}/materials/{material}/attendance/mark-all-present', [MaterialController::class, 'markAllPresent'])->name('materials.attendance.mark-all-present');
+
             // Question Bank Management
             Route::resource('question-banks', \App\Http\Controllers\Instructor\QuestionBankController::class);
             Route::get('/question-banks/{questionBank}/create-question', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'createQuestion'])->name('question-banks.create-question');
@@ -608,5 +614,20 @@ Route::middleware('auth')->group(function () {
 
             // Section Management (INSTRUKTUR)
             Route::resource('courses.sections', \App\Http\Controllers\Instructor\SectionController::class)->shallow();
+
+            // Class Session Management (untuk offline/hybrid courses)
+            Route::get('/courses/{course}/sessions', [\App\Http\Controllers\Instructor\ClassSessionController::class, 'index'])->name('courses.sessions.index');
+            Route::get('/courses/{course}/sessions/create', [\App\Http\Controllers\Instructor\ClassSessionController::class, 'create'])->name('courses.sessions.create');
+            Route::post('/courses/{course}/sessions', [\App\Http\Controllers\Instructor\ClassSessionController::class, 'store'])->name('courses.sessions.store');
+            Route::get('/courses/{course}/sessions/{session}/edit', [\App\Http\Controllers\Instructor\ClassSessionController::class, 'edit'])->name('courses.sessions.edit');
+            Route::put('/courses/{course}/sessions/{session}', [\App\Http\Controllers\Instructor\ClassSessionController::class, 'update'])->name('courses.sessions.update');
+            Route::delete('/courses/{course}/sessions/{session}', [\App\Http\Controllers\Instructor\ClassSessionController::class, 'destroy'])->name('courses.sessions.destroy');
+
+            // Attendance Management
+            Route::get('/courses/{course}/sessions/{session}/attendances', [\App\Http\Controllers\Instructor\AttendanceController::class, 'index'])->name('courses.sessions.attendances.index');
+            Route::put('/courses/{course}/sessions/{session}/attendances/{attendance}', [\App\Http\Controllers\Instructor\AttendanceController::class, 'update'])->name('courses.sessions.attendances.update');
+            Route::post('/courses/{course}/sessions/{session}/attendances/bulk', [\App\Http\Controllers\Instructor\AttendanceController::class, 'bulkUpdate'])->name('courses.sessions.attendances.bulk');
+            Route::post('/courses/{course}/sessions/{session}/attendances/mark-all-present', [\App\Http\Controllers\Instructor\AttendanceController::class, 'markAllPresent'])->name('courses.sessions.attendances.mark-all-present');
+            Route::post('/courses/{course}/sessions/{session}/attendances/regenerate', [\App\Http\Controllers\Instructor\AttendanceController::class, 'regenerate'])->name('courses.sessions.attendances.regenerate');
         });
 });

@@ -18,10 +18,10 @@ class MidtransService
         Config::$isSanitized = config('midtrans.is_sanitized', true);
         Config::$is3ds = config('midtrans.is_3ds', true);
         Config::$appendNotifUrl = config('midtrans.append_notif_url');
-        
+
         // Tentukan CA certificate path dengan fallback strategy
         $caInfoPath = $this->getCACertificatePath();
-        
+
         // Paksa cURL memakai CA bundle yang ada agar tidak bergantung pada path lama di php.ini
         Config::$curlOptions = [
             CURLOPT_CAINFO => $caInfoPath,
@@ -111,6 +111,72 @@ class MidtransService
         } catch (Exception $e) {
             \Log::error('Midtrans Snap Token Error: ' . $e->getMessage());
             throw new Exception('Gagal membuat token pembayaran: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Regenerate Snap Token with new unique order_id suffix
+     * This is used when the previous token has expired
+     */
+    public function regenerateSnapToken(Transaction $transaction)
+    {
+        try {
+            $transaction->load(['user', 'kursus']);
+
+            // Generate unique order_id with timestamp suffix to avoid duplicate order_id error
+            $baseCode = preg_replace('/-R\d+$/', '', $transaction->transaction_code); // Remove existing suffix if any
+            $newOrderId = $baseCode . '-R' . time();
+
+            $transactionDetails = [
+                'order_id' => $newOrderId,
+                'gross_amount' => (int) $transaction->total_bayar,
+            ];
+
+            $customerDetails = [
+                'first_name' => $transaction->user->first_name ?? $transaction->user->name,
+                'last_name' => $transaction->user->last_name ?? '',
+                'email' => $transaction->user->email,
+                'phone' => $transaction->user->phone ?? '',
+            ];
+
+            $itemDetails = [
+                [
+                    'id' => 'COURSE-' . $transaction->kursus_id,
+                    'price' => (int) $transaction->total_bayar,
+                    'quantity' => 1,
+                    'name' => $transaction->kursus->judul ?? 'Kursus',
+                ]
+            ];
+
+            $payload = [
+                'transaction_details' => $transactionDetails,
+                'customer_details' => $customerDetails,
+                'item_details' => $itemDetails,
+                'callbacks' => [
+                    'finish' => route('transactions.finish'),
+                    'unfinish' => route('transactions.unfinish'),
+                    'error' => route('transactions.error'),
+                ]
+            ];
+
+            $snapToken = Snap::getSnapToken($payload);
+
+            // Update transaction code with new order_id for webhook matching
+            $transaction->update([
+                'transaction_code' => $newOrderId,
+                'snap_token' => $snapToken,
+            ]);
+
+            \Log::info('Regenerated Snap Token for transaction', [
+                'old_code' => $baseCode,
+                'new_code' => $newOrderId,
+            ]);
+
+            return $snapToken;
+
+        } catch (Exception $e) {
+            \Log::error('Midtrans Regenerate Snap Token Error: ' . $e->getMessage());
+            throw new Exception('Gagal regenerate token pembayaran: ' . $e->getMessage());
         }
     }
 
@@ -259,13 +325,13 @@ class MidtransService
     {
         try {
             $status = \Midtrans\Transaction::status($orderId);
-            
+
             // Convert object to array
             $statusArray = json_decode(json_encode($status), true);
-            
+
             $paymentType = $statusArray['payment_type'] ?? null;
             $paymentChannel = null;
-            
+
             // Extract payment channel based on payment type
             if ($paymentType === 'bank_transfer' && isset($statusArray['bank'])) {
                 $paymentChannel = strtoupper($statusArray['bank']);

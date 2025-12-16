@@ -43,20 +43,33 @@ class Kursus extends Model
         // time settings
         'access_duration_days',
         'purchase_deadline_date',
+
+        // course method settings
+        'metode',
+        'lokasi',
+        'alamat_lengkap',
+        'kuota_peserta',
+        'jadwal_mulai',
+        'jadwal_selesai',
+        'hari_kelas',
+        'waktu_kelas',
     ];
 
     protected $casts = [
-        'harga'             => 'decimal:2',
-        'discount_price'    => 'decimal:2',
-        'status_berbayar'   => 'boolean',
-        'status_diterbitkan'=> 'boolean',
-        'rating'            => 'decimal:1',
-        'videos'            => 'integer',
+        'harga' => 'decimal:2',
+        'discount_price' => 'decimal:2',
+        'status_berbayar' => 'boolean',
+        'status_diterbitkan' => 'boolean',
+        'rating' => 'decimal:1',
+        'videos' => 'integer',
         'access_duration_days' => 'integer',
         'purchase_deadline_date' => 'datetime',
         'min_passing_score' => 'decimal:2',
         'max_quiz_attempts' => 'integer',
-        'require_final_quiz'=> 'boolean',
+        'require_final_quiz' => 'boolean',
+        'kuota_peserta' => 'integer',
+        'jadwal_mulai' => 'date',
+        'jadwal_selesai' => 'date',
     ];
 
     /*
@@ -109,7 +122,7 @@ class Kursus extends Model
         return $this->belongsTo(User::class, 'pembuat');
     }
 
-     public function transactions()
+    public function transactions()
     {
         return $this->hasMany(Transaction::class);
     }
@@ -150,9 +163,9 @@ class Kursus extends Model
     }
 
     public function sections(): HasMany
-{
-    return $this->hasMany(CourseSection::class, 'course_id')->orderBy('order');
-}
+    {
+        return $this->hasMany(CourseSection::class, 'course_id')->orderBy('order');
+    }
 
     // quiz
     public function quizzes()
@@ -176,5 +189,75 @@ class Kursus extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // class sessions untuk offline/hybrid
+    public function classSessions()
+    {
+        return $this->hasMany(ClassSession::class, 'kursus_id')->orderBy('tanggal')->orderBy('waktu_mulai');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | METHOD ACCESSORS
+    |--------------------------------------------------------------------------
+    */
+
+    // Badge metode kursus
+    public function getMetodeBadgeAttribute()
+    {
+        $badges = [
+            'online' => '<span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Online</span>',
+            'offline' => '<span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Offline</span>',
+            'hybrid' => '<span class="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Hybrid</span>',
+        ];
+
+        return $badges[$this->metode ?? 'online'] ?? $badges['online'];
+    }
+
+    // Label metode
+    public function getMetodeLabelAttribute()
+    {
+        $labels = [
+            'online' => 'Online',
+            'offline' => 'Offline',
+            'hybrid' => 'Hybrid',
+        ];
+
+        return $labels[$this->metode ?? 'online'] ?? 'Online';
+    }
+
+    // Cek apakah perlu jadwal (offline atau hybrid)
+    public function getRequiresScheduleAttribute()
+    {
+        return in_array($this->metode, ['offline', 'hybrid']);
+    }
+
+    // Cek apakah kuota masih tersedia
+    public function getHasAvailableSlotsAttribute()
+    {
+        if (!$this->kuota_peserta) {
+            return true; // unlimited
+        }
+
+        $enrolled = $this->enrollments()
+            ->whereIn('status_pendaftaran', ['active', 'completed'])
+            ->count();
+
+        return $enrolled < $this->kuota_peserta;
+    }
+
+    // Sisa slot
+    public function getAvailableSlotsAttribute()
+    {
+        if (!$this->kuota_peserta) {
+            return null; // unlimited
+        }
+
+        $enrolled = $this->enrollments()
+            ->whereIn('status_pendaftaran', ['active', 'completed'])
+            ->count();
+
+        return max(0, $this->kuota_peserta - $enrolled);
     }
 }

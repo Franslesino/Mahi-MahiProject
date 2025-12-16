@@ -461,9 +461,10 @@ class StudentController extends Controller
      */
     private function getMaterialStats(Kursus $course, int $userId): array
     {
+        // Ambil semua materi yang ada pada section (tidak dibatasi status) agar progress sesuai yang sudah diakses user
         $course->loadMissing([
             'sections.materials' => function ($query) {
-                $query->where('status', 'published')->orderBy('urutan', 'asc');
+                $query->orderBy('urutan', 'asc');
             },
         ]);
 

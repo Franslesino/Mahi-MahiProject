@@ -259,8 +259,8 @@ Route::post('/email/verification-notification', function (\Illuminate\Http\Reque
     return back()->withErrors(['email' => 'Email tidak ditemukan atau sudah diverifikasi.']);
 })->middleware('throttle:6,1')->name('verification.send');
 
-// Logout
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+// Logout (allow POST/GET to avoid stuck sessions on some UIs)
+Route::match(['post', 'get'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
 // ==========================
 // Protected Routes (AUTH)

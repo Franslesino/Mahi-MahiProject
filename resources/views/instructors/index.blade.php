@@ -40,13 +40,16 @@
                                          class="w-20 h-20 rounded-full object-cover mx-auto border-4 border-teal-100">
                                 @else
                                     <div class="w-20 h-20 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center mx-auto">
-                                        <span class="text-2xl font-bold text-white">{{ $instructor->initials }}</span>
+                                        <span class="text-2xl font-bold text-white">{{ $instructor->initials ?? strtoupper(substr($instructor->name, 0, 2)) }}</span>
                                     </div>
                                 @endif
                             </div>
 
                             <!-- Name -->
                             <h3 class="text-lg font-bold text-gray-900 mb-2">{{ $instructor->name }}</h3>
+
+                            <!-- Email -->
+                            <p class="text-sm text-gray-600 truncate mb-2">{{ $instructor->email }}</p>
 
                             <!-- Course Count -->
                             <p class="text-sm text-gray-500 mb-4">

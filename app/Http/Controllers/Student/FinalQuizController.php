@@ -267,6 +267,21 @@ class FinalQuizController extends Controller
         $kursus = $attempt->kursus;
         $quiz = $attempt->quiz;
 
+        // Recalculate score from stored answers to avoid display mismatch
+        $answers = $attempt->jawabanPeserta ?? collect();
+        $totalQuestions = $answers->count();
+        $correctCount = $answers->where('nilai_tercapai', 1)->count();
+        $computedScore = $totalQuestions > 0 ? round(($correctCount / $totalQuestions) * 100, 2) : 0;
+
+        // Sync attempt score/pass flag if different
+        $passingScore = $kursus->min_passing_score ?? ($quiz->passing_score ?? 70);
+        $computedPassed = $computedScore >= $passingScore;
+        if (abs(($attempt->score ?? 0) - $computedScore) > 0.01 || (bool)$attempt->is_passed !== $computedPassed) {
+            $attempt->score = $computedScore;
+            $attempt->is_passed = $computedPassed;
+            $attempt->save();
+        }
+
         return view('student.courses.final-quiz-result', compact('attempt', 'kursus', 'quiz'));
     }
 }

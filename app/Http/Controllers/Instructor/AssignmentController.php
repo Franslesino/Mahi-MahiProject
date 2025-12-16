@@ -388,25 +388,27 @@ class AssignmentController extends Controller
                     'questions.*.points' => 'required|integer|min:1',
                     'questions.*.correct_answer' => 'nullable|string',
                     // opsi hanya wajib untuk multiple_choice / true_false
-                    'questions.*.options' => 'nullable|array',
-                    'questions.*.options.*.text' => 'required_if:questions.*.type,multiple_choice,true_false|string',
-                    'questions.*.options.*.is_correct' => 'nullable|boolean',
-                ]);
-            } else {
-                $validated = $request->validate([
-                    'question_bank_id' => 'nullable|exists:question_banks,id',
-                    'type' => 'required|in:multiple_choice,true_false,essay,short_answer',
+                // Opsi hanya digunakan untuk multiple_choice; tipe lain diabaikan
+                'questions.*.options' => 'nullable|array',
+                'questions.*.options.*.text' => 'required_if:questions.*.type,multiple_choice|nullable|string',
+                'questions.*.options.*.is_correct' => 'nullable|boolean',
+            ]);
+        } else {
+            $validated = $request->validate([
+                'question_bank_id' => 'nullable|exists:question_banks,id',
+                'type' => 'required|in:multiple_choice,true_false,essay,short_answer',
                     'question_text' => 'required|string',
                     'explanation' => 'nullable|string',
                     'points' => 'required|integer|min:1',
                     'correct_answer' => 'nullable|string',
                     // opsi hanya wajib untuk multiple_choice / true_false
-                    'options' => 'nullable|array',
-                    'options.*.text' => 'required_if:type,multiple_choice,true_false|string',
-                    'options.*.is_correct' => 'nullable|boolean',
-                    'save_to_bank' => 'nullable|boolean',
-                ]);
-            }
+                // Opsi hanya digunakan untuk multiple_choice; tipe lain diabaikan
+                'options' => 'nullable|array',
+                'options.*.text' => 'required_if:type,multiple_choice|nullable|string',
+                'options.*.is_correct' => 'nullable|boolean',
+                'save_to_bank' => 'nullable|boolean',
+            ]);
+        }
 
         $saveToBank = $request->boolean('save_to_bank', true);
 

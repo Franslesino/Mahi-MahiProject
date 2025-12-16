@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class VoucherController extends Controller
 {
-    public function validate(Request $request)
+    public function validateVoucher(Request $request)
     {
         $request->validate([
             'voucher_code' => 'required|string',

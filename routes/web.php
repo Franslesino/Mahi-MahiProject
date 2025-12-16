@@ -231,7 +231,7 @@ Route::middleware('auth')->group(function () {
     // ==========================
     // Voucher Validation (AJAX)
     // ==========================
-    Route::post('/voucher/validate', [VoucherController::class, 'validate'])->name('voucher.validate');
+    Route::post('/voucher/validate', [VoucherController::class, 'validateVoucher'])->name('voucher.validate');
 
     // ======================
     // Student Routes

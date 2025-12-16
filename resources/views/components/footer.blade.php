@@ -17,10 +17,11 @@
         <div>
             <h4 class="font-semibold text-[#005F56] mb-4">Jelajahi</h4>
             <ul class="space-y-2">
-                <li><a href="#" class="hover:text-[#005F56] transition">Kursus</a></li>
-                <li><a href="#" class="hover:text-[#005F56] transition">Instruktur</a></li>
-                <li><a href="#" class="hover:text-[#005F56] transition">Kategori</a></li>
-                <li><a href="#" class="hover:text-[#005F56] transition">Tentang Kami</a></li>
+                <li><a href="{{ route('home') }}" class="hover:text-[#005F56] transition">Kursus</a></li>
+                <li><a href="{{ route('instructors.index') }}" class="hover:text-[#005F56] transition">Instruktur</a>
+                </li>
+                <li><a href="{{ route('home') }}#categories" class="hover:text-[#005F56] transition">Kategori</a></li>
+                <li><a href="{{ route('home') }}#about" class="hover:text-[#005F56] transition">Tentang Kami</a></li>
             </ul>
         </div>
 
@@ -28,10 +29,12 @@
         <div>
             <h4 class="font-semibold text-[#005F56] mb-4">Bantuan</h4>
             <ul class="space-y-2">
-                <li><a href="#" class="hover:text-[#005F56] transition">Pusat Bantuan</a></li>
-                <li><a href="#" class="hover:text-[#005F56] transition">Kebijakan Privasi</a></li>
-                <li><a href="#" class="hover:text-[#005F56] transition">Syarat & Ketentuan</a></li>
-                <li><a href="#" class="hover:text-[#005F56] transition">Kontak Kami</a></li>
+                <li><a href="{{ route('home') }}#faq" class="hover:text-[#005F56] transition">Pusat Bantuan</a></li>
+                <li><a href="{{ route('home') }}#privacy" class="hover:text-[#005F56] transition">Kebijakan Privasi</a>
+                </li>
+                <li><a href="{{ route('home') }}#terms" class="hover:text-[#005F56] transition">Syarat & Ketentuan</a>
+                </li>
+                <li><a href="mailto:info@pnj.ac.id" class="hover:text-[#005F56] transition">Kontak Kami</a></li>
             </ul>
         </div>
 

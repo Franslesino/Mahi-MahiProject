@@ -110,6 +110,75 @@ Route::get('/all-courses', function (Request $request) {
     return view('courses.all', compact('courses', 'categoryCounts'));
 })->name('courses.all');
 
+// Instructors Page (public)
+Route::get('/instructors', function () {
+    // Ambil user yang memiliki kursus published (baik sebagai pembuat atau instructor_id)
+    $instructorIds = \App\Models\Kursus::where('status_diterbitkan', true)
+        ->whereNotNull('instructor_id')
+        ->pluck('instructor_id')
+        ->unique();
+
+    // Juga ambil user yang jadi pembuat kursus
+    $pembuatIds = \App\Models\Kursus::where('status_diterbitkan', true)
+        ->whereNotNull('pembuat')
+        ->pluck('pembuat')
+        ->unique();
+
+    $allInstructorIds = $instructorIds->merge($pembuatIds)->unique();
+
+    // Ambil instruktur dan hitung kursus (exclude admin)
+    $instructors = \App\Models\User::whereIn('id', $allInstructorIds)
+        ->where('role', '!=', 'admin')
+        ->orderBy('name')
+        ->get();
+
+    // Calculate total courses for each instructor
+    foreach ($instructors as $instructor) {
+        $instructor->total_courses = \App\Models\Kursus::where('status_diterbitkan', true)
+            ->where(function ($q) use ($instructor) {
+                $q->where('instructor_id', $instructor->id)
+                    ->orWhere('pembuat', $instructor->id);
+            })
+            ->count();
+    }
+
+    // Sort by total_courses descending
+    $instructors = $instructors->sortByDesc('total_courses')->values();
+
+    // Paginate manually
+    $page = request()->get('page', 1);
+    $perPage = 12;
+    $instructors = new \Illuminate\Pagination\LengthAwarePaginator(
+        $instructors->forPage($page, $perPage),
+        $instructors->count(),
+        $perPage,
+        $page,
+        ['path' => request()->url()]
+    );
+
+    return view('instructors.index', compact('instructors'));
+})->name('instructors.index');
+
+// Instructor Detail Page (public)
+Route::get('/instructors/{instructor}', function (\App\Models\User $instructor) {
+    // Ambil kursus yang diampuh instruktur (baik via instructor_id atau pembuat)
+    $courses = \App\Models\Kursus::where('status_diterbitkan', true)
+        ->where(function ($q) use ($instructor) {
+            $q->where('instructor_id', $instructor->id)
+                ->orWhere('pembuat', $instructor->id);
+        })
+        ->withCount([
+            'materi',
+            'enrollments as students_count' => function ($q) {
+                $q->whereIn('status_pendaftaran', ['active', 'completed', 'paid']);
+            }
+        ])
+        ->latest()
+        ->get();
+
+    return view('instructors.show', compact('instructor', 'courses'));
+})->name('instructors.show');
+
 // Terms & Conditions (public)
 Route::get('/terms', function () {
     return view('student.courses.terms');

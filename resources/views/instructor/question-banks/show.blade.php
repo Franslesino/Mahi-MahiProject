@@ -14,7 +14,6 @@
             @endif
         </div>
         <div class="flex gap-2">
-            @if($questionBank->created_by == auth()->id())
             <a href="{{ route('instructor.question-banks.create-question', $questionBank) }}" 
                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
                 <i class="fas fa-plus mr-2"></i>Tambah Soal
@@ -23,14 +22,10 @@
                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium">
                 <i class="fas fa-file-export mr-2"></i>Export Soal
             </a>
+            @if($questionBank->created_by == auth()->id())
             <a href="{{ route('instructor.question-banks.edit', $questionBank) }}" 
                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium">
                 <i class="fas fa-edit mr-2"></i>Edit Bank
-            </a>
-            @else
-            <a href="{{ route('instructor.question-banks.export-questions', $questionBank) }}" 
-               class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium">
-                <i class="fas fa-file-export mr-2"></i>Export Soal
             </a>
             @endif
             <a href="{{ route('instructor.question-banks.index') }}" 

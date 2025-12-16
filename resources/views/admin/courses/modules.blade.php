@@ -43,7 +43,7 @@
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <a href="{{ route('admin.courses.materials.index', [$course]) }}" 
+                    <a href="{{ route('admin.courses.modules.materials', [$course, $section]) }}" 
                        class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition text-sm font-medium">
                         <i class="fas fa-book-open mr-1"></i>
                         Kelola Materi

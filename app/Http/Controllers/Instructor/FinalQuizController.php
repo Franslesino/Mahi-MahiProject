@@ -31,7 +31,16 @@ class FinalQuizController extends Controller
             })
             ->get();
 
-        return view('instructor.courses.final-quiz-settings', compact('kursus', 'availableQuizzes'));
+        // Question banks (publik + milik instruktur) untuk import/simpan soal
+        $questionBanks = \App\Models\QuestionBank::with('questions.options')
+            ->where(function($q) {
+                $q->where('created_by', Auth::id())
+                  ->orWhere('is_public', true);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('instructor.courses.final-quiz-settings', compact('kursus', 'availableQuizzes', 'questionBanks'));
     }
 
     /**
@@ -430,7 +439,7 @@ class FinalQuizController extends Controller
             'options.*' => 'required_unless:type,essay|string',
             'correct_option' => 'required_unless:type,essay|numeric',
             'save_to_bank' => 'nullable|boolean',
-            'question_bank_id' => 'required_if:save_to_bank,1|exists:question_banks,id',
+            'question_bank_id' => 'nullable',
         ]);
 
         DB::beginTransaction();
@@ -439,7 +448,21 @@ class FinalQuizController extends Controller
 
             // If save to bank is checked, use the selected bank
             if ($request->save_to_bank) {
-                $questionBankId = $validated['question_bank_id'];
+                if (($validated['question_bank_id'] ?? null) === 'new') {
+                    $autoBank = \App\Models\QuestionBank::firstOrCreate(
+                        [
+                            'created_by' => Auth::id(),
+                            'title' => 'Soal Final Quiz (Auto)',
+                        ],
+                        [
+                            'description' => 'Bank soal otomatis untuk pertanyaan final quiz',
+                            'is_public' => false,
+                        ]
+                    );
+                    $questionBankId = $autoBank->id;
+                } else {
+                    $questionBankId = $validated['question_bank_id'];
+                }
             } else {
                 // Create/get a default "Final Quiz Questions" bank for this instructor
                 $defaultBank = \App\Models\QuestionBank::firstOrCreate([
@@ -500,5 +523,4 @@ class FinalQuizController extends Controller
         }
     }
 }
-
 

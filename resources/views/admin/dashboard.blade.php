@@ -12,13 +12,21 @@
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Total Kursus -->
+<<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
         <a href="{{ route('admin.courses.index') }}" class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-blue-300 block">
+========
+        <a href="<?php echo e(route('admin.courses.index')); ?>" class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-blue-300 block">
+>>>>>>>> origin/sabil0:storage/framework/views/fbc5c41062f89a13d1219cce71c9da07.php
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Total Kursus</p>
                     <p class="text-3xl font-bold text-gray-800 mt-2">{{ $totalCourses }}</p>
                     <p class="text-xs text-green-600 mt-1 font-semibold">
+<<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
                         <span class="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full"><i class="fas fa-arrow-up"></i> {{ $activeCourses }} aktif</span>
+========
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full"><i class="fas fa-arrow-up"></i> <?php echo e($activeCourses); ?> aktif</span>
+>>>>>>>> origin/sabil0:storage/framework/views/fbc5c41062f89a13d1219cce71c9da07.php
                     </p>
                 </div>
                 <div class="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -28,7 +36,11 @@
         </a>
 
         <!-- Total Pengguna -->
+<<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
         <a href="{{ route('admin.users.index') }}" class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-emerald-300 block">
+========
+        <a href="<?php echo e(route('admin.users.index')); ?>" class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-emerald-300 block">
+>>>>>>>> origin/sabil0:storage/framework/views/fbc5c41062f89a13d1219cce71c9da07.php
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Total Pengguna</p>
@@ -44,13 +56,21 @@
         </a>
 
         <!-- Total Transaksi -->
+<<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
         <a href="{{ route('admin.transactions.index') }}" class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-purple-300 block">
+========
+        <a href="<?php echo e(route('admin.transactions.index')); ?>" class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-purple-300 block">
+>>>>>>>> origin/sabil0:storage/framework/views/fbc5c41062f89a13d1219cce71c9da07.php
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Total Transaksi</p>
                     <p class="text-3xl font-bold text-gray-800 mt-2">{{ $totalTransactions }}</p>
                     <p class="text-xs text-yellow-600 mt-1 font-semibold">
+<<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
                         <span class="inline-flex items-center gap-1 px-2 py-1 bg-yellow-50 text-yellow-700 rounded-full"><i class="fas fa-clock"></i> {{ $pendingTransactions }} pending</span>
+========
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-yellow-50 text-yellow-700 rounded-full"><i class="fas fa-clock"></i> <?php echo e($pendingTransactions); ?> pending</span>
+>>>>>>>> origin/sabil0:storage/framework/views/fbc5c41062f89a13d1219cce71c9da07.php
                     </p>
                 </div>
                 <div class="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -60,7 +80,11 @@
         </a>
 
         <!-- Total Pendapatan -->
+<<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
         <a href="{{ route('admin.transactions.index') }}" class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-amber-300 block">
+========
+        <a href="<?php echo e(route('admin.transactions.index')); ?>" class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-amber-300 block">
+>>>>>>>> origin/sabil0:storage/framework/views/fbc5c41062f89a13d1219cce71c9da07.php
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Total Pendapatan</p>
@@ -68,7 +92,11 @@
                         Rp {{ number_format($totalRevenue, 0, ',', '.') }}
                     </p>
                     <p class="text-xs text-green-600 mt-1 font-semibold">
+<<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
                         <span class="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full"><i class="fas fa-check-circle"></i> {{ $paidTransactions }} paid</span>
+========
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full"><i class="fas fa-check-circle"></i> <?php echo e($paidTransactions); ?> paid</span>
+>>>>>>>> origin/sabil0:storage/framework/views/fbc5c41062f89a13d1219cce71c9da07.php
                     </p>
                 </div>
                 <div class="w-14 h-14 bg-amber-100 rounded-lg flex items-center justify-center">
@@ -93,15 +121,24 @@
                 <div class="h-6 w-40 bg-gray-200 rounded animate-pulse"></div>
                 <div class="h-48 bg-gray-200 rounded-xl animate-pulse"></div>
             </div>
+<<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
             @if($categoryData->count() > 0)
+========
+            <?php if($categoryData->count() > 0): ?>
+>>>>>>>> origin/sabil0:storage/framework/views/fbc5c41062f89a13d1219cce71c9da07.php
             <div class="flex items-center justify-center mb-6 chart-body">
                 <canvas id="revenueChart" width="250" height="250"></canvas>
             </div>
             <div class="grid grid-cols-2 gap-4">
                 @php
                     $colors = ['#F59E0B', '#3B82F6', '#06B6D4', '#EF4444', '#10B981', '#8B5CF6'];
+<<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
                 @endphp
                 @foreach($categoryData as $index => $cat)
+========
+                ?>
+                <?php $__currentLoopData = $categoryData; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+>>>>>>>> origin/sabil0:storage/framework/views/fbc5c41062f89a13d1219cce71c9da07.php
                 <div class="flex items-center gap-2">
                     <div class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: {{ $colors[$index % 6] }}"></div>
                     <div class="flex-1 min-w-0">
@@ -134,7 +171,11 @@
                 <div class="h-48 bg-gray-200 rounded-xl animate-pulse"></div>
             </div>
 
+<<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
             @if($monthlyData->sum() > 0)
+========
+            <?php if($monthlyData->sum() > 0): ?>
+>>>>>>>> origin/sabil0:storage/framework/views/fbc5c41062f89a13d1219cce71c9da07.php
             <div class="flex items-center gap-2 mb-4 chart-toggle">
                 <div class="flex rounded-lg border border-gray-200 overflow-hidden text-xs">
                     <button id="chartTypeLine" class="px-3 py-1.5 bg-gray-100 text-gray-800 font-semibold" aria-pressed="true" aria-label="Tampilkan grafik garis">Line</button>
@@ -145,13 +186,21 @@
             <div style="height: 250px;" class="chart-body">
                 <canvas id="monthlyChart"></canvas>
             </div>
+<<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
             @else
+========
+            <?php else: ?>
+>>>>>>>> origin/sabil0:storage/framework/views/fbc5c41062f89a13d1219cce71c9da07.php
             <div class="flex flex-col items-center justify-center py-12 text-center chart-empty">
                 <i class="fas fa-chart-line text-5xl text-gray-300 mb-3"></i>
                 <p class="text-gray-600 font-semibold">Belum ada transaksi bulan ini</p>
                 <p class="text-gray-400 text-sm">Grafik akan tampil otomatis setelah ada transaksi paid.</p>
             </div>
+<<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
             @endif
+========
+            <?php endif; ?>
+>>>>>>>> origin/sabil0:storage/framework/views/fbc5c41062f89a13d1219cce71c9da07.php
         </div>
     </div>
 
@@ -170,7 +219,11 @@
                 <div class="h-6 w-40 bg-gray-200 rounded animate-pulse"></div>
                 <div class="h-48 bg-gray-200 rounded-xl animate-pulse"></div>
             </div>
+<<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
             @if($genderData->count() > 0)
+========
+            <?php if($genderData->count() > 0): ?>
+>>>>>>>> origin/sabil0:storage/framework/views/fbc5c41062f89a13d1219cce71c9da07.php
             <div class="flex items-center justify-center mb-6 chart-body">
                 <canvas id="genderChart" width="250" height="250"></canvas>
             </div>
@@ -210,7 +263,11 @@
                 <div class="h-6 w-40 bg-gray-200 rounded animate-pulse"></div>
                 <div class="h-48 bg-gray-200 rounded-xl animate-pulse"></div>
             </div>
+<<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
             @if($profesiData->count() > 0)
+========
+            <?php if($profesiData->count() > 0): ?>
+>>>>>>>> origin/sabil0:storage/framework/views/fbc5c41062f89a13d1219cce71c9da07.php
             <div style="height: 300px;" class="chart-body">
                 <canvas id="profesiChart"></canvas>
             </div>
@@ -403,7 +460,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // ==========================================
     const monthlyCtx = document.getElementById('monthlyChart');
         if (monthlyCtx) {
+<<<<<<<< HEAD:resources/views/admin/dashboard.blade.php
         const monthlyData = @json($monthlyData->values());
+========
+        const monthlyData = <?php echo json_encode($monthlyData->values(), 15, 512) ?>;
+>>>>>>>> origin/sabil0:storage/framework/views/fbc5c41062f89a13d1219cce71c9da07.php
         const monthlySum = monthlyData.reduce((a,b)=>a+b,0);
         const monthlyCard = document.querySelector('[data-chart-card=\"monthly\"]');
         if (monthlySum === 0) {

@@ -93,6 +93,7 @@
                 <span class="font-medium">Dashboard</span>
             </a>
 
+<<<<<<<< HEAD:resources/views/layouts/admin.blade.php
             @php
                 $isKursusSectionActive = request()->routeIs('admin.courses*') || request()->routeIs('admin.vouchers*') || request()->routeIs('admin.question-banks*');
             @endphp
@@ -100,6 +101,15 @@
                 <button type="button"
                         @click="open = !open"
                         class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-emerald-300 {{ $isKursusSectionActive ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}"
+========
+            <?php
+                $isKursusSectionActive = request()->routeIs('admin.courses*') || request()->routeIs('admin.vouchers*') || request()->routeIs('admin.question-banks*');
+            ?>
+            <div x-data="{ open: <?php echo e($isKursusSectionActive ? 'true' : 'false'); ?> }" class="space-y-1">
+                <button type="button"
+                        @click="open = !open"
+                        class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-emerald-300 <?php echo e($isKursusSectionActive ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50'); ?>"
+>>>>>>>> origin/sabil0:storage/framework/views/4308e2767fe12849481e5501e1f54f96.php
                         :class="open ? 'bg-emerald-50 text-emerald-700' : ''"
                         :aria-expanded="open"
                         aria-controls="menu-kursus">
@@ -110,6 +120,7 @@
                     </svg>
                 </button>
                 <div x-show="open" x-transition class="space-y-1 pl-10" id="menu-kursus">
+<<<<<<<< HEAD:resources/views/layouts/admin.blade.php
                     <a href="{{ route('admin.courses.index') }}"
                        class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition {{ request()->routeIs('admin.courses*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
                         <i class="fas fa-list-ul w-4 text-center"></i>
@@ -122,6 +133,20 @@
                     </a>
                     <a href="{{ route('admin.question-banks.index') }}" 
                        class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition {{ request()->routeIs('admin.question-banks*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50' }}">
+========
+                    <a href="<?php echo e(route('admin.courses.index')); ?>"
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition <?php echo e(request()->routeIs('admin.courses*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50'); ?>">
+                        <i class="fas fa-list-ul w-4 text-center"></i>
+                        <span class="font-medium">Daftar Kursus</span>
+                    </a>
+                    <a href="<?php echo e(route('admin.vouchers.index')); ?>" 
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition <?php echo e(request()->routeIs('admin.vouchers*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50'); ?>">
+                        <i class="fas fa-ticket-alt w-4 text-center"></i>
+                        <span class="font-medium">Voucher</span>
+                    </a>
+                    <a href="<?php echo e(route('admin.question-banks.index')); ?>" 
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition <?php echo e(request()->routeIs('admin.question-banks*') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50'); ?>">
+>>>>>>>> origin/sabil0:storage/framework/views/4308e2767fe12849481e5501e1f54f96.php
                         <i class="fas fa-folder-open w-4 text-center"></i>
                         <span class="font-medium">Bank Soal</span>
                     </a>

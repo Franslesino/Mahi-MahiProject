@@ -157,9 +157,9 @@ class QuestionBankController extends Controller
             'explanation' => 'nullable|string',
             'points' => 'required|integer|min:1',
             'correct_answer' => 'nullable|string',
-            'options' => 'nullable|array',
-            'options.*.text' => 'required_with:options|string',
-            'options.*.is_correct' => 'nullable|boolean',
+            'options' => 'required_if:type,multiple_choice|array|min:2',
+            'options.*' => 'required_if:type,multiple_choice|string',
+            'correct_option' => 'required_if:type,multiple_choice,true_false',
         ]);
 
         DB::beginTransaction();
@@ -177,15 +177,31 @@ class QuestionBankController extends Controller
                 'correct_answer' => $validated['correct_answer'] ?? null,
             ]);
 
-            // Create options if multiple choice or true/false
-            if (in_array($validated['type'], ['multiple_choice', 'true_false']) && isset($validated['options'])) {
-                foreach ($validated['options'] as $index => $optionData) {
+            // Create options based on type
+            if ($validated['type'] === 'multiple_choice') {
+                foreach ($validated['options'] as $index => $optionText) {
                     $question->options()->create([
-                        'option_text' => $optionData['text'],
-                        'is_correct' => $optionData['is_correct'] ?? false,
+                        'option_text' => $optionText,
+                        'is_correct' => ((string)$validated['correct_option'] === (string)($index + 1)),
                         'order' => $index + 1,
                     ]);
                 }
+            } elseif ($validated['type'] === 'true_false') {
+                $correct = $validated['correct_option'] === 'true';
+                $question->options()->createMany([
+                    [
+                        'option_text' => 'Benar',
+                        'is_correct' => $correct,
+                        'order' => 1,
+                    ],
+                    [
+                        'option_text' => 'Salah',
+                        'is_correct' => !$correct,
+                        'order' => 2,
+                    ],
+                ]);
+            } elseif ($validated['type'] === 'short_answer') {
+                $question->update(['correct_answer' => $validated['correct_answer'] ?? '']);
             }
 
             DB::commit();

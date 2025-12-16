@@ -49,7 +49,9 @@ class MaterialController extends Controller
             ->get();
 
         // Stats
-        $totalMaterials = $course->materi()->count();
+        $materialIds = $course->materi()->pluck('id');
+        $totalMaterials = $materialIds->count(); // angka display apa adanya
+        $totalMaterialsForProgress = max(1, $totalMaterials); // divisor progress supaya tidak 0
         $totalVideos = $course->materi()->where('type', 'video')->count();
         $studentsCount = $course->enrollments()
             ->whereIn('status_pendaftaran', ['active', 'completed', 'paid'])
@@ -62,8 +64,6 @@ class MaterialController extends Controller
             ->get();
 
         // Progress & score per participant
-        $materialIds = $course->materi()->pluck('id');
-        $totalMaterials = max(1, $materialIds->count());
         $passingScore = Assignment::where('kursus_id', $course->id)->firstWhere('passing_score')?->passing_score ?? 60;
 
         $completionCounts = MaterialCompletion::select('user_id', DB::raw('COUNT(*) as completed_count'))
@@ -117,9 +117,9 @@ class MaterialController extends Controller
         $participantProgress = $course->enrollments()
             ->with('user')
             ->get()
-            ->map(function ($enrollment) use ($completionCounts, $submissionStats, $completionAggregated, $totalMaterials, $passingScore) {
+            ->map(function ($enrollment) use ($completionCounts, $submissionStats, $completionAggregated, $totalMaterials, $totalMaterialsForProgress, $passingScore) {
                 $completed = $completionCounts[$enrollment->user_id]->completed_count ?? 0;
-                $progress = $totalMaterials > 0 ? round(($completed / $totalMaterials) * 100) : 0;
+                $progress = $totalMaterialsForProgress > 0 ? round(($completed / $totalMaterialsForProgress) * 100) : 0;
                 $submission = $submissionStats[$enrollment->user_id] ?? null;
                 $fallback = $completionAggregated[$enrollment->user_id] ?? null;
                 $bestScore = $submission->best_score ?? $fallback->best_score ?? null;

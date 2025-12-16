@@ -5,8 +5,13 @@
     <!-- Header -->
     <div class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div class="flex-1">
+<<<<<<<< HEAD:resources/views/instructor/course-detail.blade.php
             <h2 class="text-2xl font-bold text-gray-800 mt-2">{{ $course->title }}</h2>
             <p class="text-gray-600 mt-1">{{ $course->description }}</p>
+========
+            <h2 class="text-2xl font-bold text-gray-800 mt-2"><?php echo e($course->title); ?></h2>
+            <p class="text-gray-600 mt-1"><?php echo e($course->description); ?></p>
+>>>>>>>> origin/sabil0:storage/framework/views/a132e0f7c2622e2a447b8880eca6b3cb.php
         </div>
         <div class="flex gap-3">
             <a href="{{ route('instructor.courses.final-quiz.edit', $course->id) }}" 
@@ -79,8 +84,13 @@
     </div>
 
     <!-- Final Quiz Statistics (if exists) -->
+<<<<<<<< HEAD:resources/views/instructor/course-detail.blade.php
     @if($course->require_final_quiz && $course->final_quiz_id)
         @php
+========
+    <?php if($course->require_final_quiz && $course->final_quiz_id): ?>
+        <?php
+>>>>>>>> origin/sabil0:storage/framework/views/a132e0f7c2622e2a447b8880eca6b3cb.php
             // Hitung total peserta unik dan peserta lulus unik
             $totalParticipants = DB::table('quiz_attempts')
                 ->where('kursus_id', $course->id)

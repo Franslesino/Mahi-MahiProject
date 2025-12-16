@@ -67,7 +67,12 @@
             </div>
 
             <!-- User Profile with Email -->
+            <?php
+                $sidebarUser = auth()->user();
+                $sidebarInitial = strtoupper(substr($sidebarUser->first_name ?? $sidebarUser->name, 0, 1));
+            ?>
             <div class="flex items-center gap-3">
+<<<<<<<< HEAD:resources/views/layouts/instructor.blade.php
                 <img
                     src="{{ auth()->user()->avatar_url
                             ? auth()->user()->avatar_url
@@ -86,6 +91,23 @@
                 <div class="flex-1 min-w-0">
                     <h3 class="font-semibold text-gray-900 truncate">{{ auth()->user()->name }}</h3>
                     <p class="text-sm text-gray-500 truncate">{{ auth()->user()->email }}</p>
+========
+                <div class="w-14 h-14 rounded-full overflow-hidden ring-2 ring-blue-500/20 bg-gray-100 flex-shrink-0">
+                    <?php if($sidebarUser?->avatar_url): ?>
+                        <img src="<?php echo e($sidebarUser->avatar_url); ?>" alt="Avatar" class="w-full h-full object-cover">
+                    <?php else: ?>
+                        <div class="w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                            <span class="text-white text-xl font-bold"><?php echo e($sidebarInitial); ?></span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-semibold text-gray-900 truncate">
+                        <?php echo e(trim(($sidebarUser->first_name ?? '') . ' ' . ($sidebarUser->last_name ?? '')) ?: $sidebarUser->name); ?>
+
+                    </h3>
+                    <p class="text-sm text-gray-500 truncate"><?php echo e($sidebarUser->email); ?></p>
+>>>>>>>> origin/sabil0:storage/framework/views/9531a82020418ae90631f966ab595617.php
                     <span class="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
                         Instruktur
                     </span>
@@ -121,6 +143,16 @@
                 <span class="font-medium">Bank Soal</span>
             </a>
 
+<<<<<<<< HEAD:resources/views/layouts/instructor.blade.php
+========
+            <!-- Edit Profile -->
+            <a href="<?php echo e(route('instructor.profile')); ?>" 
+               class="flex items-center gap-3 px-4 py-3 rounded-lg transition <?php echo e(request()->routeIs('instructor.profile*') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'); ?>">
+                <i class="fas fa-user-cog w-5 text-center"></i>
+                <span class="font-medium">Edit Profile</span>
+            </a>
+
+>>>>>>>> origin/sabil0:storage/framework/views/9531a82020418ae90631f966ab595617.php
 
             <!-- Divider -->
             <div class="py-2">

@@ -568,6 +568,145 @@ class CourseController extends Controller
     }
 
     /**
+     * Display materials in a module
+     */
+    public function moduleMaterials(Kursus $course, \App\Models\CourseSection $section)
+    {
+        $materials = \App\Models\Materi::where('section_id', $section->id)
+            ->orderBy('urutan')
+            ->get();
+
+        return view('admin.courses.materials', compact('course', 'section', 'materials'));
+    }
+
+    /**
+     * Store new material in module
+     */
+    public function storeMaterial(Request $request, Kursus $course, \App\Models\CourseSection $section)
+    {
+        $validated = $request->validate([
+            'judul' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'content' => 'nullable|string',
+            'type' => 'required|in:video,text,document,quiz,pdf,reading',
+            'file' => 'nullable|file|mimes:pdf,mp4,avi,mov|max:102400', // 100MB
+            'section_id' => 'required|exists:course_sections,id',
+        ]);
+
+        $lastMaterial = \App\Models\Materi::where('section_id', $section->id)
+            ->orderBy('urutan', 'desc')
+            ->first();
+
+        $filePath = null;
+        if ($request->hasFile('file')) {
+            $filePath = $request->file('file')->store('materials', 'public');
+        }
+
+        \App\Models\Materi::create([
+            'kursus_id' => $course->id,
+            'section_id' => $section->id,
+            'judul' => $validated['judul'],
+            'description' => $validated['description'],
+            'content' => $validated['content'],
+            'type' => $validated['type'],
+            'url_konten' => $filePath,
+            'duration' => 0,
+            'urutan' => $lastMaterial ? $lastMaterial->urutan + 1 : 1,
+            'status_terkunci' => false,
+        ]);
+
+        return redirect()->route('admin.courses.detail', $course)
+            ->with('success', 'Materi berhasil ditambahkan!');
+    }
+
+    /**
+     * Update material
+     */
+    public function updateMaterial(Request $request, Kursus $course, \App\Models\CourseSection $section, \App\Models\Materi $material)
+    {
+        $validated = $request->validate([
+            'judul' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'file_path' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,mp4,avi,mov|max:51200',
+            'video_url' => 'nullable|url',
+            'type' => 'required|in:video,document,text,quiz',
+            'is_preview' => 'nullable|boolean',
+            'status_terkunci' => 'nullable|boolean',
+        ]);
+
+        $data = [
+            'judul' => $validated['judul'],
+            'description' => $validated['description'] ?? null,
+            'type' => $validated['type'],
+            'is_preview' => $request->boolean('is_preview'),
+            'status_terkunci' => $request->boolean('status_terkunci'),
+        ];
+
+        // Handle file upload
+        if ($request->hasFile('file_path')) {
+            $storage = app(SupabaseStorageService::class);
+            $upload = $storage->upload($request->file('file_path'), 'materials');
+            $data['file_path'] = $upload['public_url'] ?? $upload['path'];
+        }
+
+        // Handle video URL
+        if ($request->filled('video_url')) {
+            $data['video_url'] = $validated['video_url'];
+        }
+
+        $material->update($data);
+
+        return redirect()->route('admin.courses.detail', $course)
+            ->with('success', 'Materi berhasil diperbarui!');
+    }
+
+    /**
+     * Delete material
+     */
+    public function destroyMaterial(Kursus $course, \App\Models\CourseSection $section, \App\Models\Materi $material)
+    {
+        $material->delete();
+
+        return redirect()->route('admin.courses.detail', $course)
+            ->with('success', 'Materi berhasil dihapus!');
+    }
+
+    /**
+     * Preview material
+     */
+    public function previewMaterial(Kursus $course, \App\Models\Materi $material)
+    {
+        // Ambil semua materi berdasarkan urutan
+        $materials = $course->materi()->with('assignment.questions.options')->orderBy('urutan')->get();
+        $material->loadMissing('assignment.questions.options');
+
+        // Cari index materi saat ini
+        $currentIndex = $materials->search(function ($m) use ($material) {
+            return $m->id === $material->id;
+        });
+
+        // Tentukan prev & next
+        $prevMaterial = $currentIndex > 0 ? $materials[$currentIndex - 1] : null;
+        $nextMaterial = $currentIndex < $materials->count() - 1 ? $materials[$currentIndex + 1] : null;
+
+        return view('admin.courses.material-preview', compact(
+            'course',
+            'material',
+            'materials', 
+            'prevMaterial',
+            'nextMaterial'
+        ));
+    }
+
+    /**
+     * Edit material
+     */
+    public function editMaterial(Kursus $course, \App\Models\CourseSection $section, \App\Models\Materi $material)
+    {
+        return view('admin.courses.edit-material', compact('course', 'section', 'material'));
+    }
+
+    /**
      * Store quiz (quick create from course detail)
      */
     public function storeQuiz(Request $request, Kursus $course)

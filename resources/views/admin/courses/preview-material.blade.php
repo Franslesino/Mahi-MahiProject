@@ -228,7 +228,7 @@
         <!-- Footer Actions -->
         <div class="bg-gray-50 px-6 py-4 border-t">
             <div class="flex items-center justify-end gap-3">
-                <a href="{{ route('admin.courses.materials.edit', [$course, $material]) }}" 
+                <a href="{{ route('admin.courses.modules.materials.edit', [$course, $section, $material]) }}" 
                    class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
                     <i class="fas fa-edit mr-2"></i>
                     Edit
@@ -258,7 +258,7 @@
                             <!-- Materials List -->
                             <div class="space-y-1">
                                 @foreach($courseSection->materials as $mat)
-                                    <a href="{{ route('admin.courses.materials.preview', [$course, $mat]) }}" 
+                                    <a href="{{ route('admin.courses.modules.materials.preview', [$course, $courseSection, $mat]) }}" 
                                        class="block px-3 py-2.5 rounded-lg transition {{ $mat->id === $material->id ? 'bg-teal-50 border-l-4 border-teal-500' : 'hover:bg-gray-50' }}">
                                         <div class="flex items-start gap-2">
                                             <!-- Icon -->

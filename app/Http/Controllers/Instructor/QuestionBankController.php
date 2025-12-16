@@ -178,8 +178,8 @@ class QuestionBankController extends Controller
         if ($questionBank->is_internal) {
             abort(404);
         }
-        // Check authorization
-        if ($questionBank->created_by !== Auth::id()) {
+        // Izinkan pemilik atau bank publik
+        if ($questionBank->created_by !== Auth::id() && !$questionBank->is_public) {
             abort(403, 'Anda tidak dapat menambah soal ke bank ini.');
         }
 
@@ -189,9 +189,9 @@ class QuestionBankController extends Controller
             'explanation' => 'nullable|string',
             'points' => 'required|integer|min:1',
             'correct_answer' => 'nullable|string',
-            'options' => 'nullable|array',
-            'options.*.text' => 'required_with:options|string',
-            'options.*.is_correct' => 'nullable|boolean',
+            'options' => 'required_if:type,multiple_choice|array|min:2',
+            'options.*' => 'required_if:type,multiple_choice|string',
+            'correct_option' => 'required_if:type,multiple_choice,true_false',
         ]);
 
         DB::beginTransaction();
@@ -209,15 +209,31 @@ class QuestionBankController extends Controller
                 'correct_answer' => $validated['correct_answer'] ?? null,
             ]);
 
-            // Create options if multiple choice or true/false
-            if (in_array($validated['type'], ['multiple_choice', 'true_false']) && isset($validated['options'])) {
-                foreach ($validated['options'] as $index => $optionData) {
+            // Handle options based on type
+            if ($validated['type'] === 'multiple_choice') {
+                foreach ($validated['options'] as $idx => $text) {
                     $question->options()->create([
-                        'option_text' => $optionData['text'],
-                        'is_correct' => $optionData['is_correct'] ?? false,
-                        'order' => $index + 1,
+                        'option_text' => $text,
+                        'is_correct' => ((string)$validated['correct_option'] === (string)($idx + 1)),
+                        'order' => $idx + 1,
                     ]);
                 }
+            } elseif ($validated['type'] === 'true_false') {
+                $correct = $validated['correct_option'] === 'true';
+                $question->options()->createMany([
+                    [
+                        'option_text' => 'Benar',
+                        'is_correct' => $correct,
+                        'order' => 1,
+                    ],
+                    [
+                        'option_text' => 'Salah',
+                        'is_correct' => !$correct,
+                        'order' => 2,
+                    ],
+                ]);
+            } elseif ($validated['type'] === 'short_answer') {
+                $question->update(['correct_answer' => $validated['correct_answer'] ?? '']);
             }
 
             DB::commit();
@@ -240,8 +256,8 @@ class QuestionBankController extends Controller
         if ($questionBank->is_internal) {
             abort(404);
         }
-        // Check authorization
-        if ($questionBank->created_by !== Auth::id() || $question->question_bank_id !== $questionBank->id) {
+        // Izinkan pemilik atau bank publik untuk bank ini
+        if (($questionBank->created_by !== Auth::id() && !$questionBank->is_public) || $question->question_bank_id !== $questionBank->id) {
             abort(403, 'Anda tidak dapat menghapus soal ini.');
         }
 
@@ -258,8 +274,8 @@ class QuestionBankController extends Controller
         if ($questionBank->is_internal) {
             abort(404);
         }
-        // Check authorization
-        if ($questionBank->created_by !== Auth::id()) {
+        // Izinkan pemilik atau bank publik
+        if ($questionBank->created_by !== Auth::id() && !$questionBank->is_public) {
             abort(403, 'Anda tidak dapat menambahkan soal ke bank ini.');
         }
 
@@ -364,8 +380,8 @@ class QuestionBankController extends Controller
         if ($questionBank->is_internal) {
             abort(404);
         }
-        // Check authorization
-        if ($questionBank->created_by !== Auth::id()) {
+        // Izinkan pemilik atau bank publik
+        if ($questionBank->created_by !== Auth::id() && !$questionBank->is_public) {
             abort(403);
         }
 

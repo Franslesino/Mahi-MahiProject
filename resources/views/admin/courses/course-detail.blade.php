@@ -3,7 +3,7 @@
     $isAdmin = auth()->user()->role === 'admin';
     $layout = $isAdmin ? 'layouts.admin' : 'layouts.instructor';
     $routePrefix = $isAdmin ? 'admin.courses' : 'instructor.courses';
-    $materialRoutePrefix = $isAdmin ? 'admin.courses.modules.materials' : 'instructor.materials';
+    $materialRoutePrefix = $isAdmin ? 'admin.courses.materials' : 'instructor.materials';
 @endphp
 
 @extends($layout)
@@ -13,7 +13,7 @@
     // Tentukan route prefix berdasarkan role user
     $isAdmin = auth()->user()->role === 'admin';
     $routePrefix = $isAdmin ? 'admin.courses' : 'instructor.courses';
-    $materialRoutePrefix = $isAdmin ? 'admin.courses.modules.materials' : 'instructor.materials';
+    $materialRoutePrefix = $isAdmin ? 'admin.courses.materials' : 'instructor.materials';
 @endphp
 
 <div class="p-8">
@@ -497,12 +497,12 @@
                                                            title="Preview">
                                                             <i class="fas fa-eye text-sm"></i>
                                                         </a>
-                                                        <a href="{{ $isAdmin ? route('admin.courses.modules.materials.edit', [$course, $material->section_id, $material]) : '#' }}" 
+                                                        <a href="{{ $isAdmin ? route('admin.courses.materials.edit', [$course, $material]) : '#' }}" 
                                                            class="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition"
                                                            title="Edit">
                                                             <i class="fas fa-edit text-sm"></i>
                                                         </a>
-                                                        <form action="{{ $isAdmin ? route('admin.courses.modules.materials.destroy', [$course, $material->section_id, $material]) : route('instructor.materials.destroy', [$course, $material]) }}" 
+                                                        <form action="{{ $isAdmin ? route('admin.courses.materials.destroy', [$course, $material]) : route('instructor.materials.destroy', [$course, $material]) }}" 
                                                               method="POST" 
                                                               class="inline"
                                                               onsubmit="return confirm('Yakin ingin menghapus materi ini?');">
@@ -592,7 +592,7 @@
                 <span>Tambah Materi</span>
             </h3>
         </div>
-        <form action="{{ route('admin.courses.modules.materials.store', [$course, '__MODULE__']) }}" method="POST" enctype="multipart/form-data" id="materialForm">
+        <form action="{{ route('admin.courses.materials.store', [$course]) }}" method="POST" enctype="multipart/form-data" id="materialForm">
             @csrf
             <input type="hidden" name="section_id" id="materialSectionId">
             <input type="hidden" name="type" id="materialType">
@@ -866,7 +866,8 @@ function openMaterialModal(sectionId, type = 'video') {
     
     // Update form action dengan section ID yang benar
     const form = document.getElementById('materialForm');
-    form.action = "{{ route('admin.courses.modules.materials.store', [$course, '__MODULE__']) }}".replace('__MODULE__', sectionId);
+    form.action = "{{ route('admin.courses.materials.store', [$course]) }}";
+    document.getElementById('materialSectionId').value = sectionId;
     
     // Update alert berdasarkan tipe materi
     const alertText = document.getElementById('materialAlertText');

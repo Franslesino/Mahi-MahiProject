@@ -40,6 +40,7 @@ class Material extends Model
 
     protected $casts = [
         'status_terkunci' => 'boolean',
+        'is_preview' => 'boolean',
     ];
 
     public function kursus()

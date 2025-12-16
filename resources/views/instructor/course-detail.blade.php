@@ -77,6 +77,8 @@
     </div>
 
     <!-- Final Quiz Statistics (if exists) -->
+    @if($course->final_quiz_id && $course->finalQuiz)
+        @php
             // Hitung total peserta unik dan peserta lulus unik
             $totalParticipants = DB::table('quiz_attempts')
                 ->where('kursus_id', $course->id)
@@ -870,4 +872,3 @@ function deleteSection(sectionId) {
 </script>
 @endpush
 @endsection
-

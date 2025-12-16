@@ -340,6 +340,8 @@ Route::middleware('auth')->group(function () {
             // Download / stream Certificate
             Route::get('/enrollment/{enrollment}/certificate/download', [StudentController::class, 'downloadCertificate'])
                 ->name('certificate.download');
+            Route::get('/enrollment/{enrollment}/certificate/stream', [StudentController::class, 'streamCertificate'])
+                ->name('certificate.stream');
 
             // Preview Certificate (AJAX)
             Route::get('/enrollment/{enrollment}/certificate-preview', function (Enrollment $enrollment) {

@@ -163,11 +163,9 @@
                                 class="w-4 h-4 text-ug border-gray-300 rounded focus:ring-ug">
                             <span class="ml-2 text-sm text-gray-600">Ingat Saya</span>
                         </label>
-                        {{-- Forgot password feature not yet implemented --}}
-                        {{-- <a href="{{ route('password.request') }}"
-                            class="text-sm text-ug hover:underline font-medium">
+                        <a href="{{ route('password.request') }}" class="text-sm text-ug hover:underline font-medium">
                             Lupa Password?
-                        </a> --}}
+                        </a>
                     </div>
 
                     <!-- Tombol Submit -->

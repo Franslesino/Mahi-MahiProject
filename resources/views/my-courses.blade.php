@@ -40,7 +40,8 @@
             : 0;
         // Final quiz (new flow) status
         $finalQuizId = $course->final_quiz_id ?? null;
-        $finalQuizRequired = (bool) ($course->require_final_quiz && $finalQuizId);
+        // Anggap final quiz wajib jika sudah terhubung ke kursus
+        $finalQuizRequired = (bool) $finalQuizId;
         $finalQuizAttempt = null;
         $finalQuizScore = null;
         $finalQuizPassed = false;

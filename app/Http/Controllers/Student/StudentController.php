@@ -515,17 +515,19 @@ class StudentController extends Controller
             ->latest('tanggal_daftar')
             ->get();
 
-        // Pastikan kursus yang sudah selesai memiliki sertifikat (perbaikan data lama)
+        // Pastikan kursus yang eligible memiliki sertifikat (perbaikan data lama)
         if ($certificateFk) {
             foreach ($enrollments as $enrollment) {
-                if (in_array($enrollment->status_pendaftaran, ['completed']) && !$enrollment->sertifikat) {
-                    // Generate sertifikat jika belum ada
-                    try {
-                        $this->generateCertificateIfNeeded($enrollment, $enrollment->kursus);
-                        $enrollment->load('sertifikat');
-                    } catch (\Throwable $e) {
-                        // Jangan hentikan halaman; sertifikat akan tetap dianggap belum tersedia
-                    }
+                if ($enrollment->sertifikat) {
+                    continue;
+                }
+
+                // Generate sertifikat jika user sudah menyelesaikan materi (dan final quiz jika wajib)
+                try {
+                    $this->generateCertificateIfNeeded($enrollment, $enrollment->kursus);
+                    $enrollment->load('sertifikat');
+                } catch (\Throwable $e) {
+                    // Jangan hentikan halaman; sertifikat akan tetap dianggap belum tersedia
                 }
             }
         }
@@ -549,8 +551,8 @@ class StudentController extends Controller
             return;
         }
 
-        // Jika kursus memiliki final quiz yang wajib, pastikan sudah lulus
-        if ($course->require_final_quiz && $course->final_quiz_id) {
+        // Jika kursus punya final quiz, pastikan sudah lulus
+        if ($course->final_quiz_id) {
             $hasPassed = \App\Models\QuizAttempt::where('user_id', $enrollment->user_id ?? Auth::id())
                 ->where('quiz_id', $course->final_quiz_id)
                 ->where('kursus_id', $course->id)

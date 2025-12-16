@@ -27,7 +27,10 @@ class MaterialController extends Controller
                 $query->where('pembuat', $instructorId)
                       ->orWhere('instructor_id', $instructorId);
             })
-            ->withCount('materi')
+            ->withCount([
+                'materi',
+                'enrollments as enrollments_count',
+            ])
             ->latest()
             ->get();
 

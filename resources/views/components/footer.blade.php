@@ -20,10 +20,10 @@
         <div>
             <h4 class="font-semibold text-white mb-4">Jelajahi</h4>
             <ul class="space-y-2">
-                <li><a href="#" class="hover:text-yellow-300 transition">Kursus</a></li>
-                <li><a href="#" class="hover:text-yellow-300 transition">Instruktur</a></li>
-                <li><a href="#" class="hover:text-yellow-300 transition">Kategori</a></li>
-                <li><a href="#" class="hover:text-yellow-300 transition">Tentang Kami</a></li>
+                <li><a href="{{ route('courses.all') }}" class="hover:text-yellow-300 transition">Kursus</a></li>
+                <li><a href="{{ route('instructors.index') }}" class="hover:text-yellow-300 transition">Instruktur</a></li>
+                <li><a href="{{ route('home') }}#categories" class="hover:text-yellow-300 transition">Kategori</a></li>
+                <li><a href="{{ route('home') }}#about" class="hover:text-yellow-300 transition">Tentang Kami</a></li>
             </ul>
         </div>
 
@@ -31,10 +31,10 @@
         <div>
             <h4 class="font-semibold text-white mb-4">Bantuan</h4>
             <ul class="space-y-2">
-                <li><a href="#" class="hover:text-yellow-300 transition">Pusat Bantuan</a></li>
-                <li><a href="#" class="hover:text-yellow-300 transition">Kebijakan Privasi</a></li>
-                <li><a href="#" class="hover:text-yellow-300 transition">Syarat & Ketentuan</a></li>
-                <li><a href="#" class="hover:text-yellow-300 transition">Kontak Kami</a></li>
+                <li><a href="{{ route('home') }}#faq" class="hover:text-yellow-300 transition">Pusat Bantuan</a></li>
+                <li><a href="{{ route('home') }}#privacy" class="hover:text-yellow-300 transition">Kebijakan Privasi</a></li>
+                <li><a href="{{ route('terms') }}" class="hover:text-yellow-300 transition">Syarat & Ketentuan</a></li>
+                <li><a href="mailto:info@pnj.ac.id" class="hover:text-yellow-300 transition">Kontak Kami</a></li>
             </ul>
         </div>
 
@@ -50,6 +50,6 @@
     </div>
 
     <div class="bg-[#004b44] text-gray-200 text-xs text-center py-4">
-        © 2025 Pelayanan TIK PNJ — Bersama membangun kompetensi digital bangsa.
+        &copy; {{ date('Y') }} Pelayanan TIK PNJ — Bersama membangun kompetensi digital bangsa.
     </div>
 </footer>

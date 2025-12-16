@@ -35,7 +35,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email'    => 'required|string',
+            'email' => 'required|string',
             'password' => 'required|min:6',
         ]);
 
@@ -44,7 +44,7 @@ class AuthController extends Controller
         }
 
         $credentials = [
-            'email'    => $request->email,
+            'email' => $request->email,
             'password' => $request->password,
         ];
 
@@ -63,9 +63,9 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'phone'    => 'nullable|string|max:15',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'nullable|string|max:15',
             'password' => 'required|min:8|confirmed',
         ]);
 
@@ -74,18 +74,18 @@ class AuthController extends Controller
         }
 
         $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'phone'    => $request->phone,
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
             'password' => Hash::make($request->password),
-            'role'     => 'student',
+            'role' => 'student',
         ]);
 
         // Create notification for new account
         Notification::create([
             'user_id' => $user->id,
             'title' => 'Akun Berhasil Dibuat',
-            'message' => 'Selamat datang di Mahi-Mahi! Akun Anda telah berhasil dibuat. Silakan login untuk mulai belajar.',
+            'message' => 'Selamat datang di UpGreenius! Akun Anda telah berhasil dibuat. Silakan login untuk mulai belajar.',
             'type' => 'success',
         ]);
 
@@ -110,7 +110,7 @@ class AuthController extends Controller
         try {
             // Dapatkan user dari Google
             $googleUser = Socialite::driver('google')->user();
-            
+
             // Cek apakah user sudah pernah login dengan Google ID ini
             $user = User::where('google_id', $googleUser->getId())->first();
 
@@ -127,7 +127,7 @@ class AuthController extends Controller
                 // Email sudah ada, link akun Google ke user yang ada
                 $existingUser->update([
                     'google_id' => $googleUser->getId(),
-                    'avatar'    => $googleUser->getAvatar(),
+                    'avatar' => $googleUser->getAvatar(),
                 ]);
 
                 Auth::login($existingUser, true);
@@ -136,12 +136,12 @@ class AuthController extends Controller
 
             // User baru, buat akun baru
             $newUser = User::create([
-                'name'      => $googleUser->getName(),
-                'email'     => $googleUser->getEmail(),
+                'name' => $googleUser->getName(),
+                'email' => $googleUser->getEmail(),
                 'google_id' => $googleUser->getId(),
-                'avatar'    => $googleUser->getAvatar(),
-                'role'      => 'student',
-                'password'  => null, // Password null untuk OAuth user
+                'avatar' => $googleUser->getAvatar(),
+                'role' => 'student',
+                'password' => null, // Password null untuk OAuth user
                 'email_verified_at' => now(), // Email sudah terverifikasi via Google
             ]);
 
@@ -149,7 +149,7 @@ class AuthController extends Controller
             Notification::create([
                 'user_id' => $newUser->id,
                 'title' => 'Akun Berhasil Dibuat',
-                'message' => 'Selamat datang di Mahi-Mahi! Akun Anda telah berhasil dibuat melalui Google. Silakan mulai belajar.',
+                'message' => 'Selamat datang di UpGreenius! Akun Anda telah berhasil dibuat melalui Google. Silakan mulai belajar.',
                 'type' => 'success',
             ]);
 
@@ -182,7 +182,7 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
-        return match($user->role) {
+        return match ($user->role) {
             'admin' => redirect()->route('admin.dashboard'),
             'instructor' => redirect()->route('instructor.dashboard'),
             default => redirect()->route('home')

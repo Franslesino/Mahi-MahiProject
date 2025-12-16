@@ -17,7 +17,7 @@
         <div>
             <h4 class="font-semibold text-[#005F56] mb-4">Jelajahi</h4>
             <ul class="space-y-2">
-                <li><a href="{{ route('home') }}" class="hover:text-[#005F56] transition">Kursus</a></li>
+                <li><a href="{{ route('courses.all') }}" class="hover:text-[#005F56] transition">Kursus</a></li>
                 <li><a href="{{ route('instructors.index') }}" class="hover:text-[#005F56] transition">Instruktur</a>
                 </li>
                 <li><a href="{{ route('home') }}#categories" class="hover:text-[#005F56] transition">Kategori</a></li>

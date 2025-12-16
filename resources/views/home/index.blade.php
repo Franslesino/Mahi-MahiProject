@@ -102,7 +102,7 @@
         </div>
 
         <!-- Categories -->
-        <div class="mb-8">
+        <div id="categories" class="mb-8 scroll-mt-32">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-xl font-bold text-gray-900">Kategori</h3>
                 <a href="{{ route('courses.all') }}"
@@ -136,7 +136,7 @@
                     @endphp
                     <a href="{{ route('home', array_merge(request()->only('search'), ['category' => $cat])) }}"
                         class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm flex items-center gap-2
-                                           {{ $currentCategory === $cat ? 'bg-pnj-teal text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
+                                                   {{ $currentCategory === $cat ? 'bg-pnj-teal text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
                         <i class="fas {{ $icon }}"></i>
                         <span>{{ $cat }}</span>
                         <span

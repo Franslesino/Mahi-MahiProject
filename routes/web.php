@@ -255,11 +255,6 @@ Route::middleware('auth')->group(function () {
                 Route::post('modules', [AdminCourseController::class, 'storeModule'])->name('modules.store');
                 Route::put('modules/{section}', [AdminCourseController::class, 'updateModule'])->name('modules.update');
                 Route::delete('modules/{section}', [AdminCourseController::class, 'destroyModule'])->name('modules.destroy');
-                Route::get('modules/{section}/materials', [AdminCourseController::class, 'moduleMaterials'])->name('modules.materials');
-                Route::post('modules/{section}/materials', [AdminCourseController::class, 'storeMaterial'])->name('modules.materials.store');
-                Route::get('modules/{section}/materials/{material}/edit', [AdminCourseController::class, 'editMaterial'])->name('modules.materials.edit');
-                Route::put('modules/{section}/materials/{material}', [AdminCourseController::class, 'updateMaterial'])->name('modules.materials.update');
-                Route::delete('modules/{section}/materials/{material}', [AdminCourseController::class, 'destroyMaterial'])->name('modules.materials.destroy');
                 
                 // Preview material
                 Route::get('materials/{material}/preview', [AdminCourseController::class, 'previewMaterial'])->name('materials.preview');

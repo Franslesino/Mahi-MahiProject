@@ -117,39 +117,33 @@ $sidebarInitial = strtoupper(substr($sidebarUser->first_name ?? $sidebarUser->na
                 <span class="font-medium">Bank Soal</span>
             </a>
 
-            <<<<<<<< HEAD:resources/views/layouts/instructor.blade.php========<!-- Edit Profile -->
-                <a href="<?php echo e(route('instructor.profile')); ?>"
-                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition <?php echo e(request()->routeIs('instructor.profile*') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'); ?>">
-                    <i class="fas fa-user-cog w-5 text-center"></i>
-                    <span class="font-medium">Edit Profile</span>
-                </a>
 
-                >>>>>>>> origin/sabil0:storage/framework/views/9531a82020418ae90631f966ab595617.php
 
-                <!-- Divider -->
-                <div class="py-2">
-                    <div class="border-t border-gray-200"></div>
-                </div>
 
-                <!-- Edit Profil -->
-                <a href="{{ route('instructor.profile.edit') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('instructor.profile*') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <span class="font-medium">Edit Profil</span>
-                </a>
+            <!-- Divider -->
+            <div class="py-2">
+                <div class="border-t border-gray-200"></div>
+            </div>
 
-                <!-- Bantuan -->
-                <a href="{{ route('instructor.help') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('instructor.help') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span class="font-medium">Bantuan</span>
-                </a>
+            <!-- Edit Profil -->
+            <a href="{{ route('instructor.profile.edit') }}"
+                class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('instructor.profile*') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span class="font-medium">Edit Profil</span>
+            </a>
+
+            <!-- Bantuan -->
+            <a href="{{ route('instructor.help') }}"
+                class="flex items-center gap-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('instructor.help') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="font-medium">Bantuan</span>
+            </a>
         </nav>
 
         <!-- Logout Button -->

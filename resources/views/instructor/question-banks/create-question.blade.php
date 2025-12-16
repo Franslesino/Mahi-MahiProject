@@ -2,6 +2,11 @@
 
 @section('content')
 <div class="p-8">
+    @if(session('success'))
+        <div class="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 rounded-lg">
+            <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
+        </div>
+    @endif
     <!-- Header -->
     <div class="flex justify-between items-center mb-8">
         <div>

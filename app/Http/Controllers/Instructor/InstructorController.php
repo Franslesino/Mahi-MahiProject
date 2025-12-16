@@ -78,9 +78,12 @@ class InstructorController extends Controller
             $query->where('pembuat', Auth::id())
                   ->orWhere('instructor_id', Auth::id());
         })
-        ->withCount(['materi', 'enrollments' => function($q) {
-            $q->whereIn('status_pendaftaran', ['active', 'completed']);
-        }])
+        ->withCount([
+            'materi',
+            'enrollments as enrollments_count' => function($q) {
+                $q->whereIn('status_pendaftaran', ['paid', 'active', 'completed']);
+            }
+        ])
         ->latest()
         ->paginate(12);
 

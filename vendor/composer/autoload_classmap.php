@@ -24,6 +24,7 @@ return array(
     'App\\Http\\Controllers\\Instructor\\FinalQuizController' => $baseDir . '/app/Http/Controllers/Instructor/FinalQuizController.php',
     'App\\Http\\Controllers\\Instructor\\InstructorController' => $baseDir . '/app/Http/Controllers/Instructor/InstructorController.php',
     'App\\Http\\Controllers\\Instructor\\MaterialController' => $baseDir . '/app/Http/Controllers/Instructor/MaterialController.php',
+    'App\\Http\\Controllers\\Instructor\\ProfileController' => $baseDir . '/app/Http/Controllers/Instructor/ProfileController.php',
     'App\\Http\\Controllers\\Instructor\\QuestionBankController' => $baseDir . '/app/Http/Controllers/Instructor/QuestionBankController.php',
     'App\\Http\\Controllers\\Instructor\\SectionController' => $baseDir . '/app/Http/Controllers/Instructor/SectionController.php',
     'App\\Http\\Controllers\\MaterialController' => $baseDir . '/app/Http/Controllers/MaterialController.php',

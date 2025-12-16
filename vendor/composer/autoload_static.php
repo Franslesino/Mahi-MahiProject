@@ -655,6 +655,7 @@ class ComposerStaticInit96c214890424297fc05a974b92147e33
         'App\\Http\\Controllers\\Instructor\\FinalQuizController' => __DIR__ . '/../..' . '/app/Http/Controllers/Instructor/FinalQuizController.php',
         'App\\Http\\Controllers\\Instructor\\InstructorController' => __DIR__ . '/../..' . '/app/Http/Controllers/Instructor/InstructorController.php',
         'App\\Http\\Controllers\\Instructor\\MaterialController' => __DIR__ . '/../..' . '/app/Http/Controllers/Instructor/MaterialController.php',
+        'App\\Http\\Controllers\\Instructor\\ProfileController' => __DIR__ . '/../..' . '/app/Http/Controllers/Instructor/ProfileController.php',
         'App\\Http\\Controllers\\Instructor\\QuestionBankController' => __DIR__ . '/../..' . '/app/Http/Controllers/Instructor/QuestionBankController.php',
         'App\\Http\\Controllers\\Instructor\\SectionController' => __DIR__ . '/../..' . '/app/Http/Controllers/Instructor/SectionController.php',
         'App\\Http\\Controllers\\MaterialController' => __DIR__ . '/../..' . '/app/Http/Controllers/MaterialController.php',

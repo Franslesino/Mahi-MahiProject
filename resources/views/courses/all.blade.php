@@ -103,9 +103,20 @@
         <!-- Courses Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             @forelse($courses as $course)
-                <a href="{{ route('courses.show', $course) }}"
-                    class="bg-white rounded-xl shadow-sm hover:shadow-xl border border-gray-100 hover:-translate-y-1 transition overflow-hidden group cursor-pointer">
-
+                @php
+                    $isFull = ($course->isOffline() || $course->isHybrid()) && $course->isFull();
+                @endphp
+                <a href="{{ $isFull ? '#' : route('courses.show', $course) }}"
+                    class="bg-white rounded-xl shadow-sm hover:shadow-xl border border-gray-100 hover:-translate-y-1 transition overflow-hidden group cursor-pointer relative {{ $isFull ? 'grayscale cursor-not-allowed opacity-80' : '' }}">
+                    
+                    @if($isFull)
+                        <div class="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-[1px]">
+                            <div class="bg-red-600 text-white px-4 py-2 rounded-full font-bold shadow-2xl transform -rotate-12 border-2 border-white text-lg tracking-wider">
+                                KUOTA HABIS
+                            </div>
+                        </div>
+                    @endif
+                    
                     <!-- Image -->
                     <div class="relative h-40 bg-gray-900 overflow-hidden">
                         @if($course->image_url)
@@ -139,7 +150,7 @@
                             </span>
                         </div>
 
-                        <!-- Badge -->
+                        <!-- Badge (Existing) -->
                         @if($course->badge)
                             <div class="absolute top-3 right-3">
                                 <span class="bg-yellow-500 text-white text-xs px-2.5 py-1 rounded-full font-semibold shadow-sm">
@@ -147,6 +158,15 @@
                                 </span>
                             </div>
                         @endif
+
+                        <!-- Mode Badge (New) -->
+                        <div class="absolute bottom-3 left-3">
+                             <span class="text-xs px-2.5 py-1 rounded-full font-semibold shadow-sm border
+                                {{ $course->isOnline() ? 'bg-white/90 text-blue-700 border-blue-200 backdrop-blur-sm' : ($course->isOffline() ? 'bg-white/90 text-orange-700 border-orange-200 backdrop-blur-sm' : 'bg-white/90 text-purple-700 border-purple-200 backdrop-blur-sm') }}">
+                                <i class="fas fa-{{ $course->isOnline() ? 'laptop' : ($course->isOffline() ? 'users' : 'random') }} mr-1"></i>
+                                {{ ucfirst($course->mode ?? 'Online') }}
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Info Card -->
@@ -167,6 +187,35 @@
                             <span class="text-gray-300">|</span>
                             <span>{{ $course->materi_count ?? 0 }} Materi</span>
                         </div>
+
+                        <!-- Purchase Deadline (New) -->
+                        @if($course->purchase_deadline_date && $course->purchase_deadline_date->isFuture())
+                            <div class="mb-3 bg-teal-50 text-teal-800 text-xs px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                <i class="fas fa-clock"></i>
+                                <span>Tersedia hingga {{ $course->purchase_deadline_date->format('d M Y') }}</span>
+                            </div>
+                        @endif
+
+                        <!-- Capacity Info for Offline/Hybrid (New) -->
+                        @if($course->hasCapacityLimit())
+                            <div class="mb-3">
+                                @php $slots = $course->available_slots; @endphp
+                                <div class="flex justify-between items-center mb-1 text-xs">
+                                    <span class="text-gray-600 font-medium"><i class="fas fa-chair mr-1"></i> Sisa Kuota</span>
+                                    <span class="{{ $slots > 0 ? 'text-emerald-700' : 'text-red-600' }} font-bold">
+                                        {{ $slots > 0 ? $slots : 'PENUH' }}
+                                    </span>
+                                </div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                    @php 
+                                        $percent = $course->max_participants > 0 
+                                            ? min(100, (($course->max_participants - $slots) / $course->max_participants) * 100) 
+                                            : 100;
+                                    @endphp
+                                    <div class="{{ $slots > 0 ? 'bg-teal-500' : 'bg-red-500' }} h-full rounded-full transition-all duration-500" style="width: {{ $percent }}%"></div>
+                                </div>
+                            </div>
+                        @endif
 
                         <div class="flex items-center justify-between">
                             @php

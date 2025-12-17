@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Sertifikat extends Model
 {
-    protected $table = 'sertifikat';
+    // Use correct table name matching migration
+    protected $table = 'sertifikats';
 
     protected $fillable = [
         'enrollment_id',
-        'enrollments_id',
         'nomor_sertifikat',
         'kode_sertifikat',
         'tanggal_terbit',
@@ -28,3 +28,4 @@ class Sertifikat extends Model
         return $this->belongsTo(Enrollment::class, 'enrollment_id');
     }
 }
+

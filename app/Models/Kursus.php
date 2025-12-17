@@ -2,9 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Assignment;
+use App\Models\CourseSection;
+use App\Models\Enrollment;
+use App\Models\QuestionBank;
+use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Kursus extends Model
 {
@@ -14,83 +19,71 @@ class Kursus extends Model
 
     protected $fillable = [
         'judul',
+        'slug',
         'deskripsi',
-        'harga',
-        'status',
-        'status_berbayar',
-        'status_diterbitkan',
-        'pembuat',
         'kategori',
-
-        // field tambahan admin
+        'harga',
+        'pembuat', // admin who created
         'image',
-        'mode',
-        'discount_price',
-        'learning',
-        'badge',
-        'badge_color',
-        'instructor_id',
-        'created_by',
-        'rating',
-        'videos',
-
-        // final quiz settings
+        'status_diterbitkan',
+        'start_date',
+        'end_date',
+        'duration',
+        'level',
+        'badge', // best seller, new, popular
+        'instructor_id', // specific instructor assigned
+        
+        // Final Quiz Configuration
+        'require_final_quiz',
         'final_quiz_id',
         'min_passing_score',
-        'max_quiz_attempts',
-        'require_final_quiz',
 
-        // time settings
-        'access_duration_days',
-        'purchase_deadline_date',
+        // Purchase Limitation
+        'purchase_deadline',
+        'purchase_deadline_active', // boolean toggle
+        'display_purchase_deadline', // boolean toggle for UI
+
+        // Discount
+        'discount_price',
+        'discount_start_at',
+        'discount_end_at',
+        
+        // Mode & Capacity
+        'mode', // 'Online', 'Offline', 'Hybrid'
+        'max_participants', // null if unlimited (Online)
+        'default_location',
+        'mode_description',
+        'latitude',
+        'longitude',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
     protected $casts = [
-        'harga'             => 'decimal:2',
-        'discount_price'    => 'decimal:2',
-        'status_berbayar'   => 'boolean',
-        'status_diterbitkan'=> 'boolean',
-        'rating'            => 'decimal:1',
-        'videos'            => 'integer',
-        'access_duration_days' => 'integer',
-        'purchase_deadline_date' => 'datetime',
-        'min_passing_score' => 'decimal:2',
-        'max_quiz_attempts' => 'integer',
-        'require_final_quiz'=> 'boolean',
+        'status_diterbitkan' => 'boolean',
+        'require_final_quiz' => 'boolean',
+        'purchase_deadline_active' => 'boolean',
+        'display_purchase_deadline' => 'boolean',
+        'purchase_deadline' => 'datetime',
+        'discount_start_at' => 'datetime',
+        'discount_end_at' => 'datetime',
+        'max_participants' => 'integer',
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'latitude' => 'float',
+        'longitude' => 'float',
     ];
-
-    /*
-    |--------------------------------------------------------------------------
-    | ACCESSOR – bikin alias biar bisa pakai $course->title, price, dll
-    |--------------------------------------------------------------------------
-    */
-
-    public function getTitleAttribute()
-    {
-        return $this->judul;
-    }
-
-    public function getDescriptionAttribute()
-    {
-        return $this->deskripsi;
-    }
-
-    public function getCategoryAttribute()
-    {
-        return $this->kategori;
-    }
-
-    public function getPriceAttribute()
-    {
-        return $this->harga;
-    }
 
     public function getImageUrlAttribute()
     {
         if (!$this->image) {
             return null;
         }
-        if (str_starts_with($this->image, 'http')) {
+
+        if (Str::startsWith($this->image, ['http://', 'https://'])) {
             return $this->image;
         }
 
@@ -107,6 +100,12 @@ class Kursus extends Model
     public function pembuat()
     {
         return $this->belongsTo(User::class, 'pembuat');
+    }
+
+    // New relationship for Instructor
+    public function instructor()
+    {
+        return $this->belongsTo(User::class, 'instructor_id');
     }
 
      public function transactions()
@@ -126,12 +125,27 @@ class Kursus extends Model
         return $this->hasMany(Materi::class, 'kursus_id');
     }
 
+    // alias untuk modules/sections
+    public function sections()
+    {
+        return $this->hasMany(CourseSection::class, 'course_id')->orderBy('order');
+    }
+
     public function enrollments()
     {
         return $this->hasMany(Enrollment::class, 'kursus_id');
     }
 
-
+    /**
+     * Get students enrolled in this course
+     * Used by MidtransNotificationController to check if user already enrolled
+     */
+    public function students()
+    {
+        return $this->belongsToMany(User::class, 'enrollments', 'kursus_id', 'user_id')
+            ->withPivot('status_pendaftaran')
+            ->wherePivotIn('status_pendaftaran', ['active', 'completed', 'paid']);
+    }
 
     public function diskon()
     {
@@ -143,38 +157,171 @@ class Kursus extends Model
         return $this->hasMany(ItemPesanan::class, 'kursus_id');
     }
 
-    // instruktur utama kursus
-    public function instructor()
+    public function questionBanks()
     {
-        return $this->belongsTo(User::class, 'instructor_id');
+        return $this->hasMany(QuestionBank::class, 'course_id');
     }
 
-    public function sections(): HasMany
-{
-    return $this->hasMany(CourseSection::class, 'course_id')->orderBy('order');
-}
-
-    // quiz
-    public function quizzes()
-    {
-        return $this->hasMany(Quiz::class, 'kursus_id');
-    }
-
-    // assignments / quiz assignments
     public function assignments()
     {
         return $this->hasMany(Assignment::class, 'kursus_id');
     }
 
-    // final quiz
+    public function quizzes()
+    {
+        return $this->hasMany(Quiz::class, 'kursus_id');
+    }
+
     public function finalQuiz()
     {
         return $this->belongsTo(Quiz::class, 'final_quiz_id');
     }
 
-    // admin yang membuat (kalau dipakai)
-    public function creator()
+    public function videos()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->hasMany(Materi::class, 'kursus_id')->where('type', 'video');
+    }
+
+    /**
+     * Check if course has a configured final quiz
+     */
+    public function hasFinalQuiz(): bool
+    {
+        return !empty($this->final_quiz_id);
+    }
+
+    /**
+     * Get max quiz attempts with default fallback
+     */
+    public function getMaxQuizAttemptsValue(): int
+    {
+        return $this->max_quiz_attempts ?? 3;
+    }
+
+    public function schedules()
+    {
+        // course_schedules table uses kursus_id as FK
+        return $this->hasMany(CourseSchedule::class, 'kursus_id');
+    }
+
+    public function upcomingSchedules()
+    {
+        return $this->schedules()
+            ->where('date', '>=', now()->toDateString())
+            ->where('status', '!=', 'cancelled')
+            ->orderBy('date')
+            ->orderBy('start_time');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACCESSORS & ATTRIBUTES
+    |--------------------------------------------------------------------------
+    */
+    
+    /**
+     * Get purchase deadline date object
+     */
+    public function getPurchaseDeadlineDateAttribute()
+    {
+        return $this->purchase_deadline;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | MODE HELPER METHODS
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Check if course is Online mode
+     */
+    public function isOnline(): bool
+    {
+        return strtolower($this->mode ?? 'online') === 'online';
+    }
+
+    /**
+     * Check if course is Offline mode
+     */
+    public function isOffline(): bool
+    {
+        return strtolower($this->mode ?? '') === 'offline';
+    }
+
+    /**
+     * Check if course is Hybrid mode
+     */
+    public function isHybrid(): bool
+    {
+        return strtolower($this->mode ?? '') === 'hybrid';
+    }
+
+    /**
+     * Check if course has capacity limit
+     */
+    public function hasCapacityLimit(): bool
+    {
+        return $this->max_participants !== null && $this->max_participants > 0;
+    }
+    
+    /**
+     * Get count of enrolled participants (active/paid)
+     */
+    public function getParticipantsCountAttribute(): int
+    {
+        return $this->enrollments()
+            ->whereIn('status_pendaftaran', ['active', 'completed', 'paid'])
+            ->count();
+    }
+
+    /**
+     * Check if course is full (for Offline/Hybrid)
+     */
+    public function isFull(): bool
+    {
+        if (!$this->hasCapacityLimit()) {
+            return false;
+        }
+
+        return $this->participants_count >= $this->max_participants;
+    }
+
+    /**
+     * Get available slots
+     */
+    public function getAvailableSlotsAttribute(): ?int
+    {
+        if (!$this->hasCapacityLimit()) {
+            return null; // unlimited
+        }
+
+        return max(0, $this->max_participants - $this->participants_count);
+    }
+
+    /**
+     * Get mode description
+     */
+    public function getModeDescriptionText(): string
+    {
+        if ($this->mode_description) {
+            return $this->mode_description;
+        }
+
+        // Default descriptions
+        return match (strtolower($this->mode ?? 'online')) {
+            'online' => 'Pembelajaran 100% online. Akses materi kapan saja, di mana saja.',
+            'offline' => 'Pembelajaran tatap muka dengan jadwal pertemuan yang ditentukan.',
+            'hybrid' => 'Kombinasi pembelajaran online dan tatap muka untuk pengalaman belajar optimal.',
+            default => 'Pembelajaran digital.',
+        };
+    }
+
+    /**
+     * Check if course requires schedule (Offline/Hybrid)
+     */
+    public function requiresSchedule(): bool
+    {
+        return $this->isOffline() || $this->isHybrid();
     }
 }

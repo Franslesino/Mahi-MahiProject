@@ -32,6 +32,13 @@ class TransactionController extends Controller
                 ->with('error', 'Anda sudah terdaftar di kursus ini!');
         }
 
+        // Fix: Check capacity for Offline/Hybrid courses
+        if ($course->isFull()) {
+            return redirect()
+                ->route('courses.show', $course)
+                ->with('error', 'Maaf, kuota pendaftaran untuk kursus ini sudah penuh.');
+        }
+
         // Check for pending transaction
         $pendingTransaction = Transaction::where('user_id', Auth::id())
             ->where('kursus_id', $course->id)
@@ -83,6 +90,11 @@ class TransactionController extends Controller
         try {
             DB::beginTransaction();
 
+            // Fix: Check capacity again before processing strictly
+            if ($course->isFull()) {
+                throw new \Exception('Maaf, kuota pendaftaran untuk kursus ini sudah penuh.');
+            }
+
             // Calculate pricing
             $hargaAsli = $course->harga ?? $course->price ?? 0;
             $hargaDiskon = ($course->discount_price && $course->discount_price > 0)
@@ -127,23 +139,27 @@ class TransactionController extends Controller
                 'status' => 'pending',
             ]);
 
-            // Record voucher usage if applied
+            // Record voucher usage if applied (but don't increment yet)
+            $voucherUsage = null;
             if ($voucherId && $voucherDiscount > 0) {
-                VoucherUsage::create([
+                $voucherUsage = VoucherUsage::create([
                     'voucher_id' => $voucherId,
                     'user_id' => Auth::id(),
                     'transaction_id' => $transaction->id,
                     'discount_amount' => $voucherDiscount,
                     'used_at' => now(),
                 ]);
-
-                $voucher->incrementUsage();
             }
 
-            // Generate Snap Token
+            // Generate Snap Token (if this fails, voucher usage will be rolled back)
             $midtransService = new MidtransService();
             $snapToken = $midtransService->generateSnapToken($transaction);
             $transaction->update(['snap_token' => $snapToken]);
+
+            // Only increment voucher usage AFTER snap token is successfully generated
+            if ($voucherUsage && $voucher) {
+                $voucher->incrementUsage();
+            }
 
             DB::commit();
 
@@ -193,37 +209,29 @@ class TransactionController extends Controller
             // Mark as paid
             $transaction->markAsPaid();
 
-            // Create enrollment if not exists
-            $existingEnrollment = Enrollment::where('user_id', $transaction->user_id)
-                ->where('kursus_id', $transaction->kursus_id)
-                ->first();
-
-            if (!$existingEnrollment) {
-                Enrollment::create([
+            // Create enrollment if not exists (using firstOrCreate to prevent race condition)
+            $enrollment = Enrollment::firstOrCreate(
+                [
                     'user_id' => $transaction->user_id,
                     'kursus_id' => $transaction->kursus_id,
+                ],
+                [
                     'status_pendaftaran' => 'active',
                     'tanggal_daftar' => now(),
-                ]);
+                ]
+            );
 
-                // Notify instructor yang mengampuh kursus ini
+            // Only send notifications if enrollment was just created
+            if ($enrollment->wasRecentlyCreated) {
+                // Notify instructor/course owner
                 $course = $transaction->kursus;
                 if ($course) {
-                    // Prioritas: instructor_id, jika tidak ada baru pembuat (admin)
-                    $instructorId = $course->instructor_id ?: $course->pembuat;
+                    // Prioritas: instructor_id, fallback ke pembuat
+                    $recipientId = $course->instructor_id ?: $course->pembuat;
 
-                    // Hanya kirim notifikasi ke instructor, bukan admin
-                    if ($instructorId && $instructorId != $course->pembuat) {
+                    if ($recipientId) {
                         Notification::create([
-                            'user_id' => $instructorId,
-                            'title' => 'Pendaftar baru',
-                            'message' => 'Pengguna ' . Auth::user()->name . ' mendaftar kursus "' . ($course->judul ?? $course->title) . '".',
-                            'type' => 'info',
-                        ]);
-                    } elseif ($instructorId == $course->pembuat && $course->pembuat) {
-                        // Jika tidak ada instructor_id, kirim ke pembuat (admin/creator)
-                        Notification::create([
-                            'user_id' => $course->pembuat,
+                            'user_id' => $recipientId,
                             'title' => 'Pendaftar baru',
                             'message' => 'Pengguna ' . Auth::user()->name . ' mendaftar kursus "' . ($course->judul ?? $course->title) . '".',
                             'type' => 'info',
@@ -323,36 +331,32 @@ class TransactionController extends Controller
             // Mark as paid
             $transaction->markAsPaid();
 
-            // Create enrollment
-            Enrollment::create([
-                'user_id' => $transaction->user_id,
-                'kursus_id' => $transaction->kursus_id,
-                'status_pendaftaran' => 'active',
-                'tanggal_daftar' => now(),
-            ]);
+            // Create enrollment if not exists (using firstOrCreate to prevent race condition)
+            $enrollment = Enrollment::firstOrCreate(
+                [
+                    'user_id' => $transaction->user_id,
+                    'kursus_id' => $transaction->kursus_id,
+                ],
+                [
+                    'status_pendaftaran' => 'active',
+                    'tanggal_daftar' => now(),
+                ]
+            );
 
-            // Notify instructor yang mengampuh kursus ini
-            $course = $transaction->kursus;
-            if ($course) {
-                // Prioritas: instructor_id, jika tidak ada baru pembuat (admin)
-                $instructorId = $course->instructor_id ?: $course->pembuat;
+            // Only send notifications if enrollment was just created
+            if ($enrollment->wasRecentlyCreated) {
+                $course = $transaction->kursus;
+                if ($course) {
+                    $recipientId = $course->instructor_id ?: $course->pembuat;
 
-                // Hanya kirim notifikasi ke instructor, bukan admin
-                if ($instructorId && $instructorId != $course->pembuat) {
-                    Notification::create([
-                        'user_id' => $instructorId,
-                        'title' => 'Pendaftar baru',
-                        'message' => 'Pengguna ' . Auth::user()->name . ' mendaftar kursus "' . ($course->judul ?? $course->title) . '".',
-                        'type' => 'info',
-                    ]);
-                } elseif ($instructorId == $course->pembuat && $course->pembuat) {
-                    // Jika tidak ada instructor_id, kirim ke pembuat (admin/creator)
-                    Notification::create([
-                        'user_id' => $course->pembuat,
-                        'title' => 'Pendaftar baru',
-                        'message' => 'Pengguna ' . Auth::user()->name . ' mendaftar kursus "' . ($course->judul ?? $course->title) . '".',
-                        'type' => 'info',
-                    ]);
+                    if ($recipientId) {
+                        Notification::create([
+                            'user_id' => $recipientId,
+                            'title' => 'Pendaftar baru',
+                            'message' => 'Pengguna ' . Auth::user()->name . ' mendaftar kursus "' . ($course->judul ?? $course->title) . '".',
+                            'type' => 'info',
+                        ]);
+                    }
                 }
             }
 
@@ -609,20 +613,20 @@ class TransactionController extends Controller
 
                     $transaction->markAsPaid();
 
-                    // Create enrollment if not exists
-                    $existingEnrollment = Enrollment::where('user_id', $transaction->user_id)
-                        ->where('kursus_id', $transaction->kursus_id)
-                        ->first();
-
-                    if (!$existingEnrollment) {
-                        Enrollment::create([
+                    // Create enrollment if not exists (using firstOrCreate to prevent race condition)
+                    $enrollment = Enrollment::firstOrCreate(
+                        [
                             'user_id' => $transaction->user_id,
                             'kursus_id' => $transaction->kursus_id,
+                        ],
+                        [
                             'status_pendaftaran' => 'active',
                             'tanggal_daftar' => now(),
-                        ]);
+                        ]
+                    );
 
-                        // Create notification for user
+                    // Only create notification if enrollment was just created
+                    if ($enrollment->wasRecentlyCreated) {
                         Notification::create([
                             'user_id' => $transaction->user_id,
                             'title' => 'Pembayaran Berhasil',

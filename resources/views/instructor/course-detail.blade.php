@@ -7,6 +7,13 @@
         <div class="flex-1">
         </div>
         <div class="flex gap-3">
+            @if($course->isOffline() || $course->isHybrid())
+                <a href="{{ route('instructor.courses.schedules.index', $course) }}" 
+                   class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-medium flex items-center gap-2">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Kelola Jadwal</span>
+                </a>
+            @endif
             <a href="{{ route('instructor.courses.final-quiz.edit', $course->id) }}" 
                class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-medium flex items-center gap-2">
                 <i class="fas fa-graduation-cap"></i>

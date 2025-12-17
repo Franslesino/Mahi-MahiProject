@@ -501,8 +501,6 @@ class StudentController extends Controller
      */
     public function myCourses()
     {
-        $certificateFk = Enrollment::getCertificateForeignKey();
-
         $enrollments = Enrollment::where('user_id', Auth::id())
             ->whereIn('status_pendaftaran', ['active', 'completed', 'paid'])
             ->with([
@@ -515,26 +513,23 @@ class StudentController extends Controller
                 'kursus.sections.materials' => function ($query) {
                     $query->where('status', 'published')->orderBy('urutan', 'asc');
                 },
-                // Load certificate only if FK is known to avoid invalid column errors
-                ...($certificateFk ? ['sertifikat'] : []),
+                // Fix #11: Sertifikat relationship now uses standard enrollment_id FK
+                'sertifikat',
             ])
             ->latest('tanggal_daftar')
             ->get();
 
-        // Pastikan kursus yang eligible memiliki sertifikat (perbaikan data lama)
-        if ($certificateFk) {
-            foreach ($enrollments as $enrollment) {
-                if ($enrollment->sertifikat) {
-                    continue;
-                }
+        // Generate sertifikat jika user sudah menyelesaikan materi (dan final quiz jika wajib)
+        foreach ($enrollments as $enrollment) {
+            if ($enrollment->sertifikat) {
+                continue;
+            }
 
-                // Generate sertifikat jika user sudah menyelesaikan materi (dan final quiz jika wajib)
-                try {
-                    $this->generateCertificateIfNeeded($enrollment, $enrollment->kursus);
-                    $enrollment->load('sertifikat');
-                } catch (\Throwable $e) {
-                    // Jangan hentikan halaman; sertifikat akan tetap dianggap belum tersedia
-                }
+            try {
+                $this->generateCertificateIfNeeded($enrollment, $enrollment->kursus);
+                $enrollment->load('sertifikat');
+            } catch (\Throwable $e) {
+                // Jangan hentikan halaman; sertifikat akan tetap dianggap belum tersedia
             }
         }
 
@@ -571,7 +566,8 @@ class StudentController extends Controller
         }
 
         // Jika kursus punya final quiz, pastikan sudah lulus
-        if ($course->final_quiz_id) {
+        // Fix: Use hasFinalQuiz() for consistency
+        if ($course->hasFinalQuiz()) {
             $hasPassed = \App\Models\QuizAttempt::where('user_id', $enrollment->user_id ?? Auth::id())
                 ->where('quiz_id', $course->final_quiz_id)
                 ->where('kursus_id', $course->id)

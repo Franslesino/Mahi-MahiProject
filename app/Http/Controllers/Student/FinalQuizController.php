@@ -33,8 +33,8 @@ class FinalQuizController extends Controller
             abort(403, 'Anda belum terdaftar di kursus ini.');
         }
 
-        // Cek apakah kursus memiliki final quiz
-        if (!$kursus->require_final_quiz || !$kursus->final_quiz_id) {
+        // Fix #12: Use hasFinalQuiz() for consistent check
+        if (!$kursus->hasFinalQuiz()) {
             return redirect()->route('courses.show', $kursusId)
                 ->with('info', 'Kursus ini tidak memiliki final quiz.');
         }
@@ -50,7 +50,7 @@ class FinalQuizController extends Controller
 
         $latestAttempt = $attempts->first();
         $attemptCount = $attempts->count();
-        $canRetake = $attemptCount < $kursus->max_quiz_attempts;
+        $canRetake = $attemptCount < $kursus->getMaxQuizAttemptsValue();
         $hasPassed = $attempts->where('is_passed', true)->isNotEmpty();
 
         return view('student.courses.final-quiz', compact(
@@ -81,7 +81,8 @@ class FinalQuizController extends Controller
             return response()->json(['error' => 'Anda belum terdaftar di kursus ini.'], 403);
         }
 
-        if (!$kursus->require_final_quiz || !$kursus->final_quiz_id) {
+        // Fix #12: Use hasFinalQuiz() for consistent check
+        if (!$kursus->hasFinalQuiz()) {
             return response()->json(['error' => 'Kursus ini tidak memiliki final quiz.'], 400);
         }
 
@@ -93,9 +94,10 @@ class FinalQuizController extends Controller
             ->where('kursus_id', $kursusId)
             ->count();
 
-        if ($attemptCount >= $kursus->max_quiz_attempts) {
+        $maxAttempts = $kursus->getMaxQuizAttemptsValue();
+        if ($attemptCount >= $maxAttempts) {
             return response()->json([
-                'error' => 'Anda telah mencapai batas maksimal percobaan (' . $kursus->max_quiz_attempts . 'x).'
+                'error' => 'Anda telah mencapai batas maksimal percobaan (' . $maxAttempts . 'x).'
             ], 403);
         }
 
@@ -176,6 +178,7 @@ class FinalQuizController extends Controller
             $totalScore = 0;
             $totalPossiblePoints = 0;
             $correctCount = 0;
+            $gradedQuestionCount = 0; // Track non-essay questions for percentage calculation
 
             // Ambil semua pertanyaan quiz supaya perhitungan konsisten
             $allQuestions = $quiz->soal()->with('options')->get();
@@ -198,9 +201,14 @@ class FinalQuizController extends Controller
                     $selectedOptionId = $answerValue;
                     $correctOption = $question->options->firstWhere('is_correct', true);
                     $isCorrect = $correctOption && $selectedOptionId && $correctOption->id == $selectedOptionId;
-                    $pointsEarned = $isCorrect ? ($question->points ?? 0) : 0;
+                    
+                    // Use points if available, otherwise count as 1 point per question
+                    $questionPoints = $question->points ?? 1;
+                    $pointsEarned = $isCorrect ? $questionPoints : 0;
                     $totalScore += $pointsEarned;
-                    $totalPossiblePoints += ($question->points ?? 0);
+                    $totalPossiblePoints += $questionPoints;
+                    $gradedQuestionCount++;
+                    
                     if ($isCorrect) {
                         $correctCount++;
                     }
@@ -221,13 +229,17 @@ class FinalQuizController extends Controller
                 ]);
             }
 
-            // Hitung score persentase: gunakan poin jika ada, fallback ke rasio benar
-            if ($totalPossiblePoints > 0) {
-                $scorePercentage = ($totalScore / $totalPossiblePoints) * 100;
+            // Hitung score persentase dengan logika yang konsisten
+            // Use ratio of correct answers to graded questions (excluding essay)
+            if ($gradedQuestionCount > 0) {
+                $scorePercentage = round(($correctCount / $gradedQuestionCount) * 100, 2);
             } else {
-                $scorePercentage = $allQuestions->count() > 0 ? ($correctCount / $allQuestions->count()) * 100 : 0;
+                // All questions are essay, set score to 0 pending manual grading
+                $scorePercentage = 0;
             }
-            $isPassed = $scorePercentage >= $kursus->min_passing_score;
+            
+            $passingScore = $kursus->min_passing_score ?? 70;
+            $isPassed = $scorePercentage >= $passingScore;
 
             // Update attempt
             $attempt->update([

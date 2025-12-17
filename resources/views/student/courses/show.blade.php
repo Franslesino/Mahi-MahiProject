@@ -245,13 +245,20 @@
                                     Lanjutkan Belajar
                                 </a>
                             @else
-                                <form action="{{ route('courses.enroll', $course) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" 
-                                            class="px-8 py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition shadow-sm">
-                                        Bayar
+                                @if($course->isFull())
+                                    <button disabled 
+                                            class="px-8 py-3 bg-gray-400 text-white rounded-lg font-semibold cursor-not-allowed shadow-sm">
+                                        Kuota Penuh
                                     </button>
-                                </form>
+                                @else
+                                    <form action="{{ route('courses.enroll', $course) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" 
+                                                class="px-8 py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition shadow-sm">
+                                            Bayar
+                                        </button>
+                                    </form>
+                                @endif
                             @endif
                         @else
                             <a href="{{ route('login') }}" 
@@ -344,12 +351,100 @@
             </div>
         @endif
 
+        {{-- Upcoming Schedules --}}
+        @if($course->requiresSchedule())
+            <div class="bg-white rounded-2xl shadow-sm p-8 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Jadwal Pertemuan</h3>
+                        <p class="text-sm text-gray-600">Pertemuan mendatang untuk mode {{ ucfirst($course->mode ?? 'offline') }}</p>
+                    </div>
+                    @if($course->upcomingSchedules->count() === 0)
+                        <span class="text-xs text-gray-500">Belum ada jadwal</span>
+                    @else
+                        <span class="text-xs text-gray-500">{{ $course->upcomingSchedules->count() }} jadwal</span>
+                    @endif
+                </div>
+
+                @if($course->upcomingSchedules->count() === 0)
+                    <div class="p-6 bg-gray-50 rounded-xl text-sm text-gray-600 flex items-center gap-3">
+                        <i class="far fa-calendar text-gray-400"></i>
+                        Jadwal pertemuan akan segera diumumkan.
+                    </div>
+                @else
+                    <div class="space-y-3">
+                        @foreach($course->upcomingSchedules as $schedule)
+                            <div class="p-4 rounded-xl border border-gray-100 hover:border-emerald-200 transition bg-gray-50/70">
+                                <div class="flex flex-wrap gap-3 items-start justify-between">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-12 h-12 rounded-lg bg-emerald-50 text-emerald-700 flex flex-col items-center justify-center text-xs font-bold">
+                                            <span>{{ $schedule->date->format('d') }}</span>
+                                            <span class="text-[10px] uppercase tracking-wide">{{ $schedule->date->format('M') }}</span>
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <h4 class="font-semibold text-gray-900">{{ $schedule->title }}</h4>
+                                                <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold border
+                                                    @class([
+                                                        'bg-blue-50 text-blue-700 border-blue-200' => $schedule->status === 'scheduled',
+                                                        'bg-green-50 text-green-700 border-green-200' => $schedule->status === 'completed',
+                                                        'bg-red-50 text-red-700 border-red-200' => $schedule->status === 'cancelled',
+                                                    ])">
+                                                    {{ ucfirst($schedule->status) }}
+                                                </span>
+                                            </div>
+                                            <div class="text-sm text-gray-600 mt-1 flex flex-wrap items-center gap-2">
+                                                <span><i class="far fa-clock mr-1"></i>{{ $schedule->time_range }}</span>
+                                                <span class="text-gray-400">•</span>
+                                                <span><i class="fas fa-map-marker-alt mr-1"></i>{{ $schedule->location ?? $course->default_location ?? 'Lokasi belum ditentukan' }}</span>
+                                            </div>
+                                            @if($schedule->description)
+                                                <p class="text-sm text-gray-600 mt-2">{{ $schedule->description }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        @if($schedule->meeting_url)
+                                            <a href="{{ $schedule->meeting_url }}" target="_blank"
+                                               class="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                                <i class="fas fa-video mr-1"></i> Join Online
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        @endif
+
         <!-- Additional Info Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <!-- Course Features -->
             <div class="bg-white rounded-2xl shadow-sm p-8">
                 <h3 class="text-xl font-bold text-gray-900 mb-6">Fitur Kursus</h3>
                 <div class="space-y-4">
+                    <!-- Mode Description -->
+                    <div class="p-4 rounded-lg {{ $course->isOnline() ? 'bg-blue-50 text-blue-800' : ($course->isOffline() ? 'bg-orange-50 text-orange-800' : 'bg-purple-50 text-purple-800') }} mb-4">
+                        <div class="font-semibold mb-1 flex items-center gap-2">
+                            <i class="fas fa-{{ $course->isOnline() ? 'laptop' : ($course->isOffline() ? 'users' : 'random') }}"></i>
+                            Mode {{ ucfirst($course->mode ?? 'Online') }}
+                        </div>
+                        <p class="text-sm opacity-90 leading-relaxed">{{ $course->getModeDescriptionText() }}</p>
+
+                        <!-- Capacity for Offline/Hybrid -->
+                        @if($course->hasCapacityLimit())
+                            <div class="mt-3 pt-3 border-t border-black/10 flex justify-between items-center text-sm">
+                                <span><i class="fas fa-chair mr-1"></i> Sisa Kuota:</span>
+                                @php $slots = $course->available_slots; @endphp
+                                <span class="font-bold {{ $slots > 0 ? 'text-emerald-700' : 'text-red-600' }}">
+                                    {{ $slots > 0 ? $slots . ' Kursi' : 'PENUH' }}
+                                </span>
+                            </div>
+                        @endif
+                    </div>
+
                     <div class="flex items-center gap-3 text-gray-700">
                         <div class="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center shadow-sm">
                             <i class="fas fa-{{ $course->access_duration_days ? 'calendar-check' : 'infinity' }} text-white"></i>
@@ -370,15 +465,27 @@
                             <span class="text-xs text-gray-500">Belajar di mana saja</span>
                         </div>
                     </div>
+                    @if($course->hasFinalQuiz())
                     <div class="flex items-center gap-3 text-gray-700">
                         <div class="w-10 h-10 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center shadow-sm">
                             <i class="fas fa-certificate text-white"></i>
                         </div>
                         <div class="flex flex-col">
                             <span class="font-semibold">Sertifikat</span>
-                            <span class="text-xs text-gray-500">Setelah menyelesaikan kursus</span>
+                            <span class="text-xs text-gray-500">Wajib Lulus Final Quiz</span>
                         </div>
                     </div>
+                    @else
+                    <div class="flex items-center gap-3 text-gray-700">
+                        <div class="w-10 h-10 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center shadow-sm">
+                            <i class="fas fa-certificate text-white"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="font-semibold">Sertifikat</span>
+                            <span class="text-xs text-gray-500">Setelah menyelesaikan materi</span>
+                        </div>
+                    </div>
+                    @endif
                     <div class="flex items-center gap-3 text-gray-700">
                         <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
                             <i class="fas fa-download text-white"></i>
@@ -408,6 +515,36 @@
                         <span><i class="fas fa-book mr-2 text-teal-600"></i>{{ $instructorCourses }} Kursus</span>
                         <span><i class="fas fa-users mr-2 text-teal-600"></i>{{ $instructorStudents }} Siswa</span>
                     </div>
+                </div>
+            @endif
+
+            {{-- Location Map (Offline/Hybrid) --}}
+            @if($course->latitude && $course->longitude)
+                <div class="bg-white rounded-2xl shadow-sm p-8 mb-6">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-1">Lokasi Pertemuan</h3>
+                            <p class="text-sm text-gray-600">
+                                {{ $course->default_location ?? 'Lokasi kursus' }}
+                                @if($course->isOffline() || $course->isHybrid())
+                                    • Mode {{ ucfirst($course->mode ?? 'offline') }}
+                                @endif
+                            </p>
+                        </div>
+                        <span class="text-xs text-gray-500">Klik pin untuk detail</span>
+                    </div>
+                    <div
+                        id="course-location-map"
+                        class="w-full h-64 rounded-xl border border-gray-200 mt-4"
+                        data-lat="{{ $course->latitude }}"
+                        data-lng="{{ $course->longitude }}"
+                        data-label="{{ $course->default_location ?? 'Lokasi kursus' }}">
+                    </div>
+                </div>
+            @elseif($course->default_location)
+                <div class="bg-white rounded-2xl shadow-sm p-8 mb-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Lokasi Pertemuan</h3>
+                    <p class="text-sm text-gray-700">{{ $course->default_location }}</p>
                 </div>
             @endif
 
@@ -453,6 +590,61 @@
                 mainContent.style.marginLeft = '256px';
             }
         }
+    });
+</script>
+@endpush
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const mapEl = document.getElementById('course-location-map');
+        if (!mapEl) return;
+
+        const lat = parseFloat(mapEl.dataset.lat);
+        const lng = parseFloat(mapEl.dataset.lng);
+        if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+        function loadLeafletAssets(callback) {
+            const cssId = 'leaflet-css';
+            if (!document.getElementById(cssId)) {
+                const link = document.createElement('link');
+                link.id = cssId;
+                link.rel = 'stylesheet';
+                link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                document.head.appendChild(link);
+            }
+
+            const scriptId = 'leaflet-js';
+            const existingScript = document.getElementById(scriptId);
+            if (existingScript) {
+                if (typeof L !== 'undefined') {
+                    callback();
+                } else {
+                    existingScript.addEventListener('load', callback, { once: true });
+                }
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.id = scriptId;
+            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            script.onload = callback;
+            document.body.appendChild(script);
+        }
+
+        loadLeafletAssets(() => {
+            const map = L.map(mapEl).setView([lat, lng], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            L.marker([lat, lng]).addTo(map).bindPopup(mapEl.dataset.label || 'Lokasi kursus');
+
+            // Fix map rendering when inside flex layouts
+            setTimeout(() => map.invalidateSize(), 200);
+        });
     });
 </script>
 @endpush

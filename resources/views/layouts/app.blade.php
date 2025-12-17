@@ -394,5 +394,7 @@
 
     <!-- Toasts -->
     @include('components.toast')
+
+    @stack('scripts')
 </body>
 </html>

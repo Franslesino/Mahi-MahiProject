@@ -62,7 +62,8 @@ class CourseController extends Controller
             'pembuat',
             'materi' => function($query) {
                 $query->orderBy('urutan');
-            }
+            },
+            'upcomingSchedules',
         ]);
 
         $course->loadCount(['materi', 'assignments']);

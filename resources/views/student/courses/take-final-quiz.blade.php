@@ -362,7 +362,10 @@
                 finishModal.classList.remove('flex');
             });
 
+            let safeToLeave = false;
+
             function submitQuiz() {
+                safeToLeave = true;
                 @if($quiz->durasi_quiz)
                     clearInterval(timerInterval);
                 @endif
@@ -394,6 +397,7 @@
                         alert('Terjadi kesalahan saat menyimpan jawaban');
                         modalFinishBtn.disabled = false;
                         modalFinishBtn.textContent = 'Selesai';
+                        safeToLeave = false; // re-enable warning if save failed
                     });
             }
 
@@ -401,8 +405,10 @@
 
             // Prevent accidental page close
             window.addEventListener('beforeunload', (e) => {
-                e.preventDefault();
-                e.returnValue = '';
+                if (!safeToLeave) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
             });
 
             renderQuestion(current);

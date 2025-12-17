@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * @property int $id
@@ -50,53 +49,13 @@ class Enrollment extends Model
         return $this->belongsTo(Kursus::class, 'kursus_id');
     }
 
+    /**
+     * Relationship to certificate
+     * Fix #11: Simplified - use standard enrollment_id FK
+     */
     public function sertifikat()
     {
-        $certificateFk = static::getCertificateForeignKey();
-
-        if (!$certificateFk) {
-            // Avoid error if schema is unknown; use neutral keys and always-false condition
-            return $this->hasOne(Sertifikat::class, 'id', 'id')->whereRaw('1=0');
-        }
-
-        return $this->hasOne(Sertifikat::class, $certificateFk);
-    }
-
-    public static function getCertificateForeignKey(): ?string
-    {
-        static $cached = null;
-        if ($cached !== null) {
-            return $cached;
-        }
-
-        $cached = self::resolveCertificateForeignKey();
-        return $cached;
-    }
-
-    private static function resolveCertificateForeignKey(): ?string
-    {
-        try {
-            $table = (new Sertifikat)->getTable();
-            $columns = Schema::getColumnListing($table);
-        } catch (\Throwable $e) {
-            return null;
-        }
-
-        $candidates = [
-            'enrollment_id',
-            'enrollments_id',
-            'enrollmentid',
-            'enrollmentsid',
-            'enrollment',
-            'enroll_id',
-        ];
-
-        foreach ($candidates as $col) {
-            if (in_array($col, $columns, true)) {
-                return $col;
-            }
-        }
-
-        return null;
+        return $this->hasOne(Sertifikat::class, 'enrollment_id');
     }
 }
+

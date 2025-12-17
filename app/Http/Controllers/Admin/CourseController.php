@@ -67,6 +67,11 @@ class CourseController extends Controller
             'image'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'access_duration_days' => 'nullable|integer|min:1',
             'purchase_deadline_date' => 'nullable|date|after:now',
+            'max_participants' => 'nullable|integer|min:1',
+            'default_location' => 'nullable|string|max:255',
+            'mode_description' => 'nullable|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
         $data = [
@@ -90,6 +95,11 @@ class CourseController extends Controller
             'videos'         => 0,
             'access_duration_days' => $validated['access_duration_days'] ?? null,
             'purchase_deadline_date' => $validated['purchase_deadline_date'] ?? null,
+            'max_participants' => $validated['max_participants'] ?? null,
+            'default_location' => $validated['default_location'] ?? null,
+            'mode_description' => $validated['mode_description'] ?? null,
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
         ];
 
         if ($request->hasFile('image')) {
@@ -147,6 +157,11 @@ class CourseController extends Controller
             'image'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'access_duration_days' => 'nullable|integer|min:1',
             'purchase_deadline_date' => 'nullable|date|after:now',
+            'max_participants' => 'nullable|integer|min:1',
+            'default_location' => 'nullable|string|max:255',
+            'mode_description' => 'nullable|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
         $data = [
@@ -166,6 +181,11 @@ class CourseController extends Controller
             'instructor_id'  => $validated['instructor_id'],
             'access_duration_days' => $validated['access_duration_days'] ?? null,
             'purchase_deadline_date' => $validated['purchase_deadline_date'] ?? null,
+            'max_participants' => $validated['max_participants'] ?? null,
+            'default_location' => $validated['default_location'] ?? null,
+            'mode_description' => $validated['mode_description'] ?? null,
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
         ];
 
         if ($request->hasFile('image')) {

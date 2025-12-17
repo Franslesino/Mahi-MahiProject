@@ -270,7 +270,7 @@ Route::middleware('auth')->group(function () {
     // ==========================
     // Voucher Validation (AJAX)
     // ==========================
-    Route::post('/voucher/validate', [VoucherController::class, 'validate'])->name('voucher.validate');
+Route::post('/voucher/validate', [VoucherController::class, 'validateVoucher'])->name('voucher.validate');
 
     // ======================
     // Student Routes
@@ -423,6 +423,9 @@ Route::middleware('auth')->group(function () {
 
                 // Quiz routes
                 Route::post('quizzes', [AdminCourseController::class, 'storeQuiz'])->name('quizzes.store');
+
+                // Course Schedule Routes (Offline/Hybrid)
+                Route::resource('schedules', \App\Http\Controllers\Admin\CourseScheduleController::class)->except(['show', 'create', 'edit']);
             });
 
             // Assignment/Quiz management routes for Admin (using instructor controller)
@@ -596,6 +599,10 @@ Route::middleware('auth')->group(function () {
             Route::post('/courses/{kursus}/final-quiz/store-new-question', [\App\Http\Controllers\Instructor\FinalQuizController::class, 'storeNewQuestion'])->name('courses.final-quiz.store-new-question');
             Route::delete('/courses/{kursus}/final-quiz/remove-question/{question}', [\App\Http\Controllers\Instructor\FinalQuizController::class, 'removeQuestion'])->name('courses.final-quiz.remove-question');
             Route::post('/courses/{kursus}/final-quiz/toggle-activation', [\App\Http\Controllers\Instructor\FinalQuizController::class, 'toggleActivation'])->name('courses.final-quiz.toggle-activation');
+
+            // Course schedules (Offline/Hybrid) - Instructor
+            Route::resource('courses.schedules', \App\Http\Controllers\Admin\CourseScheduleController::class)
+                ->except(['show', 'create', 'edit']);
 
             Route::resource('bank-soal', \App\Http\Controllers\Instructor\BankSoalController::class)->names([
                 'index' => 'bank-soal.index',

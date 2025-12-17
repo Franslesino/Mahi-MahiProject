@@ -87,47 +87,47 @@ class MidtransNotificationController extends Controller
     private function createEnrollment(Transaction $transaction)
     {
         try {
-            $enrollment = \App\Models\Enrollment::create([
-                'user_id' => $transaction->user_id,
-                'kursus_id' => $transaction->kursus_id,
-                'status_pendaftaran' => 'active',
-                'tanggal_daftar' => now(),
-            ]);
+            // Use firstOrCreate to prevent race condition with other callbacks
+            $enrollment = \App\Models\Enrollment::firstOrCreate(
+                [
+                    'user_id' => $transaction->user_id,
+                    'kursus_id' => $transaction->kursus_id,
+                ],
+                [
+                    'status_pendaftaran' => 'active',
+                    'tanggal_daftar' => now(),
+                ]
+            );
 
-            // Notify instructor yang mengampuh kursus ini
-            $course = $transaction->kursus;
-            if ($course) {
-                // Prioritas: instructor_id, jika tidak ada baru pembuat (admin)
-                $instructorId = $course->instructor_id ?: $course->pembuat;
-                
-                // Hanya kirim notifikasi ke instructor, bukan admin
-                if ($instructorId && $instructorId != $course->pembuat) {
-                    \App\Models\Notification::create([
-                        'user_id' => $instructorId,
-                        'title'   => 'Pendaftar baru',
-                        'message' => 'Pengguna ' . $transaction->user->name . ' mendaftar kursus "' . ($course->judul ?? $course->title) . '".',
-                        'type'    => 'info',
-                    ]);
-                } elseif ($instructorId == $course->pembuat && $course->pembuat) {
-                    // Jika tidak ada instructor_id, kirim ke pembuat (admin/creator)
-                    \App\Models\Notification::create([
-                        'user_id' => $course->pembuat,
-                        'title'   => 'Pendaftar baru',
-                        'message' => 'Pengguna ' . $transaction->user->name . ' mendaftar kursus "' . ($course->judul ?? $course->title) . '".',
-                        'type'    => 'info',
-                    ]);
+            // Only send notifications if enrollment was just created
+            if ($enrollment->wasRecentlyCreated) {
+                $course = $transaction->kursus;
+                if ($course) {
+                    // Notify instructor/course owner (simplified logic)
+                    $recipientId = $course->instructor_id ?: $course->pembuat;
+                    
+                    if ($recipientId) {
+                        \App\Models\Notification::create([
+                            'user_id' => $recipientId,
+                            'title'   => 'Pendaftar baru',
+                            'message' => 'Pengguna ' . $transaction->user->name . ' mendaftar kursus "' . ($course->judul ?? $course->title) . '".',
+                            'type'    => 'info',
+                        ]);
+                    }
                 }
+
+                // Notify user
+                \App\Models\Notification::create([
+                    'user_id' => $transaction->user_id,
+                    'title' => 'Pembayaran Berhasil',
+                    'message' => 'Pembayaran untuk kursus "' . ($course->judul ?? 'Kursus') . '" telah berhasil dikonfirmasi. Selamat belajar!',
+                    'type' => 'success',
+                ]);
+
+                Log::info('Enrollment created for transaction: ' . $transaction->transaction_code);
+            } else {
+                Log::info('Enrollment already exists for transaction: ' . $transaction->transaction_code);
             }
-
-            // Notify user
-            \App\Models\Notification::create([
-                'user_id' => $transaction->user_id,
-                'title' => 'Pembayaran Berhasil',
-                'message' => 'Pembayaran untuk kursus "' . $course->judul . '" telah berhasil dikonfirmasi. Selamat belajar!',
-                'type' => 'success',
-            ]);
-
-            Log::info('Enrollment created for transaction: ' . $transaction->transaction_code);
 
         } catch (\Exception $e) {
             Log::error('Error creating enrollment: ' . $e->getMessage());

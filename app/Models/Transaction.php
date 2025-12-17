@@ -81,8 +81,18 @@ class Transaction extends Model
 
     public function isExpired()
     {
-        return $this->status === 'expired' || 
-               ($this->payment_deadline && Carbon::now()->gt($this->payment_deadline));
+        // If already marked as expired
+        if ($this->status === 'expired') {
+            return true;
+        }
+
+        // If pending and past deadline, auto-mark as expired for consistency
+        if ($this->status === 'pending' && $this->payment_deadline && Carbon::now()->gt($this->payment_deadline)) {
+            $this->markAsExpired();
+            return true;
+        }
+
+        return false;
     }
 
     public function markAsPaid()

@@ -83,6 +83,47 @@
                     @enderror
                 </div>
 
+                <!-- Konfigurasi Mode Offline/Hybrid -->
+                <div id="mode-config" class="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-lg border border-gray-200 mt-2 {{ old('mode') == 'Offline' || old('mode') == 'Hybrid' ? '' : 'hidden' }}">
+                    <h4 class="font-semibold text-gray-800 mb-3 text-sm"><i class="fas fa-cog mr-1"></i> Konfigurasi Offline/Hybrid</h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Kapasitas -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Kapasitas Maksimal (Siswa)</label>
+                            <input type="number" name="max_participants" value="{{ old('max_participants') }}" min="1"
+                                   placeholder="Contoh: 30"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <p class="text-xs text-gray-500 mt-1">Biarkan kosong untuk tanpa batas.</p>
+                        </div>
+
+                        <!-- Lokasi -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Lokasi Default</label>
+                            <input type="text" name="default_location" value="{{ old('default_location') }}"
+                                   placeholder="Contoh: Gedung A, Ruang 101"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+
+                        <!-- Map Picker -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Lokasi di Peta (Opsional)</label>
+                            <div id="course-map" class="w-full h-64 rounded-lg border border-gray-200"></div>
+                            <input type="hidden" name="latitude" id="latitude" value="{{ old('latitude') }}">
+                            <input type="hidden" name="longitude" id="longitude" value="{{ old('longitude') }}">
+                            <p class="text-xs text-gray-500 mt-1">Klik atau drag marker di peta untuk menetapkan koordinat.</p>
+                        </div>
+                        
+                        <!-- Mode Description -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Deskripsi Mode (Opsional)</label>
+                            <textarea name="mode_description" rows="2"
+                                      placeholder="Penjelasan singkat tentang pelaksanaan metode belajar..."
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">{{ old('mode_description') }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Harga -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Harga (Rp) *</label>
@@ -215,3 +256,112 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modeSelect = document.querySelector('select[name="mode"]');
+        const modeConfig = document.getElementById('mode-config');
+        const mapContainer = document.getElementById('course-map');
+        const latInput = document.getElementById('latitude');
+        const lngInput = document.getElementById('longitude');
+        let leafletLoaded = false;
+        let mapInstance = null;
+        let marker = null;
+
+        function toggleModeConfig() {
+            if (modeSelect.value === 'Offline' || modeSelect.value === 'Hybrid') {
+                modeConfig.classList.remove('hidden');
+                initializeMap();
+            } else {
+                modeConfig.classList.add('hidden');
+                destroyMap();
+            }
+        }
+
+        modeSelect.addEventListener('change', toggleModeConfig);
+        toggleModeConfig();
+
+        function loadLeafletAssets(callback) {
+            if (leafletLoaded) {
+                callback();
+                return;
+            }
+
+            const cssId = 'leaflet-css';
+            if (!document.getElementById(cssId)) {
+                const link = document.createElement('link');
+                link.id = cssId;
+                link.rel = 'stylesheet';
+                link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                document.head.appendChild(link);
+            }
+
+            const scriptId = 'leaflet-js';
+            const existingScript = document.getElementById(scriptId);
+            if (existingScript) {
+                existingScript.addEventListener('load', () => {
+                    leafletLoaded = true;
+                    callback();
+                });
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.id = scriptId;
+            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            script.onload = () => {
+                leafletLoaded = true;
+                callback();
+            };
+            document.body.appendChild(script);
+        }
+
+        function initializeMap() {
+            if (!mapContainer || mapInstance) {
+                return;
+            }
+
+            loadLeafletAssets(() => {
+                const defaultLat = parseFloat(latInput?.value) || -6.200000;
+                const defaultLng = parseFloat(lngInput?.value) || 106.816666;
+
+                mapInstance = L.map(mapContainer).setView([defaultLat, defaultLng], 13);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(mapInstance);
+
+                marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(mapInstance);
+                updateInputs(defaultLat, defaultLng);
+
+                mapInstance.on('click', function(e) {
+                    marker.setLatLng(e.latlng);
+                    updateInputs(e.latlng.lat, e.latlng.lng);
+                });
+
+                marker.on('dragend', function(e) {
+                    const pos = e.target.getLatLng();
+                    updateInputs(pos.lat, pos.lng);
+                });
+            });
+        }
+
+        function destroyMap() {
+            if (mapInstance) {
+                mapInstance.remove();
+                mapInstance = null;
+                marker = null;
+            }
+        }
+
+        function updateInputs(lat, lng) {
+            if (latInput && lngInput) {
+                latInput.value = lat.toFixed(6);
+                lngInput.value = lng.toFixed(6);
+            }
+        }
+    });
+</script>
+@endpush

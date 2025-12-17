@@ -241,25 +241,32 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
+                    credentials: 'same-origin',
                     body: JSON.stringify({
                         voucher_code: voucherCode,
                         course_id: {{ $course->id }},
                         price: originalPrice
                     })
                 })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
+                    .then(async (response) => {
+                        const contentType = response.headers.get('content-type') || '';
+                        if (!contentType.includes('application/json')) {
+                            throw new Error('Invalid response');
+                        }
+                        const data = await response.json();
+                        if (response.ok && data.success) {
                             applyVoucherToCheckout(data.voucher, data.discount);
                             showVoucherMessage('Voucher berhasil diterapkan!', 'success');
                         } else {
-                            showVoucherMessage(data.message, 'error');
+                            throw new Error(data.message || 'Voucher gagal diterapkan');
                         }
                     })
                     .catch(error => {
-                        showVoucherMessage('Terjadi kesalahan. Silakan coba lagi.', 'error');
+                        showVoucherMessage(error.message || 'Terjadi kesalahan. Silakan coba lagi.', 'error');
                     });
             });
 

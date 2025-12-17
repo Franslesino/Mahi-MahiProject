@@ -169,8 +169,19 @@
         <!-- Courses Grid -->
         <div id="courseGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden">
             @forelse($courses as $course)
-                <a href="{{ route('courses.show', $course) }}"
-                    class="bg-white rounded-xl shadow-sm hover:shadow-xl border border-gray-100 hover:-translate-y-1 transition overflow-hidden group cursor-pointer">
+                @php
+                    $isFull = ($course->isOffline() || $course->isHybrid()) && $course->isFull();
+                @endphp
+                <a href="{{ $isFull ? '#' : route('courses.show', $course) }}"
+                    class="bg-white rounded-xl shadow-sm hover:shadow-xl border border-gray-100 hover:-translate-y-1 transition overflow-hidden group cursor-pointer relative {{ $isFull ? 'grayscale cursor-not-allowed opacity-80' : '' }}">
+                    
+                    @if($isFull)
+                        <div class="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-[1px]">
+                            <div class="bg-red-600 text-white px-4 py-2 rounded-full font-bold shadow-2xl transform -rotate-12 border-2 border-white text-lg tracking-wider">
+                                KUOTA HABIS
+                            </div>
+                        </div>
+                    @endif
 
                     <!-- Image -->
                     <div class="relative h-40 bg-gray-900 overflow-hidden">
@@ -184,8 +195,8 @@
                             </div>
                         @endif
 
-                        <!-- Category -->
-                        <div class="absolute top-3 left-3">
+                        <!-- Category & Mode Stack -->
+                        <div class="absolute top-3 left-3 flex flex-col gap-2 items-start">
                             @php
                                 $cat = $course->kategori ?? 'General';
                                 $catColors = [
@@ -201,6 +212,21 @@
                             <span class="text-xs px-2.5 py-1 rounded-full font-semibold border shadow-sm {{ $badgeClass }}">
                                 {{ $cat }}
                             </span>
+
+                            <!-- Mode Badge -->
+                            @if($course->isOnline())
+                                <span class="bg-blue-600/90 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded-md font-medium shadow-sm flex items-center gap-1">
+                                    <i class="fas fa-globe"></i> Online
+                                </span>
+                            @elseif($course->isOffline())
+                                <span class="bg-orange-600/90 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded-md font-medium shadow-sm flex items-center gap-1">
+                                    <i class="fas fa-building"></i> Offline
+                                </span>
+                            @elseif($course->isHybrid())
+                                <span class="bg-purple-600/90 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded-md font-medium shadow-sm flex items-center gap-1">
+                                    <i class="fas fa-video"></i> Hybrid
+                                </span>
+                            @endif
                         </div>
 
                         <!-- Badge -->
@@ -244,10 +270,30 @@
                             {{ $course->judul }}
                         </h4>
 
-                        <div class="flex items-center gap-2 text-sm text-gray-600 mb-3">
-                            <i class="fas fa-user-tie"></i>
-                            <span>{{ $course->instructor->name ?? $course->pembuat->name ?? 'Instruktur' }}</span>
-                        </div>
+                        <!-- Capacity Info for Offline/Hybrid -->
+                        @if(($course->isOffline() || $course->isHybrid()) && $course->max_participants)
+                            <div class="mb-3">
+                                @php
+                                    $remainingSlots = $course->available_slots;
+                                    $filledSlots = $course->participants_count;
+                                @endphp
+                                <div class="flex justify-between items-center text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">Kuota Terisi</span>
+                                    <span class="{{ $remainingSlots <= 5 ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold' }}">
+                                        {{ $filledSlots }} / {{ $course->max_participants }}
+                                    </span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="{{ $remainingSlots <= 5 ? 'bg-red-500' : 'bg-emerald-500' }} h-1.5 rounded-full transition-all duration-500"
+                                         style="width: {{ min(($filledSlots / $course->max_participants) * 100, 100) }}%"></div>
+                                </div>
+                            </div>
+                        @else
+                            <div class="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                                <i class="fas fa-user-tie"></i>
+                                <span>{{ $course->instructor->name ?? $course->pembuat->name ?? 'Instruktur' }}</span>
+                            </div>
+                        @endif
 
                         <div class="flex items-center gap-2 text-sm text-gray-500 mb-3">
                             <span><i class="fas fa-user-graduate mr-1"></i>{{ $course->students_count ?? 0 }} Siswa</span>

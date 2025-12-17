@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -23,7 +24,7 @@ use Illuminate\Notifications\Notifiable;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  */
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
 
@@ -41,6 +42,9 @@ class User extends Authenticatable
         'google_id',
         'jenis_kelamin',
         'profesi',
+        'email_verified_at',
+        'first_name',
+        'last_name',
     ];
 
     protected $hidden = [
@@ -139,7 +143,7 @@ class User extends Authenticatable
 
 
 
-    
+
 
     // --- Relasi ke Notifications ---
     public function notifications()

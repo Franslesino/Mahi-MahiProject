@@ -85,13 +85,13 @@ class SupabaseStorageService
         return "{$baseUrl}/storage/v1/object/public/{$bucket}/{$path}";
     }
 
-    protected function generateFilename(UploadedFile $file): string
+    public function generateFilename(UploadedFile $file): string
     {
         $extension = $file->getClientOriginalExtension();
         return uniqid(date('YmdHis') . '_') . ($extension ? ".{$extension}" : '');
     }
 
-    protected function toObjectPath(string $value): ?string
+    public function toObjectPath(string $value): ?string
     {
         if (!$value) {
             return null;
@@ -108,7 +108,7 @@ class SupabaseStorageService
         return $path ? ltrim($path, '/') : null;
     }
 
-    protected function isFullUrl(string $value): bool
+    public function isFullUrl(string $value): bool
     {
         return str_starts_with($value, 'http://') || str_starts_with($value, 'https://');
     }

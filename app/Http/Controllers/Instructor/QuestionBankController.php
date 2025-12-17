@@ -18,10 +18,10 @@ class QuestionBankController extends Controller
      */
     public function index(Request $request)
     {
-        $banksQuery = QuestionBank::where(function($query) {
-                $query->where('created_by', Auth::id())
-                      ->orWhere('is_public', true);
-            })
+        $banksQuery = QuestionBank::where(function ($query) {
+            $query->where('created_by', Auth::id())
+                ->orWhere('is_public', true);
+        })
             ->withCount('questions')
             ->latest();
         if (Schema::hasColumn('question_banks', 'is_internal')) {
@@ -31,9 +31,9 @@ class QuestionBankController extends Controller
         // Search functionality
         if ($request->filled('search')) {
             $search = $request->search;
-            $banksQuery->where(function($query) use ($search) {
+            $banksQuery->where(function ($query) use ($search) {
                 $query->where('title', 'ilike', "%{$search}%")
-                      ->orWhere('description', 'ilike', "%{$search}%");
+                    ->orWhere('description', 'ilike', "%{$search}%");
             });
         }
 
@@ -172,10 +172,10 @@ class QuestionBankController extends Controller
      */
     private function getAvailableCategories()
     {
-        $query = QuestionBank::where(function($query) {
-                $query->where('created_by', Auth::id())
-                      ->orWhere('is_public', true);
-            })
+        $query = QuestionBank::where(function ($query) {
+            $query->where('created_by', Auth::id())
+                ->orWhere('is_public', true);
+        })
             ->whereNotNull('category');
 
         if (Schema::hasColumn('question_banks', 'is_internal')) {
@@ -257,7 +257,7 @@ class QuestionBankController extends Controller
                 foreach ($validated['options'] as $idx => $text) {
                     $question->options()->create([
                         'option_text' => $text,
-                        'is_correct' => ((string)$validated['correct_option'] === (string)($idx + 1)),
+                        'is_correct' => ((string) $validated['correct_option'] === (string) ($idx + 1)),
                         'order' => $idx + 1,
                     ]);
                 }
@@ -302,6 +302,34 @@ class QuestionBankController extends Controller
         // Izinkan pemilik atau bank publik untuk bank ini
         if (($questionBank->created_by !== Auth::id() && !$questionBank->is_public) || $question->question_bank_id !== $questionBank->id) {
             abort(403, 'Anda tidak dapat menghapus soal ini.');
+        }
+
+        // ✅ CEK APAKAH SOAL SEDANG DIGUNAKAN (BUG-006 FIX)
+        // Check if question is used in any assignment
+        $isUsedInAssignment = DB::table('assignment_questions')
+            ->where('question_id', $question->id)
+            ->exists();
+
+        if ($isUsedInAssignment) {
+            return back()->with('error', 'Soal tidak dapat dihapus karena sedang digunakan dalam assignment.');
+        }
+
+        // Check if question is used in any quiz (relasi_quiz table)
+        $isUsedInQuiz = DB::table('relasi_quiz')
+            ->where('question_id', $question->id)
+            ->exists();
+
+        if ($isUsedInQuiz) {
+            return back()->with('error', 'Soal tidak dapat dihapus karena sedang digunakan dalam quiz.');
+        }
+
+        // Check if question has any student answers
+        $hasAnswers = DB::table('jawaban_peserta')
+            ->where('question_id', $question->id)
+            ->exists();
+
+        if ($hasAnswers) {
+            return back()->with('error', 'Soal tidak dapat dihapus karena sudah ada jawaban dari peserta.');
         }
 
         $question->delete();
@@ -388,7 +416,7 @@ class QuestionBankController extends Controller
                 foreach ($validated['options'] as $idx => $text) {
                     $question->options()->create([
                         'option_text' => $text,
-                        'is_correct' => ((string)$validated['correct_option'] === (string)($idx + 1)),
+                        'is_correct' => ((string) $validated['correct_option'] === (string) ($idx + 1)),
                         'order' => $idx + 1,
                     ]);
                 }
@@ -430,7 +458,7 @@ class QuestionBankController extends Controller
     public function exportTemplate()
     {
         $filename = 'template_soal_' . date('Y-m-d') . '.csv';
-        
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
@@ -449,12 +477,12 @@ class QuestionBankController extends Controller
             'explanation'
         ];
 
-        $callback = function() use ($columns) {
+        $callback = function () use ($columns) {
             $file = fopen('php://output', 'w');
-            
+
             // Header
             fputcsv($file, $columns);
-            
+
             // Example rows
             fputcsv($file, [
                 'multiple_choice',
@@ -468,7 +496,7 @@ class QuestionBankController extends Controller
                 '1',
                 'Jakarta adalah ibu kota Indonesia'
             ]);
-            
+
             fputcsv($file, [
                 'true_false',
                 'Bumi itu bulat',
@@ -481,7 +509,7 @@ class QuestionBankController extends Controller
                 'true',
                 'Bumi berbentuk bulat (spheroid)'
             ]);
-            
+
             fputcsv($file, [
                 'short_answer',
                 'Siapa presiden pertama Indonesia?',
@@ -494,7 +522,7 @@ class QuestionBankController extends Controller
                 'Soekarno',
                 'Ir. Soekarno adalah presiden pertama RI'
             ]);
-            
+
             fputcsv($file, [
                 'essay',
                 'Jelaskan dampak revolusi industri terhadap masyarakat',
@@ -537,10 +565,10 @@ class QuestionBankController extends Controller
             $file = $request->file('file');
             $path = $file->getRealPath();
             $data = array_map('str_getcsv', file($path));
-            
+
             // Remove header
             $header = array_shift($data);
-            
+
             $imported = 0;
             $errors = [];
 
@@ -554,7 +582,7 @@ class QuestionBankController extends Controller
                     $type = $row[0] ?? '';
                     $questionText = $row[1] ?? '';
                     $points = $row[2] ?? 1;
-                    
+
                     if (empty($type) || empty($questionText)) {
                         $errors[] = "Baris " . ($index + 2) . ": Tipe atau pertanyaan kosong";
                         continue;
@@ -565,7 +593,7 @@ class QuestionBankController extends Controller
                         'question_bank_id' => $questionBank->id,
                         'type' => $type,
                         'question_text' => $questionText,
-                        'points' => (int)$points,
+                        'points' => (int) $points,
                         'explanation' => $row[9] ?? null,
                         'order' => $questionBank->questions()->max('order') + 1,
                     ]);
@@ -578,7 +606,7 @@ class QuestionBankController extends Controller
                                 $options[] = [
                                     'question_id' => $question->id,
                                     'option_text' => $row[$i],
-                                    'is_correct' => ($i - 2) == (int)($row[8] ?? 0),
+                                    'is_correct' => ($i - 2) == (int) ($row[8] ?? 0),
                                     'order' => $i - 2,
                                     'created_at' => now(),
                                     'updated_at' => now(),
@@ -651,15 +679,15 @@ class QuestionBankController extends Controller
         }
 
         $filename = 'soal_' . str_replace(' ', '_', $questionBank->title) . '_' . date('Y-m-d') . '.csv';
-        
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($questionBank) {
+        $callback = function () use ($questionBank) {
             $file = fopen('php://output', 'w');
-            
+
             // Header
             fputcsv($file, [
                 'type',
@@ -673,10 +701,10 @@ class QuestionBankController extends Controller
                 'correct_option',
                 'explanation'
             ]);
-            
+
             // Questions
             $questions = $questionBank->questions()->with('options')->get();
-            
+
             foreach ($questions as $question) {
                 $row = [
                     $question->type,
@@ -690,14 +718,14 @@ class QuestionBankController extends Controller
                     for ($i = 0; $i < 5; $i++) {
                         $row[] = $options[$i]->option_text ?? '';
                     }
-                    
+
                     // Correct option
                     $correctOption = $options->where('is_correct', true)->first();
                     $row[] = $correctOption ? $correctOption->order : '';
                 } else {
                     // Empty options for non-multiple choice
                     $row = array_merge($row, ['', '', '', '', '']);
-                    
+
                     if ($question->type === 'short_answer') {
                         $row[] = $question->correct_answer ?? '';
                     } else {

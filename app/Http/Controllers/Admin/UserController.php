@@ -22,7 +22,7 @@ class UserController extends Controller
         if ($request->has('search') && $request->search) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+                    ->orWhere('email', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -45,10 +45,10 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'role'     => 'required|in:admin,instructor,student,user',
+            'role' => 'required|in:admin,instructor,student,user',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -73,9 +73,9 @@ class UserController extends Controller
         if ($user->role === 'instructor') {
             // Untuk instructor: ambil courses yang dia ampu beserta jumlah peserta
             $user->load([
-                'instructorCourses' => function($query) {
+                'instructorCourses' => function ($query) {
                     $query->withCount('enrollments')
-                          ->orderBy('created_at', 'desc');
+                        ->orderBy('created_at', 'desc');
                 }
             ]);
 
@@ -96,7 +96,7 @@ class UserController extends Controller
             // Untuk student/user: ambil courses yang diikuti dan transaksi
             $user->load([
                 'enrollments.kursus.instructor',
-                'transactions' => function($query) {
+                'transactions' => function ($query) {
                     $query->latest()->limit(10);
                 }
             ]);
@@ -133,10 +133,10 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email,' . $user->id,
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
-            'role'     => 'required|in:admin,instructor,student,user',
+            'role' => 'required|in:admin,instructor,student,user',
         ]);
 
         if ($request->filled('password')) {
@@ -164,5 +164,99 @@ class UserController extends Controller
         return redirect()
             ->route('admin.users.index')
             ->with('success', 'Pengguna berhasil dihapus!');
+    }
+
+    /**
+     * Bulk delete multiple users
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'user_ids' => 'required|array|min:1',
+            'user_ids.*' => 'exists:users,id',
+        ]);
+
+        $userIds = $request->input('user_ids');
+
+        // Prevent deleting current admin user
+        $currentUserId = auth()->id();
+        $userIds = array_filter($userIds, fn($id) => $id != $currentUserId);
+
+        if (empty($userIds)) {
+            return redirect()
+                ->route('admin.users.index')
+                ->with('error', 'Tidak ada pengguna yang dihapus.');
+        }
+
+        $deletedCount = User::whereIn('id', $userIds)->delete();
+
+        return redirect()
+            ->route('admin.users.index')
+            ->with('success', "$deletedCount pengguna berhasil dihapus!");
+    }
+
+    /**
+     * Export users to CSV
+     */
+    public function export(Request $request)
+    {
+        $query = User::query();
+
+        // Apply same filters as index
+        if ($request->has('search') && $request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                    ->orWhere('email', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        if ($request->has('role') && $request->role) {
+            $query->where('role', $request->role);
+        }
+
+        $users = $query->latest()->get();
+
+        $filename = 'users_export_' . date('Y-m-d_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($users) {
+            $file = fopen('php://output', 'w');
+
+            // CSV Header
+            fputcsv($file, [
+                'ID',
+                'Nama',
+                'Email',
+                'Role',
+                'Telepon',
+                'NIM',
+                'Profesi',
+                'Email Verified',
+                'Tanggal Daftar',
+            ]);
+
+            // CSV Data
+            foreach ($users as $user) {
+                fputcsv($file, [
+                    $user->id,
+                    $user->name,
+                    $user->email,
+                    $user->role,
+                    $user->phone ?? '-',
+                    $user->nim ?? '-',
+                    $user->profesi ?? '-',
+                    $user->email_verified_at ? 'Ya' : 'Tidak',
+                    $user->created_at->format('Y-m-d H:i:s'),
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

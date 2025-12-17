@@ -400,6 +400,8 @@ Route::middleware('auth')->group(function () {
 
             // Users management
             Route::resource('users', UserController::class);
+            Route::post('users/bulk-destroy', [UserController::class, 'bulkDestroy'])->name('users.bulk-destroy');
+            Route::get('users-export', [UserController::class, 'export'])->name('users.export');
 
             // Courses management
             Route::resource('courses', AdminCourseController::class);

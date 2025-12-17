@@ -327,17 +327,19 @@
 
                                 <!-- Course Info -->
                                 <div class="flex-1 min-w-0">
-                                    <!-- Category Label -->
-                                    <div class="mb-2">
+                                    <!-- Category Label & Mode Badge -->
+                                    <div class="mb-2 flex flex-wrap items-center gap-2">
                                         <span
                                             class="inline-block px-3 py-1 text-xs font-bold rounded-full
-                                                                                                                                                                                {{ in_array($kategori, ['Graphic Design', 'Digital Marketing']) ? 'bg-orange-100 text-orange-600' : '' }}
-                                                                                                                                                                                {{ in_array($kategori, ['Web Development', 'Frontend', 'Backend']) ? 'bg-blue-100 text-blue-600' : '' }}
-                                                                                                                                                                                {{ $kategori === 'Programming' ? 'bg-purple-100 text-purple-600' : '' }}
-                                                                                                                                                                                {{ $kategori === 'business' ? 'bg-green-100 text-green-600' : '' }}
-                                                                                                                                                                                {{ !in_array($kategori, ['Graphic Design', 'Digital Marketing', 'Web Development', 'Frontend', 'Backend', 'Programming', 'business']) ? 'bg-gray-100 text-gray-600' : '' }}">
+                                                                                                                                                                                            {{ in_array($kategori, ['Graphic Design', 'Digital Marketing']) ? 'bg-orange-100 text-orange-600' : '' }}
+                                                                                                                                                                                            {{ in_array($kategori, ['Web Development', 'Frontend', 'Backend']) ? 'bg-blue-100 text-blue-600' : '' }}
+                                                                                                                                                                                            {{ $kategori === 'Programming' ? 'bg-purple-100 text-purple-600' : '' }}
+                                                                                                                                                                                            {{ $kategori === 'business' ? 'bg-green-100 text-green-600' : '' }}
+                                                                                                                                                                                            {{ !in_array($kategori, ['Graphic Design', 'Digital Marketing', 'Web Development', 'Frontend', 'Backend', 'Programming', 'business']) ? 'bg-gray-100 text-gray-600' : '' }}">
                                             {{ ucwords($kategori) }}
                                         </span>
+                                        {{-- Course Mode Badge (Online/Offline/Hybrid) --}}
+                                        {!! $course->metode_badge !!}
                                     </div>
 
                                     <!-- Course Title -->
@@ -763,24 +765,24 @@
                         const url = data.stream_url || data.url || '';
                         const isHtml = url.toLowerCase().endsWith('.html');
                         preview.innerHTML = `
-                                                                            <iframe src="${url}" class="w-full h-[70vh] rounded-lg border-4 border-blue-100 shadow-lg" title="Certificate"></iframe>
-                                                                        `;
+                                                                                <iframe src="${url}" class="w-full h-[70vh] rounded-lg border-4 border-blue-100 shadow-lg" title="Certificate"></iframe>
+                                                                            `;
                     } else {
                         preview.innerHTML = `
-                                                                            <div class="text-center text-red-600">
-                                                                                <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
-                                                                                <p class="font-semibold">Gagal memuat sertifikat</p>
-                                                                            </div>
-                                                                        `;
+                                                                                <div class="text-center text-red-600">
+                                                                                    <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
+                                                                                    <p class="font-semibold">Gagal memuat sertifikat</p>
+                                                                                </div>
+                                                                            `;
                     }
                 })
                 .catch(error => {
                     preview.innerHTML = `
-                                                                        <div class="text-center text-red-600">
-                                                                            <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
-                                                                            <p class="font-semibold">Terjadi kesalahan</p>
-                                                                        </div>
-                                                                    `;
+                                                                            <div class="text-center text-red-600">
+                                                                                <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
+                                                                                <p class="font-semibold">Terjadi kesalahan</p>
+                                                                            </div>
+                                                                        `;
                 });
         }
 

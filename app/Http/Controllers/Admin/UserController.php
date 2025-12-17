@@ -57,7 +57,22 @@ class UserController extends Controller
             $validated['role'] = 'student';
         }
 
-        User::create($validated);
+        // Handle email verification based on admin choice
+        if ($request->has('auto_verify') && $request->auto_verify) {
+            // Auto-verify: set email_verified_at immediately
+            $validated['email_verified_at'] = now();
+        }
+
+        $user = User::create($validated);
+
+        // Send verification email if requested
+        if ($request->has('send_verification') && $request->send_verification) {
+            $user->sendEmailVerificationNotification();
+
+            return redirect()
+                ->route('admin.users.index')
+                ->with('success', 'Pengguna berhasil ditambahkan! Email verifikasi telah dikirim.');
+        }
 
         return redirect()
             ->route('admin.users.index')

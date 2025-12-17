@@ -136,7 +136,7 @@
                     @endphp
                     <a href="{{ route('home', array_merge(request()->only('search'), ['category' => $cat])) }}"
                         class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm flex items-center gap-2
-                                                   {{ $currentCategory === $cat ? 'bg-pnj-teal text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
+                                                           {{ $currentCategory === $cat ? 'bg-pnj-teal text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
                         <i class="fas {{ $icon }}"></i>
                         <span>{{ $cat }}</span>
                         <span
@@ -185,7 +185,7 @@
                         @endif
 
                         <!-- Category -->
-                        <div class="absolute top-3 left-3">
+                        <div class="absolute top-3 left-3 flex flex-wrap gap-1">
                             @php
                                 $cat = $course->kategori ?? 'General';
                                 $catColors = [
@@ -201,6 +201,8 @@
                             <span class="text-xs px-2.5 py-1 rounded-full font-semibold border shadow-sm {{ $badgeClass }}">
                                 {{ $cat }}
                             </span>
+                            {{-- Course Mode Badge (Online/Offline/Hybrid) --}}
+                            {!! $course->metode_badge !!}
                         </div>
 
                         <!-- Badge -->

@@ -341,7 +341,8 @@ class MaterialController extends Controller
 
         $storage = app(SupabaseStorageService::class);
 
-        $request->validate([
+        // Base validation rules
+        $rules = [
             'section_id' => 'nullable|exists:course_sections,id',
             'judul' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -371,14 +372,19 @@ class MaterialController extends Controller
             'is_preview' => 'nullable|boolean',
             'status' => 'nullable|in:published,draft',
             'status_terkunci' => 'nullable|boolean',
-            // class session fields
-            'session_date' => 'required_if:type,class_session|date',
-            'session_start_time' => 'required_if:type,class_session',
-            'session_end_time' => 'required_if:type,class_session',
-            'session_location' => 'nullable|string|max:255',
-            'session_meeting_link' => 'nullable|url',
-            'session_type' => ['required_if:type,class_session', Rule::in(['offline', 'online'])],
-        ]);
+        ];
+
+        // Add class session validation rules only if type is class_session
+        if ($request->type === 'class_session') {
+            $rules['session_date'] = 'required|date';
+            $rules['session_start_time'] = 'required';
+            $rules['session_end_time'] = 'required';
+            $rules['session_location'] = 'nullable|string|max:255';
+            $rules['session_meeting_link'] = 'nullable|url';
+            $rules['session_type'] = ['required', Rule::in(['offline', 'online'])];
+        }
+
+        $request->validate($rules);
 
         $updateData = [
             'section_id' => $request->section_id,

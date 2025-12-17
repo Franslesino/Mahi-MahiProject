@@ -40,7 +40,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                     Tipe Soal <span class="text-red-500">*</span>
                 </label>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:border-blue-500 transition"
                            :class="questionType === 'multiple_choice' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'">
                         <input type="radio" 
@@ -81,18 +81,6 @@
                         </div>
                     </label>
 
-                    <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:border-orange-500 transition"
-                           :class="questionType === 'essay' ? 'border-orange-500 bg-orange-50' : 'border-gray-200'">
-                        <input type="radio" 
-                               name="type" 
-                               value="essay"
-                               x-model="questionType"
-                               class="sr-only">
-                        <div class="text-center w-full">
-                            <i class="fas fa-file-alt text-2xl mb-2 text-orange-600"></i>
-                            <div class="font-medium text-sm">Essay</div>
-                        </div>
-                    </label>
                 </div>
             </div>
 
@@ -193,16 +181,6 @@
                 </p>
             </div>
 
-            <!-- Essay (no correct answer needed) -->
-            <div x-show="questionType === 'essay'" class="mb-6">
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <p class="text-sm text-yellow-800">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        Soal essay akan dinilai secara manual oleh instruktur
-                    </p>
-                </div>
-            </div>
-
             <!-- Explanation -->
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -279,7 +257,7 @@
                 <div class="bg-gray-50 rounded-lg p-4 mb-6">
                     <h5 class="font-semibold text-gray-800 mb-2">Format Template:</h5>
                     <ul class="text-sm text-gray-700 space-y-1">
-                        <li>• <strong>type:</strong> multiple_choice, true_false, short_answer, atau essay</li>
+                        <li>• <strong>type:</strong> multiple_choice, true_false, atau short_answer</li>
                         <li>• <strong>question_text:</strong> Teks pertanyaan</li>
                         <li>• <strong>points:</strong> Poin soal (angka)</li>
                         <li>• <strong>option_1, option_2, dst:</strong> Pilihan jawaban (untuk multiple_choice)</li>

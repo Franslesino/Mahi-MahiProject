@@ -55,7 +55,8 @@
                 ->where('quiz_id', $quiz->id)
                 ->where('kursus_id', $kursus->id)
                 ->count();
-            $canRetake = $totalAttempts < $kursus->max_quiz_attempts;
+            // Paksa tampil tanpa opsi retake agar tombol tidak doble
+            $canRetake = false;
         @endphp
 
         @if($attempt->is_passed)
@@ -245,55 +246,40 @@
         <!-- Action Buttons -->
         <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
             <div class="flex flex-wrap justify-center gap-4">
-                @if($attempt->is_passed)
-                    {{-- User lulus - tampilkan Kembali ke Kursus dan Lihat Sertifikat --}}
-                    <a href="{{ route('student.course.learn', $kursus->id) }}" 
-                       class="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition font-semibold">
-                        <i class="fas fa-book-open"></i>
-                        Kembali ke Kursus
-                    </a>
-                    
-                    @php
-                        $enrollment = \App\Models\Enrollment::where('user_id', auth()->id())
-                            ->where('kursus_id', $kursus->id)
-                            ->whereIn('status_pendaftaran', ['active', 'completed', 'paid'])
-                            ->first();
-                    @endphp
-                    
-                    @if($enrollment)
-                        <a href="{{ route('student.certificate.stream', $enrollment->id) }}" 
-                           target="_blank"
-                           class="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition font-semibold">
-                            <i class="fas fa-certificate"></i>
-                            Lihat Sertifikat
-                        </a>
-                    @endif
-                @else
-                    {{-- User belum lulus - tampilkan Kembali ke Final Quiz dan Coba Lagi --}}
-                    <a href="{{ route('courses.final-quiz.show', $kursus->id) }}" 
-                       class="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition font-semibold">
-                        <i class="fas fa-arrow-left"></i>
-                        Kembali ke Final Quiz
-                    </a>
-                    
-                    @php
-                        $totalAttempts = \App\Models\QuizAttempt::where('user_id', auth()->id())
-                            ->where('quiz_id', $quiz->id)
-                            ->where('kursus_id', $kursus->id)
-                            ->count();
-                        $canRetake = $totalAttempts < $kursus->max_quiz_attempts;
-                    @endphp
-                    
-                    @if($canRetake)
-                        <a href="{{ route('courses.final-quiz.show', $kursus->id) }}" 
-                           class="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition font-semibold">
-                            <i class="fas fa-redo"></i>
-                            Coba Lagi ({{ $kursus->max_quiz_attempts - $totalAttempts }} kesempatan)
-                        </a>
-                    @endif
-                @endif
+                <a href="{{ route('student.course.learn', $kursus->id) }}" 
+                   class="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition font-semibold">
+                    <i class="fas fa-book-open"></i>
+                    Kembali ke Kursus
+                </a>
+                <button type="button"
+                        onclick="showReviewButtonHandler()"
+                        class="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition font-semibold">
+                    <i class="fas fa-clipboard-list"></i>
+                    Lihat Review Jawaban
+                </button>
             </div>
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    function showReviewButtonHandler() {
+        // Jika fungsi showReview (untuk lulus+retake) tersedia, pakai itu
+        if (typeof showReview === 'function') {
+            showReview();
+        } else {
+            // fallback: tampilkan blok review jika ada
+            const review = document.getElementById('review-section');
+            const choice = document.getElementById('review-choice');
+            if (review) review.classList.remove('hidden');
+            if (choice) choice.classList.add('hidden');
+        }
+        const review = document.getElementById('review-section');
+        if (review) {
+            review.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+</script>
+@endpush
 @endsection

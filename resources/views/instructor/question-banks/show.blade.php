@@ -60,7 +60,6 @@
                             required>
                         <option value="multiple_choice" selected>Multiple Choice</option>
                         <option value="true_false">True/False</option>
-                        <option value="essay">Essay</option>
                         <option value="short_answer">Short Answer</option>
                     </select>
                 </div>
@@ -99,7 +98,7 @@
                     </button>
                 </div>
 
-                <!-- Correct Answer (for essay/short answer) -->
+                <!-- Correct Answer (for short answer) -->
                 <div id="correctAnswerContainer" style="display: none;">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Kunci Jawaban (opsional)</label>
                     <textarea name="correct_answer" 
@@ -155,16 +154,23 @@
                             </span>
                         </div>
                         @if($questionBank->created_by == auth()->id())
-                        <form action="{{ route('instructor.question-banks.questions.destroy', [$questionBank, $question]) }}" 
-                              method="POST"
-                              data-confirm="Yakin ingin menghapus soal ini?">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" 
-                                    class="px-3 py-1 text-red-600 hover:bg-red-50 rounded transition text-sm">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
+                        <div class="flex items-center gap-2">
+                            <a href="{{ route('instructor.question-banks.questions.edit', [$questionBank, $question]) }}"
+                               class="px-3 py-1 text-blue-600 hover:bg-blue-50 rounded transition text-sm"
+                               title="Edit soal">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ route('instructor.question-banks.questions.destroy', [$questionBank, $question]) }}" 
+                                  method="POST"
+                                  data-confirm="Yakin ingin menghapus soal ini?">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" 
+                                        class="px-3 py-1 text-red-600 hover:bg-red-50 rounded transition text-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
                         @endif
                     </div>
 
@@ -226,9 +232,14 @@ document.addEventListener('DOMContentLoaded', function() {
             optionsList.innerHTML = '';
             optionCount = 0;
             addTrueFalseOptions();
-        } else {
+        } else if (type === 'short_answer') {
             optionsContainer.style.display = 'none';
             correctAnswerContainer.style.display = 'block';
+            optionsList.innerHTML = '';
+            optionCount = 0;
+        } else {
+            optionsContainer.style.display = 'none';
+            correctAnswerContainer.style.display = 'none';
             optionsList.innerHTML = '';
             optionCount = 0;
         }

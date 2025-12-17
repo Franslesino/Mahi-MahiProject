@@ -377,14 +377,14 @@
                             // Show Midtrans popup
                             showMidtransPopup(data.snap_token, data.transaction_id, data.transaction_code);
                         } else {
-                            alert(data.message || 'Terjadi kesalahan saat membuat transaksi');
+                            showSuccessModal(data.message || 'Terjadi kesalahan saat membuat transaksi');
                             payButton.disabled = false;
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
                         showLoading(false);
-                        alert('Terjadi kesalahan. Silakan coba lagi.');
+                        showSuccessModal('Terjadi kesalahan. Silakan coba lagi.');
                         payButton.disabled = false;
                     });
             });
@@ -398,6 +398,37 @@
                 }
             }
 
+            // Simple success modal (floating)
+            function showSuccessModal(message) {
+                let modal = document.getElementById('successModal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'successModal';
+                    modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+                    modal.innerHTML = `
+                        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 text-center">
+                            <div class="w-14 h-14 mx-auto mb-4 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-2xl">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <p class="text-lg font-semibold text-gray-800 mb-4" id="successModalMessage"></p>
+                            <button id="successModalClose" class="w-full px-4 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition">
+                                Tutup
+                            </button>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) modal.classList.add('hidden');
+                    });
+                    modal.querySelector('#successModalClose').addEventListener('click', () => {
+                        modal.classList.add('hidden');
+                    });
+                }
+                const msgEl = modal.querySelector('#successModalMessage');
+                if (msgEl) msgEl.textContent = message || 'Berhasil!';
+                modal.classList.remove('hidden');
+            }
+
             function showMidtransPopup(snapToken, transactionId, transactionCode) {
                 snap.pay(snapToken, {
                     onSuccess: function (result) {
@@ -407,12 +438,12 @@
                     onPending: function (result) {
                         console.log('Payment Pending:', result);
                         // Langsung redirect ke halaman transaksi untuk cek status
-                        alert('Pembayaran sedang diproses. Anda akan diarahkan ke halaman detail transaksi.');
+                        showSuccessModal('Pembayaran sedang diproses. Anda akan diarahkan ke halaman detail transaksi.');
                         window.location.href = '/transactions/' + transactionId;
                     },
                     onError: function (result) {
                         console.log('Payment Error:', result);
-                        alert('Terjadi kesalahan pada proses pembayaran.');
+                        showSuccessModal('Terjadi kesalahan pada proses pembayaran.');
                         window.location.href = '/transactions/' + transactionId;
                     },
                     onClose: function () {
@@ -460,17 +491,17 @@
 
                         if (data.success) {
                             // Show success message dan redirect
-                            alert('Pembayaran berhasil! Anda sekarang terdaftar di kursus ini.');
+                        showSuccessModal(data.message || 'Pembayaran berhasil! Anda sekarang terdaftar di kursus ini.');
                             window.location.href = data.redirect_url;
                         } else {
-                            alert(data.message || 'Pembayaran berhasil tapi ada kesalahan saat mendaftarkan kursus');
+                        showSuccessModal(data.message || 'Pembayaran berhasil tapi ada kesalahan saat mendaftarkan kursus');
                             window.location.href = window.location.href;
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
                         showLoading(false);
-                        alert('Pembayaran berhasil! Silakan tunggu, sistem sedang memproses...');
+                        showSuccessModal('Pembayaran berhasil! Silakan tunggu, sistem sedang memproses...');
                         setTimeout(() => {
                             window.location.reload();
                         }, 2000);
@@ -494,7 +525,7 @@
                             }, 2000);
                         } else {
                             showLoading(false);
-                            alert('Pembayaran gagal atau dibatalkan');
+                            showSuccessModal('Pembayaran gagal atau dibatalkan');
                             payButton.disabled = false;
                         }
                     })

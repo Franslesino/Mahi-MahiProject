@@ -346,7 +346,7 @@ class MaterialController extends Controller
             'judul' => 'required|string|max:255',
             'description' => 'nullable|string',
             'isi' => 'nullable|string',
-            'type' => 'required|in:video,pdf,text,quiz',
+            'type' => 'required|in:video,pdf,text,quiz,class_session',
             'file' => [
                 'nullable',
                 'file',
@@ -371,6 +371,13 @@ class MaterialController extends Controller
             'is_preview' => 'nullable|boolean',
             'status' => 'nullable|in:published,draft',
             'status_terkunci' => 'nullable|boolean',
+            // class session fields
+            'session_date' => 'required_if:type,class_session|date',
+            'session_start_time' => 'required_if:type,class_session',
+            'session_end_time' => 'required_if:type,class_session',
+            'session_location' => 'nullable|string|max:255',
+            'session_meeting_link' => 'nullable|url',
+            'session_type' => ['required_if:type,class_session', Rule::in(['offline', 'online'])],
         ]);
 
         $updateData = [
@@ -386,6 +393,28 @@ class MaterialController extends Controller
             'status' => $request->status ?? 'draft',
             'status_terkunci' => $request->status_terkunci ?? false,
         ];
+
+        if ($request->type === 'class_session') {
+            $updateData = array_merge($updateData, [
+                'session_date' => $request->session_date,
+                'session_start_time' => $request->session_start_time,
+                'session_end_time' => $request->session_end_time,
+                'session_location' => $request->session_location,
+                'session_meeting_link' => $request->session_meeting_link,
+                'session_type' => $request->session_type,
+                'status' => 'published',
+            ]);
+        } else {
+            // Bersihkan field sesi jika tipe diubah
+            $updateData = array_merge($updateData, [
+                'session_date' => null,
+                'session_start_time' => null,
+                'session_end_time' => null,
+                'session_location' => null,
+                'session_meeting_link' => null,
+                'session_type' => null,
+            ]);
+        }
 
         if ($request->hasFile('file')) {
             // Hapus file lama

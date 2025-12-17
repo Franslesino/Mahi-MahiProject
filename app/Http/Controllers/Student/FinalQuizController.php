@@ -267,11 +267,38 @@ class FinalQuizController extends Controller
         $kursus = $attempt->kursus;
         $quiz = $attempt->quiz;
 
-        // Recalculate score from stored answers to avoid display mismatch
+        // Recalculate score from stored answers using the same logic as submit()
         $answers = $attempt->jawabanPeserta ?? collect();
-        $totalQuestions = $answers->count();
-        $correctCount = $answers->where('nilai_tercapai', 1)->count();
-        $computedScore = $totalQuestions > 0 ? round(($correctCount / $totalQuestions) * 100, 2) : 0;
+        $questions = $quiz->soal()->with('options')->get();
+
+        $totalPossiblePoints = 0;
+        $totalScore = 0;
+        $correctCount = 0;
+
+        foreach ($questions as $question) {
+            $answer = $answers->firstWhere('question_id', $question->id);
+            $isEssay = $question->type === 'essay' || $question->options->count() === 0;
+
+            if ($isEssay) {
+                continue; // tidak dihitung otomatis
+            }
+
+            $points = $question->points ?? 0;
+            $totalPossiblePoints += $points;
+
+            $isCorrect = $answer && $answer->nilai_tercapai == 1;
+            if ($isCorrect) {
+                $correctCount++;
+                $totalScore += $points;
+            }
+        }
+
+        if ($totalPossiblePoints > 0) {
+            $computedScore = round(($totalScore / $totalPossiblePoints) * 100, 2);
+        } else {
+            $totalQuestions = $questions->count();
+            $computedScore = $totalQuestions > 0 ? round(($correctCount / $totalQuestions) * 100, 2) : 0;
+        }
 
         // Sync attempt score/pass flag if different
         $passingScore = $kursus->min_passing_score ?? ($quiz->passing_score ?? 70);

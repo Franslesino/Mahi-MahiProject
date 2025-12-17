@@ -297,7 +297,8 @@ class FinalQuizController extends Controller
 
         $validated = $request->validate([
             'questions' => 'required|array',
-            'questions.*' => 'exists:bank_soal,id',
+            // Validasi ke tabel questions (soal dari question bank)
+            'questions.*' => 'exists:questions,id',
         ]);
 
         DB::beginTransaction();
@@ -314,13 +315,13 @@ class FinalQuizController extends Controller
                 // Cek apakah soal sudah ada
                 $exists = DB::table('relasi_quiz')
                     ->where('quiz_id', $quiz->id)
-                    ->where('bank_soal_id', $soalId)
+                    ->where('question_id', $soalId)
                     ->exists();
 
                 if (!$exists) {
                     DB::table('relasi_quiz')->insert([
                         'quiz_id' => $quiz->id,
-                        'bank_soal_id' => $soalId,
+                        'question_id' => $soalId,
                         'urutan' => $lastUrutan + $index + 1,
                         'is_active' => true,
                     ]);
@@ -523,4 +524,3 @@ class FinalQuizController extends Controller
         }
     }
 }
-

@@ -35,12 +35,13 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Tipe Materi *</label>
-                    <select name="type" required
+                    <select name="type" id="materialTypeSelect" required
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('type') border-red-500 @enderror">
                         <option value="video" {{ old('type', $material->type) === 'video' ? 'selected' : '' }}>Video</option>
                         <option value="pdf" {{ old('type', $material->type) === 'pdf' ? 'selected' : '' }}>PDF</option>
                         <option value="text" {{ old('type', $material->type) === 'text' ? 'selected' : '' }}>Text</option>
                         <option value="quiz" {{ old('type', $material->type) === 'quiz' ? 'selected' : '' }}>Quiz</option>
+                        <option value="class_session" {{ old('type', $material->type) === 'class_session' ? 'selected' : '' }}>Sesi Tatap Muka</option>
                     </select>
                     @error('type')
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -69,7 +70,7 @@
                     </select>
                 </div>
 
-                <div class="md:col-span-2">
+                <div class="md:col-span-2" id="fileUploadBlock">
                     <label class="block text-sm font-medium text-gray-700 mb-2">File (Video/PDF)</label>
                     <input type="file" name="file" accept="video/mp4,application/pdf"
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('file') border-red-500 @enderror">
@@ -102,10 +103,51 @@
                     </label>
                 </div>
 
-                <div class="md:col-span-2">
+                <div class="md:col-span-2" id="contentBlock">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Konten Text (jika tipe Text)</label>
                     <textarea name="content" rows="6"
                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">{{ old('content', $material->content) }}</textarea>
+                </div>
+
+                {{-- Class Session Fields --}}
+                <div class="md:col-span-2 space-y-4" id="classSessionBlock">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Sesi *</label>
+                            <input type="date" name="session_date" value="{{ old('session_date', optional($material->session_date)->format('Y-m-d')) }}"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 shadow-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tipe Sesi *</label>
+                            <select name="session_type"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 shadow-sm">
+                                <option value="offline" {{ old('session_type', $material->session_type) === 'offline' ? 'selected' : '' }}>Offline (Tatap Muka)</option>
+                                <option value="online" {{ old('session_type', $material->session_type) === 'online' ? 'selected' : '' }}>Online (Virtual)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Waktu Mulai *</label>
+                            <input type="time" name="session_start_time" value="{{ old('session_start_time', $material->session_start_time) }}"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 shadow-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Waktu Selesai *</label>
+                            <input type="time" name="session_end_time" value="{{ old('session_end_time', $material->session_end_time) }}"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 shadow-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Lokasi / Tempat</label>
+                        <input type="text" name="session_location" value="{{ old('session_location', $material->session_location) }}" placeholder="Contoh: Ruang Lab 301, Gedung A"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 shadow-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Link Meeting (untuk sesi online)</label>
+                        <input type="url" name="session_meeting_link" value="{{ old('session_meeting_link', $material->session_meeting_link) }}" placeholder="https://zoom.us/j/..."
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 shadow-sm">
+                    </div>
                 </div>
             </div>
 
@@ -124,3 +166,34 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const typeSelect = document.getElementById('materialTypeSelect');
+        const fileBlock = document.getElementById('fileUploadBlock');
+        const contentBlock = document.getElementById('contentBlock');
+        const sessionBlock = document.getElementById('classSessionBlock');
+
+        const toggleFields = () => {
+            const type = typeSelect.value;
+            if (type === 'text') {
+                contentBlock.style.display = '';
+            } else {
+                contentBlock.style.display = 'none';
+            }
+
+            if (type === 'class_session') {
+                sessionBlock.style.display = '';
+                fileBlock.style.display = 'none';
+            } else {
+                sessionBlock.style.display = 'none';
+                fileBlock.style.display = '';
+            }
+        };
+
+        toggleFields();
+        typeSelect.addEventListener('change', toggleFields);
+    });
+</script>
+@endpush

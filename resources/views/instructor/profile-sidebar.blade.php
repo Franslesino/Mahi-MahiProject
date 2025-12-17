@@ -31,33 +31,6 @@
             </div>
         </div>
 
-        {{-- Error messages --}}
-        @if ($errors->any())
-            <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 shadow-sm">
-                <div class="flex items-start gap-3">
-                    <i class="fas fa-exclamation-circle text-xl mt-0.5"></i>
-                    <div>
-                        <h4 class="font-semibold mb-1">Terdapat kesalahan:</h4>
-                        <ul class="list-disc pl-5 space-y-1 text-sm">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        {{-- Flash success --}}
-        @if (session('success'))
-            <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-700 shadow-sm">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-check-circle text-lg"></i>
-                    <p class="font-medium">{{ session('success') }}</p>
-                </div>
-            </div>
-        @endif
-
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <form method="POST" action="{{ route('instructor.profile.update') }}" enctype="multipart/form-data">
                 @csrf

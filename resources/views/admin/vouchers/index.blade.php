@@ -10,24 +10,6 @@
         </a>
     </div>
 
-    @if(session('success'))
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
-        <span>{{ session('success') }}</span>
-        <button onclick="this.parentElement.remove()" class="text-green-700 hover:text-green-900">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-    @endif
-
-    @if(session('error'))
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
-        <span>{{ session('error') }}</span>
-        <button onclick="this.parentElement.remove()" class="text-red-700 hover:text-red-900">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-    @endif
-
     <div class="bg-white rounded-lg shadow-sm">
         @if($vouchers->count() > 0)
         <div class="overflow-x-auto">

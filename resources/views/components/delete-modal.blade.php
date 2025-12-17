@@ -10,7 +10,7 @@
             <p id="globalDeleteMessage" class="text-sm text-gray-600">Tindakan ini tidak bisa dibatalkan.</p>
             <div class="flex flex-col gap-2 mt-3">
                 <button id="globalDeleteConfirm" class="w-full px-4 py-3 bg-red-600 text-white rounded-2xl font-semibold hover:bg-red-700 transition">
-                    Ya, hapus
+                    Ya, lanjut
                 </button>
                 <button id="globalDeleteCancel" class="w-full px-4 py-3 bg-gray-100 text-gray-800 rounded-2xl font-semibold hover:bg-gray-200 transition">
                     Batal

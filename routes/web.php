@@ -537,6 +537,8 @@ Route::middleware('auth')->group(function () {
             Route::resource('question-banks', \App\Http\Controllers\Instructor\QuestionBankController::class);
             Route::get('/question-banks/{questionBank}/create-question', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'createQuestion'])->name('question-banks.create-question');
             Route::post('/question-banks/{questionBank}/questions', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'storeQuestion'])->name('question-banks.questions.store');
+            Route::get('/question-banks/{questionBank}/questions/{question}/edit', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'editQuestion'])->name('question-banks.questions.edit');
+            Route::put('/question-banks/{questionBank}/questions/{question}', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'updateQuestion'])->name('question-banks.questions.update');
             Route::delete('/question-banks/{questionBank}/questions/{question}', [\App\Http\Controllers\Instructor\QuestionBankController::class, 'destroyQuestion'])->name('question-banks.questions.destroy');
 
             // Bantuan (static)

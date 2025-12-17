@@ -15,12 +15,6 @@
     </div>
 
     <!-- Alert Messages -->
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <i class="fas fa-check-circle"></i> {{ session('success') }}
-        </div>
-    @endif
-
     @if($errors->any())
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
             <i class="fas fa-exclamation-circle"></i>
@@ -222,11 +216,12 @@
 
                 <div class="mt-4 flex flex-wrap gap-3">
                     <!-- Toggle Activation Button -->
-                    <form action="{{ route('instructor.courses.final-quiz.toggle-activation', $kursus->id) }}" method="POST" class="inline">
+                    <form action="{{ route('instructor.courses.final-quiz.toggle-activation', $kursus->id) }}" method="POST" class="inline"
+                          data-confirm-title="{{ optional($kursus->finalQuiz)->is_active ? 'Nonaktifkan final quiz?' : 'Aktifkan final quiz?' }}"
+                          data-confirm="Apakah Anda yakin ingin {{ optional($kursus->finalQuiz)->is_active ? 'menonaktifkan' : 'mengaktifkan' }} final quiz?">
                         @csrf
                         <button type="submit" 
-                                class="px-6 py-2 {{ optional($kursus->finalQuiz)->is_active ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700' }} text-white rounded-lg transition inline-flex items-center gap-2"
-                                onclick="return confirm('Apakah Anda yakin ingin {{ optional($kursus->finalQuiz)->is_active ? 'menonaktifkan' : 'mengaktifkan' }} final quiz?')">
+                                class="px-6 py-2 {{ optional($kursus->finalQuiz)->is_active ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700' }} text-white rounded-lg transition inline-flex items-center gap-2">
                             <i class="fas fa-{{ optional($kursus->finalQuiz)->is_active ? 'pause' : 'play' }}-circle"></i>
                             {{ optional($kursus->finalQuiz)->is_active ? 'Nonaktifkan Quiz' : 'Aktifkan Quiz' }}
                         </button>
@@ -238,14 +233,14 @@
                     </a>
                     
                     <button type="button" 
-                            onclick="openCreateQuestionModal()"
+                            onclick="openCreateQuestionModal(this)"
                             {{ optional($kursus->finalQuiz)->is_active ? 'disabled' : '' }}
                             class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                         <i class="fas fa-plus-circle"></i> Tambah Soal Baru
                     </button>
                     
                     <button type="button" 
-                            onclick="openImportModal()"
+                            onclick="openImportModal(this)"
                             {{ optional($kursus->finalQuiz)->is_active ? 'disabled' : '' }}
                             class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                         <i class="fas fa-file-import"></i> Tambah Soal dari Bank Soal
@@ -333,7 +328,8 @@
                                         @else
                                             <form action="{{ route('instructor.courses.final-quiz.remove-question', [$kursus->id, $question->id]) }}" 
                                                   method="POST" 
-                                                  onsubmit="return confirm('Yakin ingin menghapus soal ini dari final quiz?')">
+                                                  data-confirm-title="Hapus soal dari final quiz?"
+                                                  data-confirm="Yakin ingin menghapus soal ini dari final quiz?">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" 
@@ -582,11 +578,8 @@
 
 <script>
 const finalQuizActive = @json(optional($kursus->finalQuiz)->is_active ?? false);
-function openImportModal() {
-    if (finalQuizActive) {
-        alert('Final quiz sedang aktif. Nonaktifkan terlebih dahulu untuk menambah soal.');
-        return;
-    }
+function openImportModal(btn) {
+    if (btn?.hasAttribute('disabled')) return;
     document.getElementById('importModal').classList.remove('hidden');
 }
 
@@ -631,11 +624,8 @@ document.addEventListener('DOMContentLoaded', () => {});
 // Create Question Modal Functions
 let optionCounter = 0;
 
-function openCreateQuestionModal() {
-    if (finalQuizActive) {
-        alert('Final quiz sedang aktif. Nonaktifkan terlebih dahulu untuk menambah soal.');
-        return;
-    }
+function openCreateQuestionModal(btn) {
+    if (btn?.hasAttribute('disabled')) return;
     document.getElementById('createQuestionModal').classList.remove('hidden');
     optionCounter = 0;
     updateOptionsCount();
@@ -712,7 +702,6 @@ function createOptionElement(text = '', isFixed = false) {
         ${!isFixed ? `<button type="button" onclick="removeOption(${optionCounter})"
                 class="px-4 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm font-medium inline-flex items-center gap-2">
             <i class="fas fa-trash"></i> Hapus
-        </button>` : ''}
         </button>` : ''}
     `;
     

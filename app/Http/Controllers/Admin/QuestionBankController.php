@@ -42,10 +42,7 @@ class QuestionBankController extends Controller
         $banks = $banksQuery->paginate(12);
 
         // Get all unique categories for filter
-        $categories = QuestionBank::whereNotNull('category')
-            ->distinct()
-            ->pluck('category')
-            ->sort();
+        $categories = $this->getAvailableCategories();
 
         return view('admin.question-banks.index', compact('banks', 'categories'));
     }
@@ -55,7 +52,9 @@ class QuestionBankController extends Controller
      */
     public function create()
     {
-        return view('admin.question-banks.create');
+        $categories = $this->getAvailableCategories();
+
+        return view('admin.question-banks.create', compact('categories'));
     }
 
     /**
@@ -101,7 +100,9 @@ class QuestionBankController extends Controller
         if ($questionBank->is_internal) {
             abort(404);
         }
-        return view('admin.question-banks.edit', compact('questionBank'));
+        $categories = $this->getAvailableCategories();
+
+        return view('admin.question-banks.edit', compact('questionBank', 'categories'));
     }
 
     /**
@@ -144,6 +145,43 @@ class QuestionBankController extends Controller
     }
 
     /**
+     * Ambil daftar kategori untuk dropdown (gabung default + data yang ada).
+     */
+    private function getAvailableCategories()
+    {
+        $defaultCategories = collect([
+            'Web Development',
+            'Programming',
+            'Data Science',
+            'UI/UX Design',
+            'Product Management',
+            'Business & Management',
+            'Marketing & Sales',
+            'Finance & Accounting',
+            'Language Learning',
+            'Mathematics',
+            'Science & Engineering',
+            'Professional Skills',
+            'Career Development',
+        ]);
+
+        $query = QuestionBank::whereNotNull('category');
+
+        if (Schema::hasColumn('question_banks', 'is_internal')) {
+            $query->where('is_internal', false);
+        }
+
+        $categories = $query->distinct()->pluck('category');
+
+        return $defaultCategories
+            ->merge($categories)
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+    }
+
+    /**
      * Store a new question in the bank
      */
     public function storeQuestion(Request $request, QuestionBank $questionBank)
@@ -152,7 +190,7 @@ class QuestionBankController extends Controller
             abort(404);
         }
         $validated = $request->validate([
-            'type' => 'required|in:multiple_choice,true_false,essay,short_answer',
+            'type' => 'required|in:multiple_choice,true_false,short_answer',
             'question_text' => 'required|string',
             'explanation' => 'nullable|string',
             'points' => 'required|integer|min:1',
@@ -253,7 +291,7 @@ class QuestionBankController extends Controller
         ];
 
         $columns = [
-            'type',
+            'type', // multiple_choice, true_false, short_answer
             'question_text',
             'points',
             'option_1',
@@ -311,18 +349,7 @@ class QuestionBankController extends Controller
                 'Ir. Soekarno adalah presiden pertama RI'
             ]);
             
-            fputcsv($file, [
-                'essay',
-                'Jelaskan dampak revolusi industri terhadap masyarakat',
-                '5',
-                '',
-                '',
-                '',
-                '',
-                '',
-                '',
-                'Jawaban akan dinilai manual oleh instruktur'
-            ]);
+            // Essay dihilangkan dari template
 
             fclose($file);
         };

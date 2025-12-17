@@ -101,11 +101,19 @@ class UserController extends Controller
                 }
             ]);
 
+            // Status yang dihitung sebagai partisipasi / aktif
+            $participatingStatuses = ['active', 'completed', 'paid', 'approved', 'enrolled'];
+            $inProgressStatuses = ['active', 'paid', 'approved', 'enrolled'];
+            $completedStatuses = ['completed'];
+
+            $enrollments = $user->enrollments;
+            $enrollmentsCountable = $enrollments->whereIn('status_pendaftaran', $participatingStatuses);
+
             // Hitung statistik
             $stats = [
-                'total_enrolled' => $user->enrollments->count(),
-                'completed_courses' => $user->enrollments->where('status', 'selesai')->count(),
-                'in_progress' => $user->enrollments->where('status', 'aktif')->count(),
+                'total_enrolled' => $enrollmentsCountable->count(),
+                'completed_courses' => $enrollmentsCountable->whereIn('status_pendaftaran', $completedStatuses)->count(),
+                'in_progress' => $enrollmentsCountable->whereIn('status_pendaftaran', $inProgressStatuses)->count(),
                 'total_spent' => $user->transactions()->where('status', 'paid')->sum('total_bayar')
             ];
 
@@ -138,8 +146,8 @@ class UserController extends Controller
         }
 
         if (isset($validated['role']) && $validated['role'] === 'user') {
-    $validated['role'] = 'student';
-}
+            $validated['role'] = 'student';
+        }
 
 
         $user->update($validated);

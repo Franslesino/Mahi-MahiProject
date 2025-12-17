@@ -20,33 +20,6 @@
         <p class="text-gray-600 mt-2">Kelola informasi profil Anda</p>
     </div>
 
-    {{-- Error messages --}}
-    @if ($errors->any())
-        <div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
-            <div class="flex items-start gap-3">
-                <i class="fas fa-exclamation-circle text-xl mt-0.5"></i>
-                <div>
-                    <h4 class="font-semibold mb-2">Terdapat kesalahan:</h4>
-                    <ul class="list-disc pl-5 space-y-1">
-                        @foreach ($errors->all() as $error)
-                            <li class="text-sm">{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            </div>
-        </div>
-    @endif
-
-    {{-- Flash success --}}
-    @if (session('success'))
-        <div class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700">
-            <div class="flex items-center gap-3">
-                <i class="fas fa-check-circle text-xl"></i>
-                <p class="font-medium">{{ session('success') }}</p>
-            </div>
-        </div>
-    @endif
-
     <div class="bg-white rounded-xl shadow-sm p-6">
         <form method="POST" action="{{ route('instructor.profile.update') }}" enctype="multipart/form-data">
             @csrf

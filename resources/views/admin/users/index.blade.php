@@ -85,7 +85,8 @@
                                 {{-- TOMBOL DELETE --}}
                                 @if($user->id !== auth()->id())
                                 <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline"
-                                      onsubmit="return confirm('Yakin ingin menghapus pengguna ini?')">
+                                      data-confirm-title="Hapus pengguna?"
+                                      data-confirm="Yakin ingin menghapus pengguna ini?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-red-600 hover:text-red-800" title="Hapus">

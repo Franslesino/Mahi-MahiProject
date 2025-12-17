@@ -10,24 +10,6 @@
         </a>
     </div>
 
-    @if(session('success'))
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
-        <span>{{ session('success') }}</span>
-        <button onclick="this.parentElement.remove()" class="text-green-700 hover:text-green-900">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-    @endif
-
-    @if(session('error'))
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
-        <span>{{ session('error') }}</span>
-        <button onclick="this.parentElement.remove()" class="text-red-700 hover:text-red-900">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-    @endif
-
     <div class="bg-white rounded-lg shadow-sm">
         @if($banners->count() > 0)
         <div class="overflow-x-auto">
@@ -121,7 +103,8 @@
                                 <form action="{{ route('admin.promo-banners.destroy', $banner->id) }}" 
                                       method="POST" 
                                       class="inline"
-                                      onsubmit="return confirm('Yakin ingin menghapus banner ini?')">
+                                      data-confirm-title="Hapus banner?"
+                                      data-confirm="Yakin ingin menghapus banner ini?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" 

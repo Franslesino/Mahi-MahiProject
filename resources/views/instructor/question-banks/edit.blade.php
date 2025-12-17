@@ -1,6 +1,12 @@
 @extends('layouts.instructor')
 
 @section('content')
+@php
+    $categories = collect($categories ?? []);
+    $oldCategory = old('category', $questionBank->category);
+    $isCustomCategory = $oldCategory && !$categories->contains($oldCategory);
+@endphp
+
 <div class="p-8 max-w-4xl mx-auto">
     <!-- Header -->
     <div class="mb-8">
@@ -32,11 +38,24 @@
                 <!-- Category -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
-                    <input type="text" 
-                           name="category" 
-                           value="{{ old('category', $questionBank->category) }}"
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                           placeholder="Contoh: Programming, Mathematics, Language">
+                    <select id="category-select"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                        <option value="">Pilih kategori</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category }}" @selected($oldCategory === $category)>{{ $category }}</option>
+                        @endforeach
+                        <option value="__new__" @selected($isCustomCategory || $categories->isEmpty())>Kategori baru...</option>
+                    </select>
+                    <div id="category-input-wrapper" class="mt-2 @if(!($isCustomCategory || $categories->isEmpty())) hidden @endif">
+                        <input type="text"
+                               id="category-input"
+                               name="category"
+                               value="{{ $oldCategory }}"
+                               data-initial="{{ $oldCategory }}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                               placeholder="Tulis kategori baru">
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Pilih kategori yang tersedia atau pilih "Kategori baru..." untuk mengetik manual.</p>
                 </div>
 
                 <!-- Description -->
@@ -80,4 +99,30 @@
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectEl = document.getElementById('category-select');
+        const inputWrapper = document.getElementById('category-input-wrapper');
+        const inputEl = document.getElementById('category-input');
+
+        if (!selectEl || !inputEl || !inputWrapper) return;
+
+        const syncInput = () => {
+            if (selectEl.value === '__new__') {
+                inputWrapper.classList.remove('hidden');
+                if (!inputEl.value) {
+                    inputEl.value = inputEl.dataset.initial || '';
+                }
+                inputEl.focus();
+            } else {
+                inputWrapper.classList.add('hidden');
+                inputEl.value = selectEl.value || '';
+            }
+        };
+
+        syncInput();
+        selectEl.addEventListener('change', syncInput);
+    });
+</script>
 @endsection

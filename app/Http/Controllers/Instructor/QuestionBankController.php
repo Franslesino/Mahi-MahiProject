@@ -45,14 +45,7 @@ class QuestionBankController extends Controller
         $banks = $banksQuery->paginate(12);
 
         // Get all unique categories for filter
-        $categories = QuestionBank::where(function($query) {
-                $query->where('created_by', Auth::id())
-                      ->orWhere('is_public', true);
-            })
-            ->whereNotNull('category')
-            ->distinct()
-            ->pluck('category')
-            ->sort();
+        $categories = $this->getAvailableCategories();
 
         return view('instructor.question-banks.index', compact('banks', 'categories'));
     }
@@ -62,7 +55,9 @@ class QuestionBankController extends Controller
      */
     public function create()
     {
-        return view('instructor.question-banks.create');
+        $categories = $this->getAvailableCategories();
+
+        return view('instructor.question-banks.create', compact('categories'));
     }
 
     /**
@@ -118,7 +113,9 @@ class QuestionBankController extends Controller
             abort(403, 'Anda tidak dapat mengedit bank soal ini.');
         }
 
-        return view('instructor.question-banks.edit', compact('questionBank'));
+        $categories = $this->getAvailableCategories();
+
+        return view('instructor.question-banks.edit', compact('questionBank', 'categories'));
     }
 
     /**
@@ -171,6 +168,47 @@ class QuestionBankController extends Controller
     }
 
     /**
+     * Ambil daftar kategori unik yang bisa dipilih instruktur.
+     */
+    private function getAvailableCategories()
+    {
+        $query = QuestionBank::where(function($query) {
+                $query->where('created_by', Auth::id())
+                      ->orWhere('is_public', true);
+            })
+            ->whereNotNull('category');
+
+        if (Schema::hasColumn('question_banks', 'is_internal')) {
+            $query->where('is_internal', false);
+        }
+
+        $defaultCategories = collect([
+            'Web Development',
+            'Programming',
+            'Data Science',
+            'UI/UX Design',
+            'Product Management',
+            'Business & Management',
+            'Marketing & Sales',
+            'Finance & Accounting',
+            'Language Learning',
+            'Mathematics',
+            'Science & Engineering',
+            'Professional Skills',
+            'Career Development',
+        ]);
+
+        $categories = $query->distinct()->pluck('category');
+
+        return $defaultCategories
+            ->merge($categories)
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+    }
+
+    /**
      * Store a new question in the bank
      */
     public function storeQuestion(Request $request, QuestionBank $questionBank)
@@ -189,7 +227,7 @@ class QuestionBankController extends Controller
         }
 
         $validated = $request->validate([
-            'type' => 'required|in:multiple_choice,true_false,essay,short_answer',
+            'type' => 'required|in:multiple_choice,true_false,short_answer',
             'question_text' => 'required|string',
             'explanation' => 'nullable|string',
             'points' => 'required|integer|min:1',
@@ -285,6 +323,105 @@ class QuestionBankController extends Controller
         }
 
         return view('instructor.question-banks.create-question', compact('questionBank'));
+    }
+
+    /**
+     * Show edit question form
+     */
+    public function editQuestion(QuestionBank $questionBank, Question $question)
+    {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
+        if (($questionBank->created_by !== Auth::id() && !$questionBank->is_public) || $question->question_bank_id !== $questionBank->id) {
+            abort(403, 'Anda tidak dapat mengedit soal ini.');
+        }
+
+        $question->load('options');
+
+        return view('instructor.question-banks.edit-question', compact('questionBank', 'question'));
+    }
+
+    /**
+     * Update an existing question
+     */
+    public function updateQuestion(Request $request, QuestionBank $questionBank, Question $question)
+    {
+        if ($questionBank->is_internal) {
+            abort(404);
+        }
+        if (($questionBank->created_by !== Auth::id() && !$questionBank->is_public) || $question->question_bank_id !== $questionBank->id) {
+            abort(403, 'Anda tidak dapat mengedit soal ini.');
+        }
+
+        if ($request->input('type') !== 'multiple_choice') {
+            $request->request->remove('options');
+        }
+
+        $validated = $request->validate([
+            'type' => 'required|in:multiple_choice,true_false,short_answer',
+            'question_text' => 'required|string',
+            'explanation' => 'nullable|string',
+            'points' => 'required|integer|min:1',
+            'correct_answer' => 'nullable|string',
+            'options' => 'required_if:type,multiple_choice|array|min:2',
+            'options.*' => 'required_if:type,multiple_choice|string',
+            'correct_option' => 'required_if:type,multiple_choice,true_false',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $question->update([
+                'type' => $validated['type'],
+                'question_text' => $validated['question_text'],
+                'explanation' => $validated['explanation'] ?? null,
+                'points' => $validated['points'],
+                'correct_answer' => $validated['type'] === 'short_answer'
+                    ? ($validated['correct_answer'] ?? '')
+                    : null,
+            ]);
+
+            // Reset options
+            $question->options()->delete();
+
+            if ($validated['type'] === 'multiple_choice') {
+                foreach ($validated['options'] as $idx => $text) {
+                    $question->options()->create([
+                        'option_text' => $text,
+                        'is_correct' => ((string)$validated['correct_option'] === (string)($idx + 1)),
+                        'order' => $idx + 1,
+                    ]);
+                }
+            } elseif ($validated['type'] === 'true_false') {
+                $correct = $validated['correct_option'] === 'true';
+                $question->options()->createMany([
+                    [
+                        'option_text' => 'Benar',
+                        'is_correct' => $correct,
+                        'order' => 1,
+                    ],
+                    [
+                        'option_text' => 'Salah',
+                        'is_correct' => !$correct,
+                        'order' => 2,
+                    ],
+                ]);
+            } elseif ($validated['type'] === 'essay') {
+                // no options, clear correct answer
+                $question->update(['correct_answer' => null]);
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('instructor.question-banks.show', $questionBank)
+                ->with('success', 'Soal berhasil diperbarui!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()
+                ->withInput()
+                ->with('error', 'Gagal memperbarui soal: ' . $e->getMessage());
+        }
     }
 
     /**

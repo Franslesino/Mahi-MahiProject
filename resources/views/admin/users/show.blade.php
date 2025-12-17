@@ -17,7 +17,8 @@
             </a>
             @if($user->id !== auth()->id())
             <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline"
-                  onsubmit="return confirm('Yakin ingin menghapus pengguna ini?')">
+                  data-confirm-title="Hapus pengguna?"
+                  data-confirm="Yakin ingin menghapus pengguna ini?">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center gap-2">
@@ -50,13 +51,15 @@
                         @endif
                     </h3>
                     
-                    @if($user->role === 'admin')
-                        <span class="px-3 py-1 text-sm font-semibold rounded-full bg-purple-100 text-purple-700">Admin</span>
-                    @elseif($user->role === 'instructor')
-                        <span class="px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-700">Instruktur</span>
-                    @else
-                        <span class="px-3 py-1 text-sm font-semibold rounded-full bg-gray-100 text-gray-700">User</span>
-                    @endif
+                        @if($user->role === 'admin')
+                            <span class="px-3 py-1 text-sm font-semibold rounded-full bg-purple-100 text-purple-700">Admin</span>
+                        @elseif($user->role === 'instructor')
+                            <span class="px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-700">Instruktur</span>
+                        @else
+                            <span class="px-3 py-1 text-sm font-semibold rounded-full bg-gray-100 text-gray-700">
+                                {{ $user->role === 'student' ? 'Student' : ucfirst($user->role) }}
+                            </span>
+                        @endif
                 </div>
 
                 <div class="space-y-4 border-t pt-4">
@@ -278,12 +281,17 @@
                                         <span><i class="fas fa-user mr-1"></i>{{ $enrollment->kursus->instructor->name ?? 'Tidak ada instruktur' }}</span>
                                         <span><i class="fas fa-calendar mr-1"></i>Terdaftar: {{ $enrollment->created_at->format('d M Y') }}</span>
                                     </div>
-                                    @if($enrollment->status === 'selesai')
+                                    @php
+                                        $status = $enrollment->status_pendaftaran ?? $enrollment->status ?? '-';
+                                    @endphp
+                                    @if(in_array($status, ['completed', 'selesai']))
                                         <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Selesai</span>
-                                    @elseif($enrollment->status === 'aktif')
+                                    @elseif(in_array($status, ['active', 'paid', 'approved', 'enrolled']))
                                         <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">Sedang Belajar</span>
+                                    @elseif($status === '-' || $status === null)
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">Tidak diketahui</span>
                                     @else
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">{{ ucfirst($enrollment->status) }}</span>
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">{{ ucfirst($status) }}</span>
                                     @endif
                                 </div>
                                 <a href="{{ route('admin.courses.show', $enrollment->kursus->id) }}" class="ml-4 text-blue-600 hover:text-blue-800">

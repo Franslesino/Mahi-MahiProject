@@ -14,33 +14,33 @@
                     @forelse($promoBanners as $banner)
                         <!-- Slide {{ $loop->iteration }} -->
                         <div
-                            class="min-w-full bg-gradient-to-r from-{{ $banner->gradient_from }} to-{{ $banner->gradient_to }} p-8 text-white relative overflow-hidden">
+                            class="min-w-full bg-gradient-to-r from-{{ $banner->gradient_from }} to-{{ $banner->gradient_to }} p-4 sm:p-6 md:p-8 text-white relative overflow-hidden">
                             <div class="absolute inset-0 bg-black/10 md:bg-black/15"></div>
-                            <div class="relative z-10 max-w-md ml-12">
+                            <div class="relative z-10 max-w-xs sm:max-w-sm md:max-w-md ml-2 sm:ml-6 md:ml-12">
                                 @if($banner->badge)
-                                    <div class="inline-block bg-white/20 px-3 py-1 rounded-full text-sm font-semibold mb-3">
+                                    <div class="inline-block bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold mb-2 sm:mb-3">
                                         {{ $banner->badge }}
                                     </div>
                                 @endif
-                                <h2 class="text-3xl font-bold mb-2">{{ $banner->title }}</h2>
-                                <p class="text-white/90 mb-4 leading-relaxed">
+                                <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">{{ $banner->title }}</h2>
+                                <p class="text-white/90 mb-3 sm:mb-4 leading-relaxed text-sm sm:text-base line-clamp-2 sm:line-clamp-none">
                                     {!! nl2br(e($banner->description)) !!}
                                 </p>
                                 @if($banner->button_text)
                                     @if($banner->button_link)
                                         <a href="{{ $banner->button_link }}"
-                                            class="inline-flex items-center gap-2 bg-white text-gray-900 px-6 py-3 rounded-xl font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 shadow-sm text-sm md:text-base">
+                                            class="inline-flex items-center gap-1 sm:gap-2 bg-white text-gray-900 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 shadow-sm text-xs sm:text-sm md:text-base">
                                             {{ $banner->button_text }}
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M9 5l7 7-7 7" />
                                             </svg>
                                         </a>
                                     @else
                                         <button
-                                            class="inline-flex items-center gap-2 bg-white text-gray-900 px-6 py-3 rounded-xl font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 shadow-sm text-sm md:text-base">
+                                            class="inline-flex items-center gap-1 sm:gap-2 bg-white text-gray-900 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 shadow-sm text-xs sm:text-sm md:text-base">
                                             {{ $banner->button_text }}
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M9 5l7 7-7 7" />
                                             </svg>
@@ -48,33 +48,33 @@
                                     @endif
                                 @endif
                             </div>
-                            <div class="absolute right-0 top-0 w-40 h-40 bg-white/20 rounded-full -mr-20 -mt-10"></div>
-                            <div class="absolute right-20 bottom-0 w-32 h-32 bg-white/10 rounded-full -mb-10"></div>
+                            <div class="absolute right-0 top-0 w-20 sm:w-32 md:w-40 h-20 sm:h-32 md:h-40 bg-white/20 rounded-full -mr-10 sm:-mr-16 md:-mr-20 -mt-5 sm:-mt-8 md:-mt-10"></div>
+                            <div class="absolute right-10 sm:right-16 md:right-20 bottom-0 w-16 sm:w-24 md:w-32 h-16 sm:h-24 md:h-32 bg-white/10 rounded-full -mb-5 sm:-mb-8 md:-mb-10"></div>
                         </div>
                     @empty
                         <!-- Default Slide if no banners -->
                         <div
-                            class="min-w-full bg-gradient-to-r from-teal-600 to-teal-700 p-8 text-white relative overflow-hidden">
+                            class="min-w-full bg-gradient-to-r from-teal-600 to-teal-700 p-4 sm:p-6 md:p-8 text-white relative overflow-hidden">
                             <div class="absolute inset-0 bg-black/10 md:bg-black/15"></div>
-                            <div class="relative z-10 max-w-md ml-12">
-                                <div class="inline-block bg-white/20 px-3 py-1 rounded-full text-sm font-semibold mb-3">
+                            <div class="relative z-10 max-w-xs sm:max-w-sm md:max-w-md ml-2 sm:ml-6 md:ml-12">
+                                <div class="inline-block bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold mb-2 sm:mb-3">
                                     SELAMAT DATANG
                                 </div>
-                                <h2 class="text-3xl font-bold mb-2">UpGrennius</h2>
-                                <p class="text-teal-50 mb-4 leading-relaxed">
+                                <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">UpGrennius</h2>
+                                <p class="text-teal-50 mb-3 sm:mb-4 leading-relaxed text-sm sm:text-base">
                                     Platform Pembelajaran Online<br>Terbaik untuk Pengembangan Skill
                                 </p>
                                 <a href="#courses"
-                                    class="inline-flex items-center gap-2 bg-white text-teal-700 px-6 py-3 rounded-xl font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 shadow-sm text-sm md:text-base">
+                                    class="inline-flex items-center gap-1 sm:gap-2 bg-white text-teal-700 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 shadow-sm text-xs sm:text-sm md:text-base">
                                     JELAJAHI KURSUS
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M9 5l7 7-7 7" />
                                     </svg>
                                 </a>
                             </div>
-                            <div class="absolute right-0 top-0 w-40 h-40 bg-teal-500/30 rounded-full -mr-20 -mt-10"></div>
-                            <div class="absolute right-20 bottom-0 w-32 h-32 bg-teal-400/20 rounded-full -mb-10"></div>
+                            <div class="absolute right-0 top-0 w-20 sm:w-32 md:w-40 h-20 sm:h-32 md:h-40 bg-teal-500/30 rounded-full -mr-10 sm:-mr-16 md:-mr-20 -mt-5 sm:-mt-8 md:-mt-10"></div>
+                            <div class="absolute right-10 sm:right-16 md:right-20 bottom-0 w-16 sm:w-24 md:w-32 h-16 sm:h-24 md:h-32 bg-teal-400/20 rounded-full -mb-5 sm:-mb-8 md:-mb-10"></div>
                         </div>
                     @endforelse
 
@@ -102,19 +102,19 @@
         </div>
 
         <!-- Categories -->
-        <div id="categories" class="mb-8 scroll-mt-32">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-xl font-bold text-gray-900">Kategori</h3>
+        <div id="categories" class="mb-6 sm:mb-8 scroll-mt-32">
+            <div class="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 class="text-lg sm:text-xl font-bold text-gray-900">Kategori</h3>
                 <a href="{{ route('courses.all') }}"
-                    class="text-pnj-teal font-semibold text-sm hover:underline flex items-center gap-1">
+                    class="text-pnj-teal font-semibold text-xs sm:text-sm hover:underline flex items-center gap-1">
                     LIHAT SEMUA
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                 </a>
             </div>
 
-            <div class="flex gap-3 overflow-x-auto pb-2">
+            <div class="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
                 @php
                     $currentCategory = request('category', 'Semua');
                     $categoryIcons = [
@@ -135,12 +135,13 @@
                         $count = $cat === 'Semua' ? ($courses->total() ?? 0) : ($categoryCounts[$cat] ?? 0);
                     @endphp
                     <a href="{{ route('home', array_merge(request()->only('search'), ['category' => $cat])) }}"
-                        class="px-6 py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm flex items-center gap-2
+                        class="px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-lg font-medium whitespace-nowrap transition shadow-sm flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm
                                                            {{ $currentCategory === $cat ? 'bg-pnj-teal text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">
-                        <i class="fas {{ $icon }}"></i>
-                        <span>{{ $cat }}</span>
+                        <i class="fas {{ $icon }} text-xs sm:text-sm"></i>
+                        <span class="hidden sm:inline">{{ $cat }}</span>
+                        <span class="sm:hidden">{{ Str::limit($cat, 10) }}</span>
                         <span
-                            class="text-xs px-2 py-0.5 rounded-full {{ $currentCategory === $cat ? 'bg-white/20' : 'bg-gray-100 text-gray-700' }}">
+                            class="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full {{ $currentCategory === $cat ? 'bg-white/20' : 'bg-gray-100 text-gray-700' }}">
                             {{ $count }}
                         </span>
                     </a>
@@ -251,12 +252,12 @@
                             <span>{{ $course->instructor->name ?? $course->pembuat->name ?? 'Instruktur' }}</span>
                         </div>
 
-                        <div class="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                            <span><i class="fas fa-user-graduate mr-1"></i>{{ $course->students_count ?? 0 }} Siswa</span>
+                        <div class="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-500 mb-3 flex-wrap">
+                            <span><i class="fas fa-user-graduate mr-0.5 sm:mr-1"></i>{{ $course->students_count ?? 0 }} <span class="hidden xs:inline">Siswa</span></span>
                             <span class="text-gray-300">|</span>
-                            <span><i class="fas fa-video mr-1"></i>{{ $course->videos_count ?? 0 }} Video</span>
+                            <span><i class="fas fa-video mr-0.5 sm:mr-1"></i>{{ $course->videos_count ?? 0 }} <span class="hidden xs:inline">Video</span></span>
                             <span class="text-gray-300">|</span>
-                            <span>{{ $course->materi_count ?? 0 }} Materi</span>
+                            <span>{{ $course->materi_count ?? 0 }} <span class="hidden xs:inline">Materi</span></span>
                         </div>
 
                         {{-- Purchase Deadline Info --}}
@@ -294,14 +295,14 @@
                                     : $basePrice;
                             @endphp
 
-                            <div class="flex flex-col gap-1">
-                                <span class="text-2xl font-bold text-pnj-teal">
+                            <div class="flex flex-col gap-0.5 sm:gap-1">
+                                <span class="text-lg sm:text-xl md:text-2xl font-bold text-pnj-teal">
                                     Rp {{ number_format($finalPrice, 0, ',', '.') }}
                                 </span>
 
                                 {{-- kalau lagi diskon, tampilkan harga asli dicoret --}}
                                 @if(($course->discount_price ?? 0) > 0)
-                                    <span class="text-sm text-gray-500 line-through">
+                                    <span class="text-xs sm:text-sm text-gray-500 line-through">
                                         Rp {{ number_format($basePrice, 0, ',', '.') }}
                                     </span>
                                 @endif
@@ -335,52 +336,51 @@
         </div>
 
         <!-- Why Choose Us Section -->
-        <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-3xl p-12 mb-12 shadow-sm border border-gray-100">
-            <div class="text-center mb-12">
-                <h3 class="text-3xl font-bold text-gray-900 mb-3">Mengapa Memilih UpGrennius?</h3>
-                <p class="text-gray-600 text-lg">Platform pembelajaran terbaik untuk mahasiswa PNJ</p>
+        <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl sm:rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 mb-8 sm:mb-12 shadow-sm border border-gray-100">
+            <div class="text-center mb-6 sm:mb-8 md:mb-12">
+                <h3 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">Mengapa Memilih UpGrennius?</h3>
+                <p class="text-gray-600 text-sm sm:text-base md:text-lg">Platform pembelajaran terbaik untuk mahasiswa PNJ</p>
             </div>
 
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
                 <div
-                    class="text-center group bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:-translate-y-1 hover:shadow-xl transition">
+                    class="text-center group bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 shadow-sm border border-gray-100 hover:-translate-y-1 hover:shadow-xl transition">
                     <div
-                        class="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-xl">
-                        <i class="fas fa-certificate text-white text-3xl"></i>
+                        class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-3 md:mb-4 group-hover:scale-110 transition-transform shadow-lg md:shadow-xl">
+                        <i class="fas fa-certificate text-white text-lg sm:text-xl md:text-2xl lg:text-3xl"></i>
                     </div>
-                    <h4 class="font-bold text-gray-900 mb-2 text-lg">Sertifikat Resmi</h4>
-                    <p class="text-gray-600 text-sm">Dapatkan sertifikat yang diakui industri setelah menyelesaikan kursus
-                    </p>
+                    <h4 class="font-bold text-gray-900 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base lg:text-lg">Sertifikat Resmi</h4>
+                    <p class="text-gray-600 text-[10px] sm:text-xs md:text-sm line-clamp-3">Dapatkan sertifikat yang diakui industri setelah menyelesaikan kursus</p>
                 </div>
 
                 <div
-                    class="text-center group bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:-translate-y-1 hover:shadow-xl transition">
+                    class="text-center group bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 shadow-sm border border-gray-100 hover:-translate-y-1 hover:shadow-xl transition">
                     <div
-                        class="w-20 h-20 bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-xl">
-                        <i class="fas fa-users text-white text-3xl"></i>
+                        class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-3 md:mb-4 group-hover:scale-110 transition-transform shadow-lg md:shadow-xl">
+                        <i class="fas fa-users text-white text-lg sm:text-xl md:text-2xl lg:text-3xl"></i>
                     </div>
-                    <h4 class="font-bold text-gray-900 mb-2 text-lg">Instruktur Ahli</h4>
-                    <p class="text-gray-600 text-sm">Belajar dari praktisi dan dosen berpengalaman di bidangnya</p>
+                    <h4 class="font-bold text-gray-900 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base lg:text-lg">Instruktur Ahli</h4>
+                    <p class="text-gray-600 text-[10px] sm:text-xs md:text-sm line-clamp-3">Belajar dari praktisi dan dosen berpengalaman di bidangnya</p>
                 </div>
 
                 <div
-                    class="text-center group bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:-translate-y-1 hover:shadow-xl transition">
+                    class="text-center group bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 shadow-sm border border-gray-100 hover:-translate-y-1 hover:shadow-xl transition">
                     <div
-                        class="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-xl">
-                        <i class="fas fa-clock text-white text-3xl"></i>
+                        class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-3 md:mb-4 group-hover:scale-110 transition-transform shadow-lg md:shadow-xl">
+                        <i class="fas fa-clock text-white text-lg sm:text-xl md:text-2xl lg:text-3xl"></i>
                     </div>
-                    <h4 class="font-bold text-gray-900 mb-2 text-lg">Fleksibel</h4>
-                    <p class="text-gray-600 text-sm">Belajar kapan saja dan di mana saja sesuai dengan waktumu</p>
+                    <h4 class="font-bold text-gray-900 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base lg:text-lg">Fleksibel</h4>
+                    <p class="text-gray-600 text-[10px] sm:text-xs md:text-sm line-clamp-3">Belajar kapan saja dan di mana saja sesuai dengan waktumu</p>
                 </div>
 
                 <div
-                    class="text-center group bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:-translate-y-1 hover:shadow-xl transition">
+                    class="text-center group bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 shadow-sm border border-gray-100 hover:-translate-y-1 hover:shadow-xl transition">
                     <div
-                        class="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-xl">
-                        <i class="fas fa-infinity text-white text-3xl"></i>
+                        class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-3 md:mb-4 group-hover:scale-110 transition-transform shadow-lg md:shadow-xl">
+                        <i class="fas fa-infinity text-white text-lg sm:text-xl md:text-2xl lg:text-3xl"></i>
                     </div>
-                    <h4 class="font-bold text-gray-900 mb-2 text-lg">Akses Fleksibel</h4>
-                    <p class="text-gray-600 text-sm">Akses materi sesuai durasi yang ditentukan atau selamanya</p>
+                    <h4 class="font-bold text-gray-900 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base lg:text-lg">Akses Fleksibel</h4>
+                    <p class="text-gray-600 text-[10px] sm:text-xs md:text-sm line-clamp-3">Akses materi sesuai durasi yang ditentukan atau selamanya</p>
                 </div>
             </div>
         </div>
@@ -550,13 +550,20 @@
             overflow: hidden;
         }
 
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
         .carousel-dot {
-            width: 2.25rem;
-            height: 2.25rem;
+            width: 1.75rem;
+            height: 1.75rem;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             font-weight: 700;
             color: #1f2937;
             background: rgba(255, 255, 255, 0.65);
@@ -564,6 +571,14 @@
             border: 1px solid rgba(255, 255, 255, 0.8);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
             transition: all 0.2s ease;
+        }
+
+        @media (min-width: 640px) {
+            .carousel-dot {
+                width: 2.25rem;
+                height: 2.25rem;
+                font-size: 0.75rem;
+            }
         }
 
         .carousel-dot:hover {
@@ -580,6 +595,22 @@
 
         .text-pnj-teal {
             color: #005F56;
+        }
+
+        /* Hide scrollbar for category pills */
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Custom breakpoint for very small screens */
+        @media (max-width: 374px) {
+            .text-\[10px\] {
+                font-size: 10px;
+            }
         }
     </style>
 @endsection

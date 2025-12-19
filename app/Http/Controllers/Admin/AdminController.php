@@ -81,7 +81,6 @@ class AdminController extends Controller
             'badge_color'    => $validated['badge_color'] ?? 'blue',
             'instructor_id'  => $validated['instructor_id'],
             'created_by'     => Auth::id(),
-            'rating'         => 0,
             'videos'         => 0,
         ];
 

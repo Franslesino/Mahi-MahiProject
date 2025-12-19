@@ -31,8 +31,8 @@
                         Coba Lagi
                     </a>
                 @endif
-                <a href="{{ route('student.course.learn', $course) }}" class="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 transition">
-                    <span>Lanjut materi berikutnya</span>
+                <a href="{{ route('student.course.learn', $course) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 text-white rounded-lg text-sm font-semibold hover:bg-emerald-800 transition">
+                    <span>Lanjut Materi Berikutnya</span>
                     <i class="fas fa-arrow-right"></i>
                 </a>
             </div>

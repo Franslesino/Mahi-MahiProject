@@ -6,10 +6,12 @@
 <div class="min-h-screen bg-[#f4f2f0] py-6">
     <div class="max-w-6xl mx-auto px-4">
         <div class="flex items-center justify-between mb-4">
-            <a href="{{ route('student.course.learn', $course) }}" class="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 transition">
-                <i class="fas fa-arrow-left"></i>
-                <span>Kembali</span>
-            </a>
+            <button type="button" onclick="if(confirm('Yakin ingin keluar? Soal yang anda kerjakan akan mulai lagi dari 0.')) { localStorage.removeItem('quiz_answers_assignment_{{ $assignment->id }}'); localStorage.removeItem('quiz_current_assignment_{{ $assignment->id }}'); localStorage.removeItem('quiz_timer_assignment_{{ $assignment->id }}'); window.location.href='{{ route('student.course.learn', $course) }}'; } return false;"
+               class="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 transition cursor-pointer bg-gray-100 px-4 py-2 rounded-lg"
+               style="position: relative; z-index: 9999; pointer-events: auto !important;">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Kembali ke Kursus</span>
+            </button>
             <div class="text-sm text-gray-600 font-semibold">{{ $material->judul ?? $material->title }}</div>
         </div>
 

@@ -88,7 +88,6 @@ class CourseController extends Controller
             'badge_color' => $validated['badge_color'] ?? 'blue',
             'instructor_id' => $validated['instructor_id'] ?? null,
             'created_by' => Auth::id(),
-            'rating' => 0,
             'videos' => 0,
             'access_duration_days' => $validated['access_duration_days'] ?? null,
             'purchase_deadline_date' => $validated['purchase_deadline_date'] ?? null,
@@ -880,6 +879,7 @@ class CourseController extends Controller
             'duration_minutes' => 'nullable|integer|min:1',
             'passing_score' => 'nullable|integer|min:0|max:100',
             'randomize_questions' => 'nullable|in:0,1,true,false,on,off',
+            'status' => 'nullable|in:published,draft',
         ]);
 
         // Ensure section belongs to course if provided
@@ -903,7 +903,7 @@ class CourseController extends Controller
                 'description' => $validated['description'] ?? null,
                 'type' => 'quiz',
                 'urutan' => $urutan,
-                'status' => 'draft',
+                'status' => $validated['status'] ?? 'draft',
                 'is_preview' => false,
                 'status_terkunci' => true,
             ]);

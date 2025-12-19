@@ -289,6 +289,7 @@ class AssignmentController extends Controller
             'duration_minutes' => 'nullable|integer|min:1',
             'passing_score' => 'nullable|integer|min:0|max:100',
             'randomize_questions' => 'nullable|in:0,1,true,false,on,off',
+            'status' => 'nullable|in:published,draft',
         ]);
 
         // Ensure section belongs to course if provided
@@ -312,7 +313,7 @@ class AssignmentController extends Controller
                 'description' => $validated['description'] ?? null,
                 'type' => 'quiz',
                 'urutan' => $urutan,
-                'status' => 'draft',
+                'status' => $validated['status'] ?? 'draft',
                 'is_preview' => false,
                 'status_terkunci' => true,
             ]);

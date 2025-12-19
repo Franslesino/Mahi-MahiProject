@@ -521,9 +521,9 @@ class QuestionBankController extends Controller
 
                 // Add options
                 if ($question->type === 'multiple_choice' || $question->type === 'true_false') {
-                    $options = $question->options->sortBy('order');
+                    $options = $question->options->sortBy('order')->values();
                     for ($i = 0; $i < 5; $i++) {
-                        $row[] = $options[$i]->option_text ?? '';
+                        $row[] = isset($options[$i]) ? $options[$i]->option_text : '';
                     }
                     
                     // Correct option

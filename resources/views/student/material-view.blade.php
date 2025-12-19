@@ -303,11 +303,11 @@
                     <span>Kembali ke daftar materi</span>
                 </a>
 
-                @if($completed)
-                    <div class="completed-indicator">
-                        <i class="fas fa-check-circle"></i>
-                        <span>Selesai</span>
-                    </div>
+                @if($completed && $nextMaterial)
+                    <a href="{{ route('courses.materials.view', [$course, $nextMaterial->id]) }}" class="back-link">
+                        <span>Materi Berikutnya</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
                 @endif
             </div>
 

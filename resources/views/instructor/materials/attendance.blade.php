@@ -16,7 +16,7 @@
                     <p class="text-gray-600">{{ $material->judul }}</p>
                 </div>
                 <div class="flex gap-2">
-                    <form action="{{ route('instructor.materials.attendance.mark-all-present', [$course, $material]) }}"
+                    <form action="{{ route('instructor.courses.materials.attendance.mark-all-present', [$course, $material]) }}"
                         method="POST">
                         @csrf
                         <button type="submit"
@@ -25,7 +25,7 @@
                             <span>Semua Hadir</span>
                         </button>
                     </form>
-                    <form action="{{ route('instructor.materials.attendance.generate', [$course, $material]) }}"
+                    <form action="{{ route('instructor.courses.materials.attendance.generate', [$course, $material]) }}"
                         method="POST">
                         @csrf
                         <button type="submit"
@@ -119,7 +119,7 @@
                 </div>
                 <h3 class="text-lg font-semibold text-gray-900 mb-2">Belum Ada Peserta</h3>
                 <p class="text-gray-600 mb-4">Klik "Refresh Peserta" untuk menambahkan peserta dari enrollment kursus.</p>
-                <form action="{{ route('instructor.materials.attendance.generate', [$course, $material]) }}" method="POST">
+                <form action="{{ route('instructor.courses.materials.attendance.generate', [$course, $material]) }}" method="POST">
                     @csrf
                     <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                         <i class="fas fa-sync mr-2"></i> Refresh Peserta
@@ -161,7 +161,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <form
-                                        action="{{ route('instructor.materials.attendance.update', [$course, $material, $attendance]) }}"
+                                        action="{{ route('instructor.courses.materials.attendance.update', [$course, $material, $attendance]) }}"
                                         method="POST" class="inline-form">
                                         @csrf
                                         @method('PUT')

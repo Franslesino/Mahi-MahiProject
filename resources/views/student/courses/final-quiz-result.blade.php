@@ -5,12 +5,17 @@
     <div class="max-w-4xl mx-auto px-6">
         <!-- Header Card -->
         <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Final Quiz</h1>
-            <p class="text-gray-600 mb-4">{{ $kursus->nama_kursus }}</p>
-            <a href="{{ route('courses.final-quiz.show', $kursus->id) }}" 
-               class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition font-semibold">
-                Kembali
-            </a>
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Final Quiz</h1>
+                    <p class="text-gray-600">{{ $kursus->nama_kursus }}</p>
+                </div>
+                <a href="{{ route('student.course.learn', $kursus->id) }}" 
+                   class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-700 text-white rounded-xl hover:bg-emerald-800 transition font-semibold">
+                    <i class="fas fa-arrow-right"></i>
+                    Lanjut Materi Berikutnya
+                </a>
+            </div>
         </div>
 
         <!-- Result Card - Teal Gradient -->
@@ -55,8 +60,10 @@
                 ->where('quiz_id', $quiz->id)
                 ->where('kursus_id', $kursus->id)
                 ->count();
-            // Paksa tampil tanpa opsi retake agar tombol tidak doble
-            $canRetake = false;
+            $maxAttempts = $kursus->max_quiz_attempts ?? 3;
+            $remainingAttempts = max(0, $maxAttempts - $totalAttempts);
+            // Mengizinkan retake jika masih ada sisa percobaan
+            $canRetake = $remainingAttempts > 0;
         @endphp
 
         @if($attempt->is_passed)
@@ -235,51 +242,48 @@
             @endif
         @else
             {{-- Jika TIDAK LULUS --}}
-            <div class="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-6 mb-6">
-                <div class="flex items-center gap-3 text-yellow-800">
-                    <i class="fas fa-info-circle text-xl"></i>
-                    <p class="font-medium">Review jawaban akan tersedia setelah Anda mencapai nilai minimum dan memutuskan untuk tidak mengerjakan ulang.</p>
+            @if($canRetake)
+                {{-- Masih ada sisa percobaan --}}
+                <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-6 mb-6">
+                    <div class="text-center">
+                        <div class="text-5xl mb-4">😢</div>
+                        <h3 class="text-xl font-bold text-red-800 mb-2">Sayang sekali, Anda belum lulus</h3>
+                        <p class="text-red-700 mb-2">
+                            Nilai Anda: <strong>{{ number_format($attempt->score, 0) }}%</strong> | Nilai Minimum: <strong>{{ $kursus->min_passing_score }}%</strong>
+                        </p>
+                        <p class="text-gray-600 mb-6">
+                            Anda masih memiliki <strong class="text-amber-600">{{ $remainingAttempts }}</strong> kesempatan lagi untuk mengerjakan ulang quiz ini.
+                        </p>
+                        <a href="{{ route('courses.final-quiz.show', $kursus->id) }}" 
+                           class="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition font-semibold shadow-lg">
+                            <i class="fas fa-redo"></i>
+                            Ulangi Quiz
+                        </a>
+                    </div>
                 </div>
-            </div>
+                
+                <div class="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-6 mb-6">
+                    <div class="flex items-center gap-3 text-yellow-800">
+                        <i class="fas fa-info-circle text-xl"></i>
+                        <p class="font-medium">Review jawaban akan tersedia setelah Anda mencapai nilai minimum.</p>
+                    </div>
+                </div>
+            @else
+                {{-- Tidak ada sisa percobaan --}}
+                <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-6 mb-6">
+                    <div class="text-center">
+                        <div class="text-5xl mb-4">❌</div>
+                        <h3 class="text-xl font-bold text-red-800 mb-2">Maaf, Anda tidak lulus</h3>
+                        <p class="text-red-700 mb-2">
+                            Nilai Anda: <strong>{{ number_format($attempt->score, 0) }}%</strong> | Nilai Minimum: <strong>{{ $kursus->min_passing_score }}%</strong>
+                        </p>
+                        <p class="text-gray-600">
+                            Sayangnya, Anda telah menggunakan semua kesempatan ({{ $maxAttempts }}x) untuk mengerjakan quiz ini.
+                        </p>
+                    </div>
+                </div>
+            @endif
         @endif
-
-        <!-- Action Buttons -->
-        <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
-            <div class="flex flex-wrap justify-center gap-4">
-                <a href="{{ route('student.course.learn', $kursus->id) }}" 
-                   class="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition font-semibold">
-                    <i class="fas fa-book-open"></i>
-                    Kembali ke Kursus
-                </a>
-                <button type="button"
-                        onclick="showReviewButtonHandler()"
-                        class="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition font-semibold">
-                    <i class="fas fa-clipboard-list"></i>
-                    Lihat Review Jawaban
-                </button>
-            </div>
-        </div>
     </div>
 </div>
-
-@push('scripts')
-<script>
-    function showReviewButtonHandler() {
-        // Jika fungsi showReview (untuk lulus+retake) tersedia, pakai itu
-        if (typeof showReview === 'function') {
-            showReview();
-        } else {
-            // fallback: tampilkan blok review jika ada
-            const review = document.getElementById('review-section');
-            const choice = document.getElementById('review-choice');
-            if (review) review.classList.remove('hidden');
-            if (choice) choice.classList.add('hidden');
-        }
-        const review = document.getElementById('review-section');
-        if (review) {
-            review.scrollIntoView({ behavior: 'smooth' });
-        }
-    }
-</script>
-@endpush
 @endsection

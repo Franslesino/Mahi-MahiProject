@@ -143,10 +143,7 @@
               </button>
             </div>
             <div class="mt-2 flex items-center gap-2 text-xs">
-              <div class="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
-                <div id="passwordStrengthBar" class="h-full w-1/4 bg-red-500 transition-all"></div>
-              </div>
-              <span id="passwordStrengthText" class="text-gray-500">Lemah</span>
+              <span id="passwordStrengthText" class="text-gray-500">Catatan: gunakan kombinasi huruf besar, huruf kecil, dan angka.</span>
             </div>
           </div>
 
@@ -212,38 +209,11 @@
     });
 
     // Password strength indicator
-    const strengthBar = document.getElementById('passwordStrengthBar');
     const strengthText = document.getElementById('passwordStrengthText');
     const passwordInput = document.getElementById('password');
-    if (passwordInput && strengthBar && strengthText) {
-      const calcStrength = (val) => {
-        let score = 0;
-        if (val.length >= 8) score += 1;
-        if (/[A-Z]/.test(val)) score += 1;
-        if (/[0-9]/.test(val)) score += 1;
-        if (/[^A-Za-z0-9]/.test(val)) score += 1;
-        return score;
-      };
-      const mapStrength = (score) => {
-        const widths = ['25%', '50%', '75%', '100%'];
-        const colors = ['bg-red-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-600'];
-        const labels = ['Lemah', 'Cukup', 'Baik', 'Kuat'];
-        return {
-          width: widths[score - 1] || '25%',
-          color: colors[score - 1] || 'bg-red-500',
-          label: labels[score - 1] || 'Lemah'
-        };
-      };
-      const updateStrength = (val) => {
-        const score = calcStrength(val);
-        const { width, color, label } = mapStrength(score);
-        strengthBar.style.width = width;
-        strengthBar.className = `h-full transition-all ${color}`;
-        strengthText.textContent = label;
-        strengthText.className = `text-xs ${score >= 3 ? 'text-green-600' : 'text-gray-500'}`;
-      };
-      passwordInput.addEventListener('input', (e) => updateStrength(e.target.value));
-      updateStrength(passwordInput.value || '');
+    if (passwordInput && strengthText) {
+      strengthText.textContent = 'Catatan: gunakan kombinasi huruf besar, huruf kecil, dan angka.';
+      strengthText.className = 'text-xs text-gray-500';
     }
 
     // Submit loading state

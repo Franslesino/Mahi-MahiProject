@@ -31,7 +31,7 @@ class Kursus extends Model
         'badge_color',
         'instructor_id',
         'created_by',
-        'rating',
+
         'videos',
 
         // final quiz settings
@@ -60,7 +60,7 @@ class Kursus extends Model
         'discount_price' => 'decimal:2',
         'status_berbayar' => 'boolean',
         'status_diterbitkan' => 'boolean',
-        'rating' => 'decimal:1',
+
         'videos' => 'integer',
         'access_duration_days' => 'integer',
         'purchase_deadline_date' => 'datetime',

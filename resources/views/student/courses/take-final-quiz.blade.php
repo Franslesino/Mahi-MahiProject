@@ -52,12 +52,12 @@
     <div class="min-h-screen bg-[#f4f2f0] py-8">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex items-center justify-between mb-6">
-                <a href="{{ route('student.course.learn', $kursusId) }}"
-                    class="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 transition text-lg"
-                    onclick="return confirm('Yakin ingin keluar? Progress akan hilang jika waktu habis.')">
-                    <i class="fas fa-arrow-left"></i>
-                    <span>Kembali</span>
-                </a>
+                <button type="button" id="back-link" 
+                    data-href="{{ route('student.course.learn', $kursusId) }}"
+                    class="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 transition text-lg">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Kembali ke Kursus</span>
+                </button>
                 <div class="text-lg text-gray-600 font-semibold">{{ $quiz->judul_quiz }}</div>
             </div>
 
@@ -115,6 +115,21 @@
         </div>
     </div>
 
+    <!-- Modal konfirmasi keluar -->
+    <div id="exit-modal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md text-center">
+            <div class="mb-4 text-red-500">
+                <i class="fas fa-exclamation-triangle text-4xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Yakin ingin keluar?</h3>
+            <p class="text-sm text-gray-600 mb-6 font-medium">Yakin ingin keluar? soal yang anda kerjakan akan mulai lagi dari 0.</p>
+            <div class="flex justify-center gap-3">
+                <button type="button" id="exit-cancel-btn" class="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-medium">Batal</button>
+                <button type="button" id="exit-confirm-btn" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">Ya, Keluar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const questions = {!! json_encode(
@@ -165,6 +180,12 @@
             const finishModal = document.getElementById('finish-modal');
             const modalBackBtn = document.getElementById('modal-back-btn');
             const modalFinishBtn = document.getElementById('modal-finish-btn');
+
+            // Exit modal elements
+            const backLink = document.getElementById('back-link');
+            const exitModal = document.getElementById('exit-modal');
+            const exitCancelBtn = document.getElementById('exit-cancel-btn');
+            const exitConfirmBtn = document.getElementById('exit-confirm-btn');
 
             // Timer functionality
             @if($quiz->durasi_quiz)
@@ -417,6 +438,26 @@
             }
 
             modalFinishBtn.addEventListener('click', submitQuiz);
+
+            // Exit confirmation logic
+            backLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Final quiz back link clicked');
+                exitModal.classList.remove('hidden');
+                exitModal.classList.add('flex');
+            });
+
+            exitCancelBtn.addEventListener('click', () => {
+                exitModal.classList.add('hidden');
+                exitModal.classList.remove('flex');
+            });
+
+            exitConfirmBtn.addEventListener('click', () => {
+                // Clear quiz progress if user leaves
+                clearQuizData();
+                isSubmitting = true; // prevent beforeunload alert
+                window.location.href = backLink.dataset.href;
+            });
 
             renderQuestion(current);
         });

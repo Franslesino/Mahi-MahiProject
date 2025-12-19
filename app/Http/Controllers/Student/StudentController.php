@@ -145,10 +145,18 @@ class StudentController extends Controller
             ->where('materi_id', $material->id)
             ->first();
 
+        // Get next material
+        $nextMaterial = $course->materi()
+            ->where('status', 'published')
+            ->where('urutan', '>', $material->urutan)
+            ->orderBy('urutan', 'asc')
+            ->first();
+
         return view('student.material-view', [
             'course' => $course,
             'material' => $material,
             'completed' => $completed,
+            'nextMaterial' => $nextMaterial,
         ]);
     }
 

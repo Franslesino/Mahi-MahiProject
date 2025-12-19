@@ -39,18 +39,25 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                     Tipe Materi <span class="text-red-500">*</span>
                 </label>
-                <select name="type" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('type') border-red-500 @enderror"
-                        required>
-                    <option value="video" {{ old('type', $material->type) == 'video' ? 'selected' : '' }}>Video</option>
-                    <option value="text" {{ old('type', $material->type) == 'text' ? 'selected' : '' }}>Text</option>
-                    <option value="document" {{ old('type', $material->type) == 'document' ? 'selected' : '' }}>Document</option>
-                    <option value="pdf" {{ old('type', $material->type) == 'pdf' ? 'selected' : '' }}>PDF</option>
-                    <option value="reading" {{ old('type', $material->type) == 'reading' ? 'selected' : '' }}>Reading</option>
-                </select>
-                @error('type')
-                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                @enderror
+                {{-- Tipe materi tidak bisa diubah setelah dibuat --}}
+                <input type="hidden" name="type" value="{{ $material->type }}">
+                @php
+                    $typeLabels = [
+                        'video' => 'Video',
+                        'pdf' => 'PDF',
+                        'document' => 'Dokumen',
+                        'text' => 'Teks',
+                        'quiz' => 'Quiz',
+                        'reading' => 'Reading',
+                        'class_session' => 'Sesi Kelas',
+                    ];
+                    $currentTypeLabel = $typeLabels[$material->type] ?? ucfirst($material->type);
+                @endphp
+                <div class="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed">
+                    {{ $currentTypeLabel }}
+                    <span class="text-xs text-gray-400 ml-2">(tidak dapat diubah)</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Tipe materi tidak dapat diubah setelah materi dibuat.</p>
             </div>
 
             <!-- Isi/Konten Teks -->
@@ -123,6 +130,23 @@
                        min="0"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('urutan') border-red-500 @enderror">
                 @error('urutan')
+                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Status -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Status <span class="text-red-500">*</span>
+                </label>
+                <select name="status" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('status') border-red-500 @enderror"
+                        required>
+                    <option value="draft" {{ old('status', $material->status) == 'draft' ? 'selected' : '' }}>Draft</option>
+                    <option value="published" {{ old('status', $material->status) == 'published' ? 'selected' : '' }}>Published</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Draft: materi tidak terlihat oleh siswa. Published: materi terlihat oleh siswa.</p>
+                @error('status')
                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                 @enderror
             </div>

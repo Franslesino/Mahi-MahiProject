@@ -657,6 +657,17 @@
                         class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 shadow-sm"></textarea>
                 </div>
 
+                {{-- Status Publication Field --}}
+                <div class="mb-4 relative z-10">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Status Publikasi *</label>
+                    <select name="status" required
+                        class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 shadow-sm">
+                        <option value="draft">Draft (Belum Dipublikasikan)</option>
+                        <option value="published" selected>Published (Dipublikasikan)</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Pilih "Published" agar materi langsung tersedia untuk peserta</p>
+                </div>
+
                 {{-- Class Session Fields --}}
                 <div id="classSessionFields" style="display: none;">
                     <div class="mb-4 relative z-10 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -764,6 +775,17 @@
                         <input type="number" name="passing_score" value="60" min="0" max="100"
                             class="w-full px-4 py-2 border border-gray-200 rounded-lg shadow-sm">
                     </div>
+                </div>
+
+                {{-- Status Publication Field --}}
+                <div class="mb-4 relative z-10">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Status Publikasi *</label>
+                    <select name="status" required
+                        class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 shadow-sm">
+                        <option value="draft">Draft (Belum Dipublikasikan)</option>
+                        <option value="published" selected>Published (Dipublikasikan)</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Pilih "Published" agar quiz langsung tersedia untuk peserta</p>
                 </div>
 
                 <label class="inline-flex items-center gap-2 mb-6 relative z-10">

@@ -10,6 +10,7 @@ class RelasiQuiz extends Model
 
     protected $fillable = [
         'quiz_id',
+        'question_id',
         'bank_soal_id',
         'is_active',
         'urutan',
@@ -27,5 +28,10 @@ class RelasiQuiz extends Model
     public function bankSoal()
     {
         return $this->belongsTo(BankSoal::class, 'bank_soal_id');
+    }
+
+    public function question()
+    {
+        return $this->belongsTo(Question::class, 'question_id');
     }
 }

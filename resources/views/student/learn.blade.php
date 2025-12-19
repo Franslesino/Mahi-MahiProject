@@ -254,12 +254,9 @@
                                                                 <i class="fas fa-check-circle"></i> Selesai
                                                             </span>
                                                         @else
-                                                            <button type="button"
-                                                                    class="mark-btn text-xs px-2 py-1 border border-gray-200 rounded-lg text-gray-600 hover:text-emerald-700 hover:border-emerald-300 transition"
-                                                                    data-url="{{ route('courses.materials.complete', [$course, $material->id]) }}"
-                                                                    data-material="{{ $material->id }}">
-                                                                Tandai selesai
-                                                            </button>
+                                                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-50 text-gray-500 text-xs font-semibold rounded-full border border-gray-200">
+                                                                <i class="far fa-circle"></i> Belum Selesai
+                                                            </span>
                                                         @endif
                                                     </div>
                                                 </a>

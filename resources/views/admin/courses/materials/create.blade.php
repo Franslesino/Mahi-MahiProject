@@ -34,6 +34,25 @@
                 @enderror
             </div>
 
+            <!-- Tipe Materi -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Tipe Materi <span class="text-red-500">*</span>
+                </label>
+                <select name="type" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('type') border-red-500 @enderror"
+                        required>
+                    <option value="video" {{ old('type') == 'video' ? 'selected' : '' }}>Video</option>
+                    <option value="text" {{ old('type') == 'text' ? 'selected' : '' }}>Text</option>
+                    <option value="document" {{ old('type') == 'document' ? 'selected' : '' }}>Document</option>
+                    <option value="pdf" {{ old('type') == 'pdf' ? 'selected' : '' }}>PDF</option>
+                    <option value="reading" {{ old('type') == 'reading' ? 'selected' : '' }}>Reading</option>
+                </select>
+                @error('type')
+                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
             <!-- Isi/Konten Teks -->
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">

@@ -68,21 +68,7 @@ class Materi extends Model
     public function getVideoUrlAttribute()
     {
         if ($this->type === 'video') {
-            if (!empty($this->file_url)) {
-                if (str_starts_with($this->file_url, 'http')) {
-                    return $this->file_url;
-                }
-                $generated = $this->generateUrl($this->file_url);
-                if ($generated) {
-                    return $generated;
-                }
-            }
-            if (!empty($this->url_konten)) {
-                if (str_starts_with($this->url_konten, 'http')) {
-                    return $this->url_konten;
-                }
-                return $this->normalizeLocalUrl($this->url_konten);
-            }
+            return $this->getFileUrlFullAttribute();
         }
         return null;
     }
@@ -91,39 +77,73 @@ class Materi extends Model
     public function getFilePathAttribute()
     {
         if ($this->type === 'pdf') {
-            if (!empty($this->file_url)) {
-                if (str_starts_with($this->file_url, 'http')) {
-                    return $this->file_url;
-                }
-                return $this->file_url;
-            }
-            if (!empty($this->url_konten)) {
-                if (str_starts_with($this->url_konten, 'http')) {
-                    return $this->url_konten;
-                }
-                return str_replace('/storage/', '', $this->url_konten);
-            }
+            return $this->getFileUrlFullAttribute();
         }
         return null;
     }
 
     public function getFileUrlFullAttribute()
     {
-        if ($this->file_url) {
-            if (str_starts_with($this->file_url, 'http')) {
-                return $this->file_url;
+        // 1. Prioritaskan url_konten jika sudah merupakan Full URL (biasanya dari Supabase)
+        if (!empty($this->url_konten) && str_starts_with($this->url_konten, 'http')) {
+            $signedUrl = $this->maybeSignedSupabaseUrl($this->url_konten);
+            if ($signedUrl) {
+                return $this->normalizeLocalUrl($signedUrl);
             }
+
+            return $this->normalizeLocalUrl($this->url_konten);
+        }
+
+        // 2. Cek file_url jika merupakan Full URL
+        if ($this->file_url && str_starts_with($this->file_url, 'http')) {
+            $signedUrl = $this->maybeSignedSupabaseUrl($this->file_url);
+            if ($signedUrl) {
+                return $this->normalizeLocalUrl($signedUrl);
+            }
+
+            return $this->normalizeLocalUrl($this->file_url);
+        }
+
+        // 3. Jika file_url adalah path, generate URL-nya
+        if ($this->file_url) {
             $generated = $this->generateUrl($this->file_url);
             if ($generated) {
                 return $generated;
             }
         }
+
+        // 4. Fallback ke url_konten (bisa path lokal atau link manual)
         if (!empty($this->url_konten)) {
-            if (str_starts_with($this->url_konten, 'http')) {
-                return $this->url_konten;
+            if (str_starts_with($this->url_konten, '/storage/')) {
+                return $this->normalizeLocalUrl($this->url_konten);
             }
+
+            if (str_starts_with($this->url_konten, 'storage/')) {
+                return $this->normalizeLocalUrl('/' . $this->url_konten);
+            }
+
+            // Jika tampaknya hanya nama file, coba tebak foldernya
+            if (!str_contains($this->url_konten, '/') && !str_contains($this->url_konten, '\\')) {
+                $guessedPath = 'materials/' . $this->url_konten;
+                $generated = $this->generateUrl($guessedPath);
+                if ($generated) return $generated;
+            }
+
+            $disk = $this->materialsDisk();
+            try {
+                $storage = Storage::disk($disk);
+                $path = ltrim($this->url_konten, '/');
+                if ($storage->exists($path)) {
+                    return $this->normalizeLocalUrl($storage->url($path));
+                }
+            } catch (\Exception $e) { }
+
+            $generated = $this->generateUrl($this->url_konten);
+            if ($generated) return $generated;
+
             return $this->normalizeLocalUrl($this->url_konten);
         }
+
         return null;
     }
 
@@ -138,24 +158,62 @@ class Materi extends Model
         }
 
         $parsed = parse_url($url);
-        if (empty($parsed['host']) || !in_array($parsed['host'], ['localhost', '127.0.0.1'])) {
+        $host = $parsed['host'] ?? null;
+
+        // Jika host sudah bukan localhost/127.0.0.1, kembalikan apa adanya
+        if (empty($host) || !in_array($host, ['localhost', '127.0.0.1'])) {
             return $url;
         }
 
         $appUrl = config('app.url');
         $appParsed = $appUrl ? parse_url($appUrl) : null;
-        if (!$appParsed || empty($appParsed['host'])) {
-            return $url;
+
+        // Gunakan host dari APP_URL jika bukan localhost, jika tidak pakai host dari request saat ini
+        $targetHost = $appParsed && !in_array(($appParsed['host'] ?? ''), ['localhost', '127.0.0.1'])
+            ? ($appParsed['host'] ?? null)
+            : (request()->getHost() ?: null);
+
+        if (!$targetHost) {
+            return $url; // fallback: biarkan apa adanya
         }
 
-        $scheme = $appParsed['scheme'] ?? $parsed['scheme'] ?? 'http';
-        $host = $appParsed['host'];
-        $port = $appParsed['port'] ?? null;
+        $scheme = $appParsed['scheme'] ?? $parsed['scheme'] ?? request()->getScheme() ?? 'http';
+        $port = $appParsed['port'] ?? request()->getPort() ?? null;
         $path = $parsed['path'] ?? '';
         $query = isset($parsed['query']) ? '?' . $parsed['query'] : '';
         $fragment = isset($parsed['fragment']) ? '#' . $parsed['fragment'] : '';
 
-        return $scheme . '://' . $host . ($port ? ':' . $port : '') . $path . $query . $fragment;
+        return $scheme . '://' . $targetHost . ($port ? ':' . $port : '') . $path . $query . $fragment;
+    }
+
+    protected function maybeSignedSupabaseUrl(?string $url): ?string
+    {
+        if (!$url) {
+            return null;
+        }
+
+        $serviceKey = config('services.supabase.service_key');
+        if (!$serviceKey) {
+            return null;
+        }
+
+        if (str_starts_with($url, 'http')) {
+            if (!str_contains($url, '/storage/v1/object/')) {
+                return null;
+            }
+            // Jika sudah ada /public/ di URL, tidak perlu di-sign lagi
+            if (str_contains($url, '/storage/v1/object/public/')) {
+                return $url;
+            }
+        }
+
+        try {
+            $supabase = app(\App\Services\SupabaseStorageService::class);
+            $ttlMinutes = (int) config('filesystems.temporary_url_ttl', 60);
+            return $supabase->signedUrl($url, max(60, $ttlMinutes) * 60);
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     // Relationships
@@ -191,14 +249,29 @@ class Materi extends Model
             return $path;
         }
 
+        // Jika menggunakan Supabase, coba generate URL dari sana (signed lalu public)
+        if (config('services.supabase.url') && config('services.supabase.service_key')) {
+            try {
+                $supabase = app(\App\Services\SupabaseStorageService::class);
+                $ttlMinutes = (int) config('filesystems.temporary_url_ttl', 60);
+                $url = $supabase->signedUrl($path, max(60, $ttlMinutes) * 60)
+                    ?? $supabase->publicUrl($path);
+                if ($url) {
+                    return $this->normalizeLocalUrl($url);
+                }
+            } catch (\Exception $e) {
+                // Lanjut ke storage lokal jika gagal
+            }
+        }
+
         $disk = $this->materialsDisk();
         try {
             $storage = Storage::disk($disk);
             if (method_exists($storage, 'temporaryUrl')) {
                 $ttl = (int) config('filesystems.temporary_url_ttl', 60);
-                return $storage->temporaryUrl($path, now()->addMinutes($ttl));
+                return $this->normalizeLocalUrl($storage->temporaryUrl($path, now()->addMinutes($ttl)));
             }
-            return $storage->url($path);
+            return $this->normalizeLocalUrl($storage->url($path));
         } catch (\Exception $e) {
             return null;
         }

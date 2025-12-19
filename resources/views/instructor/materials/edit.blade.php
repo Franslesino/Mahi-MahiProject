@@ -3,7 +3,7 @@
 @section('content')
 <div class="p-8">
     <div class="mb-6">
-        <a href="{{ route('instructor.materials.preview', [$course, $material]) }}" class="text-blue-600 hover:text-blue-700 flex items-center gap-2">
+        <a href="{{ route('instructor.courses.materials.preview', [$course, $material]) }}" class="text-blue-600 hover:text-blue-700 flex items-center gap-2">
             <i class="fas fa-arrow-left"></i>
             <span>Kembali ke Materi</span>
         </a>
@@ -13,7 +13,7 @@
         <h2 class="text-2xl font-bold text-gray-800 mb-2">Edit Materi</h2>
         <p class="text-gray-600 mb-6">Kursus: {{ $course->judul }}</p>
 
-        <form action="{{ route('instructor.materials.update', [$course, $material]) }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('instructor.courses.materials.update', [$course, $material]) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -157,7 +157,7 @@
                     <i class="fas fa-save mr-2"></i>
                     Simpan Perubahan
                 </button>
-                <a href="{{ route('instructor.materials.preview', [$course, $material]) }}"
+                <a href="{{ route('instructor.courses.materials.preview', [$course, $material]) }}"
                    class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">
                     Batal
                 </a>

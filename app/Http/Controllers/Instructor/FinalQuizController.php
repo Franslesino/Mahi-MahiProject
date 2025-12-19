@@ -78,7 +78,11 @@ class FinalQuizController extends Controller
 
             // Update quiz yang dipilih sebagai final quiz
             if ($validated['final_quiz_id']) {
-                Quiz::where('id', $validated['final_quiz_id'])->update(['is_final_quiz' => true]);
+                Quiz::where('id', $validated['final_quiz_id'])->update([
+                    'is_final_quiz' => true,
+                    'passing_grade' => $validated['min_passing_score'],
+                    'kesempatan_mengerjakan' => $validated['max_quiz_attempts']
+                ]);
                 
                 // Set quiz lain yang bukan final quiz
                 Quiz::where('kursus_id', $kursusId)
@@ -481,8 +485,7 @@ class FinalQuizController extends Controller
                 'question_bank_id' => $questionBankId,
                 'type' => $validated['type'],
                 'question_text' => $validated['question_text'],
-                'points' => $validated['points'],
-                'created_by' => Auth::id(),
+                'points' => $validated['points'] ?? 1,
             ]);
 
             // Create options if not essay

@@ -59,7 +59,11 @@ class FinalQuizController extends Controller
 
             // Update new final quiz
             if ($validated['require_final_quiz'] && $validated['final_quiz_id']) {
-                Quiz::where('id', $validated['final_quiz_id'])->update(['is_final_quiz' => true]);
+                Quiz::where('id', $validated['final_quiz_id'])->update([
+                    'is_final_quiz' => true,
+                    'passing_grade' => $validated['min_passing_score'],
+                    'kesempatan_mengerjakan' => $validated['max_attempts']
+                ]);
             }
         });
 
@@ -98,10 +102,13 @@ class FinalQuizController extends Controller
         DB::transaction(function() use ($kursus, $validated) {
             $quiz = Quiz::create([
                 'judul_quiz' => $validated['judul_quiz'],
-                'deskripsi' => $validated['deskripsi'],
+                'deskripsi' => $validated['deskripsi'] ?? null,
                 'kursus_id' => $kursus->id,
                 'is_final_quiz' => true,
-                'is_active' => false, // Start as inactive
+                'is_active' => false,
+                'passing_grade' => 60, // Default passing grade
+                'kesempatan_mengerjakan' => 3, // Default attempts
+                'durasi_quiz' => 60, // Default duration in minutes
             ]);
 
             $kursus->update([
@@ -158,24 +165,40 @@ class FinalQuizController extends Controller
             'options' => 'required_if:question_type,multiple_choice,true_false|array',
             'options.*.text' => 'required_if:question_type,multiple_choice,true_false|string',
             'options.*.is_correct' => 'nullable|boolean',
+            'correct_option' => 'nullable|integer',
             'save_to_bank' => 'nullable|boolean',
-            'question_bank_id' => 'required_if:save_to_bank,1|nullable|exists:question_banks,id',
+            'question_bank_id' => [
+                'required_if:save_to_bank,1',
+                'nullable',
+                function ($attribute, $value, $fail) {
+                    if ($value !== 'new' && $value !== null && !\DB::table('question_banks')->where('id', $value)->exists()) {
+                        $fail('ID bank soal tidak valid.');
+                    }
+                }
+            ],
         ]);
 
         DB::transaction(function() use ($kursus, $validated) {
             // Determine question bank ID
             $questionBankId = null;
-            if ($validated['save_to_bank']) {
+            if (!empty($validated['save_to_bank'])) {
                 if ($validated['question_bank_id'] === 'new') {
                     // Create auto bank
                     $autoBank = QuestionBank::firstOrCreate(
-                        ['name' => 'Soal Final Quiz (Auto)'],
-                        ['description' => 'Bank soal otomatis untuk final quiz']
+                        ['title' => 'Soal Final Quiz (Auto)', 'created_by' => auth()->id()],
+                        ['description' => 'Bank soal otomatis untuk final quiz', 'is_public' => false]
                     );
                     $questionBankId = $autoBank->id;
                 } else {
                     $questionBankId = $validated['question_bank_id'];
                 }
+            } else {
+                // Fallback: Questions must belong to a bank in this schema
+                $autoBank = QuestionBank::firstOrCreate(
+                    ['title' => 'Soal Final Quiz (Auto)', 'created_by' => auth()->id()],
+                    ['description' => 'Bank soal otomatis untuk final quiz', 'is_public' => false]
+                );
+                $questionBankId = $autoBank->id;
             }
 
             // Create question
@@ -188,11 +211,21 @@ class FinalQuizController extends Controller
 
             // Create options for multiple choice and true/false
             if (in_array($validated['question_type'], ['multiple_choice', 'true_false'])) {
-                foreach ($validated['options'] as $option) {
+                foreach ($validated['options'] as $index => $option) {
+                    $isCorrect = false;
+                    
+                    // Check logic: either from is_correct field or correct_option index
+                    if (isset($option['is_correct']) && ($option['is_correct'] == '1' || $option['is_correct'] === true)) {
+                        $isCorrect = true;
+                    } elseif (isset($validated['correct_option']) && $validated['correct_option'] == $index) {
+                        $isCorrect = true;
+                    }
+
                     QuestionOption::create([
                         'question_id' => $question->id,
                         'option_text' => $option['text'],
-                        'is_correct' => isset($option['is_correct']) && $option['is_correct'] == '1',
+                        'is_correct' => $isCorrect,
+                        'order' => $index + 1
                     ]);
                 }
             }

@@ -76,8 +76,13 @@
                                 @php
                                     $videoSrc = $material->file_url_full ?? $material->url_konten;
                                     $mime = 'video/mp4';
-                                    if ($videoSrc && \Illuminate\Support\Str::endsWith(strtolower($videoSrc), ['.mov'])) {
-                                        $mime = 'video/quicktime';
+                                    if ($videoSrc) {
+                                        $cleanUrl = strtok($videoSrc, '?');
+                                        if (\Illuminate\Support\Str::endsWith(strtolower($cleanUrl), ['.mov'])) {
+                                            $mime = 'video/quicktime';
+                                        } elseif (\Illuminate\Support\Str::endsWith(strtolower($cleanUrl), ['.avi'])) {
+                                            $mime = 'video/x-msvideo';
+                                        }
                                     }
                                 @endphp
                                 @if($videoSrc)
@@ -100,12 +105,12 @@
                                 <!-- PDF Viewer -->
                                 @if($material->file_url || $material->url_konten)
                                     <div class="border border-gray-200 rounded-lg overflow-hidden" style="height: 600px;">
-                                        <iframe src="{{ $material->file_url ? $material->file_url_full : $material->url_konten }}"
+                                        <iframe src="{{ route('instructor.materials.file', [$course, $material]) }}"
                                             class="w-full h-full" frameborder="0">
                                         </iframe>
                                     </div>
                                     <div class="mt-4">
-                                        <a href="{{ $material->file_url ? $material->file_url_full : $material->url_konten }}"
+                                        <a href="{{ route('instructor.materials.file', [$course, $material]) }}"
                                             target="_blank"
                                             class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
                                             <i class="fas fa-download"></i>
@@ -352,7 +357,7 @@
                         <!-- Navigation -->
                         <div class="p-6 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
                             @if($prevMaterial)
-                                <a href="{{ route('instructor.materials.preview', [$course, $prevMaterial]) }}"
+                                <a href="{{ route('instructor.courses.materials.preview', [$course, $prevMaterial]) }}"
                                     class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                                     <i class="fas fa-chevron-left"></i>
                                     <span>Materi Sebelumnya</span>
@@ -362,7 +367,7 @@
                             @endif
 
                             @if($nextMaterial)
-                                <a href="{{ route('instructor.materials.preview', [$course, $nextMaterial]) }}"
+                                <a href="{{ route('instructor.courses.materials.preview', [$course, $nextMaterial]) }}"
                                     class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                                     <span>Materi Selanjutnya</span>
                                     <i class="fas fa-chevron-right"></i>
@@ -385,7 +390,7 @@
                         </div>
                         <div class="max-h-[600px] overflow-y-auto">
                             @foreach($materials as $mat)
-                                <a href="{{ route('instructor.materials.preview', [$course, $mat]) }}"
+                                <a href="{{ route('instructor.courses.materials.preview', [$course, $mat]) }}"
                                     class="block p-4 border-b border-gray-100 hover:bg-gray-50 transition {{ $mat->id === $material->id ? 'bg-blue-50 border-l-4 border-l-blue-600' : '' }}">
                                     <div class="flex items-start gap-3">
                                         <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0

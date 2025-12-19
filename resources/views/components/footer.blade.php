@@ -29,12 +29,14 @@
         <div>
             <h4 class="font-semibold text-white mb-4">Bantuan</h4>
             <ul class="space-y-2 text-white/80">
-                <li><a href="{{ route('home') }}#faq" class="hover:text-white transition">Pusat Bantuan</a></li>
-                <li><a href="{{ route('home') }}#privacy" class="hover:text-white transition">Kebijakan Privasi</a>
+                <li><a href="{{ route('help') }}" class="hover:text-white transition">Pusat Bantuan</a></li>
+                <li><a href="{{ route('privacy') }}" class="hover:text-white transition">Kebijakan Privasi</a>
                 </li>
-                <li><a href="{{ route('home') }}#terms" class="hover:text-white transition">Syarat & Ketentuan</a>
+                <li><a href="{{ route('terms') }}" class="hover:text-white transition">Syarat & Ketentuan</a>
                 </li>
-                <li><a href="mailto:info@pnj.ac.id" class="hover:text-white transition">Kontak Kami</a></li>
+                <li><a href="{{ route('certificate.verify') }}" class="hover:text-white transition">Verifikasi Sertifikat</a>
+                </li>
+                <li><a href="{{ route('contact') }}" class="hover:text-white transition">Kontak Kami</a></li>
             </ul>
         </div>
 

@@ -56,7 +56,7 @@ class MidtransNotificationController extends Controller
                 $transaction->handleMidtransNotification($notification);
 
                 // If payment successful, create enrollment
-                if ($transaction->status === 'paid' && !$transaction->kursus->students()->where('user_id', $transaction->user_id)->exists()) {
+                if ($transaction->status === 'paid' && !$transaction->kursus->enrollments()->where('user_id', $transaction->user_id)->exists()) {
                     $this->createEnrollment($transaction);
                 }
 

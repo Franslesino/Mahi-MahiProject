@@ -127,23 +127,22 @@ Route::get('/instructors', function () {
     $allInstructorIds = $instructorIds->merge($pembuatIds)->unique();
 
     // Ambil instruktur dan hitung kursus (exclude admin)
+    // Gunakan subquery untuk menghitung total kursus unik (pembuat OR instructor_id)
     $instructors = \App\Models\User::whereIn('id', $allInstructorIds)
         ->where('role', '!=', 'admin')
+        ->select('*')
+        ->selectSub(function ($query) {
+            $query->from('kursus')
+                ->where('status_diterbitkan', true)
+                ->where(function ($q) {
+                    $q->whereColumn('kursus.pembuat', 'users.id')
+                        ->orWhereColumn('kursus.instructor_id', 'users.id');
+                })
+                ->selectRaw('count(*)');
+        }, 'total_courses')
+        ->orderBy('total_courses', 'desc')
         ->orderBy('name')
         ->get();
-
-    // Calculate total courses for each instructor
-    foreach ($instructors as $instructor) {
-        $instructor->total_courses = \App\Models\Kursus::where('status_diterbitkan', true)
-            ->where(function ($q) use ($instructor) {
-                $q->where('instructor_id', $instructor->id)
-                    ->orWhere('pembuat', $instructor->id);
-            })
-            ->count();
-    }
-
-    // Sort by total_courses descending
-    $instructors = $instructors->sortByDesc('total_courses')->values();
 
     // Paginate manually
     $page = request()->get('page', 1);
@@ -183,6 +182,22 @@ Route::get('/instructors/{instructor}', function (\App\Models\User $instructor) 
 Route::get('/terms', function () {
     return view('student.courses.terms');
 })->name('terms');
+
+Route::get('/privacy', function () {
+    return view('home.privacy');
+})->name('privacy');
+
+Route::get('/help', function () {
+    return view('home.help');
+})->name('help');
+
+Route::get('/contact', function () {
+    return view('home.contact');
+})->name('contact');
+
+// Certificate Verification (public)
+Route::get('/verify-certificate', [\App\Http\Controllers\CertificateVerificationController::class, 'index'])->name('certificate.verify');
+Route::post('/verify-certificate', [\App\Http\Controllers\CertificateVerificationController::class, 'check'])->name('certificate.check');
 
 // Test Google Config (Public - untuk debugging)
 Route::get('/test-google-config', function () {
@@ -422,6 +437,7 @@ Route::middleware('auth')->group(function () {
 
                 // Preview material
                 Route::get('materials/{material}/preview', [AdminCourseController::class, 'previewMaterial'])->name('materials.preview');
+                Route::get('materials/{material}/file', [AdminCourseController::class, 'streamMaterialFile'])->name('materials.file');
 
                 // Quiz routes
                 Route::post('quizzes', [AdminCourseController::class, 'storeQuiz'])->name('quizzes.store');
@@ -521,19 +537,21 @@ Route::middleware('auth')->group(function () {
             Route::get('/courses/{course}', [MaterialController::class, 'show'])->name('courses.show');
 
             // Material Management
-            Route::get('/courses/{course}/materials/create', [MaterialController::class, 'create'])->name('materials.create');
-            Route::post('/courses/{course}/materials', [MaterialController::class, 'store'])->name('materials.store');
-            Route::post('/', [MaterialController::class, 'store'])->name('store');
-            Route::get('/courses/{course}/materials/{material}/preview', [MaterialController::class, 'preview'])->name('materials.preview');
-            Route::get('/courses/{course}/materials/{material}/edit', [MaterialController::class, 'edit'])->name('materials.edit');
-            Route::put('/courses/{course}/materials/{material}', [MaterialController::class, 'update'])->name('materials.update');
-            Route::delete('/courses/{course}/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
+            Route::name('courses.')->group(function () {
+                Route::get('/courses/{course}/materials/create', [MaterialController::class, 'create'])->name('materials.create');
+                Route::post('/courses/{course}/materials', [MaterialController::class, 'store'])->name('materials.store');
+                Route::get('/courses/{course}/materials/{material}/preview', [MaterialController::class, 'preview'])->name('materials.preview');
+                Route::get('/courses/{course}/materials/{material}/file', [MaterialController::class, 'streamMaterialFile'])->name('materials.file');
+                Route::get('/courses/{course}/materials/{material}/edit', [MaterialController::class, 'edit'])->name('materials.edit');
+                Route::put('/courses/{course}/materials/{material}', [MaterialController::class, 'update'])->name('materials.update');
+                Route::delete('/courses/{course}/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
 
-            // Material-based Attendance Management (for class_session type materials)
-            Route::get('/courses/{course}/materials/{material}/attendance', [MaterialController::class, 'attendance'])->name('materials.attendance');
-            Route::put('/courses/{course}/materials/{material}/attendance/{attendance}', [MaterialController::class, 'updateAttendance'])->name('materials.attendance.update');
-            Route::post('/courses/{course}/materials/{material}/attendance/generate', [MaterialController::class, 'generateAttendance'])->name('materials.attendance.generate');
-            Route::post('/courses/{course}/materials/{material}/attendance/mark-all-present', [MaterialController::class, 'markAllPresent'])->name('materials.attendance.mark-all-present');
+                // Material-based Attendance Management (for class_session type materials)
+                Route::get('/courses/{course}/materials/{material}/attendance', [MaterialController::class, 'attendance'])->name('materials.attendance');
+                Route::put('/courses/{course}/materials/{material}/attendance/{attendance}', [MaterialController::class, 'updateAttendance'])->name('materials.attendance.update');
+                Route::post('/courses/{course}/materials/{material}/attendance/generate', [MaterialController::class, 'generateAttendance'])->name('materials.attendance.generate');
+                Route::post('/courses/{course}/materials/{material}/attendance/mark-all-present', [MaterialController::class, 'markAllPresent'])->name('materials.attendance.mark-all-present');
+            });
 
             // Question Bank Management
             Route::resource('question-banks', \App\Http\Controllers\Instructor\QuestionBankController::class);

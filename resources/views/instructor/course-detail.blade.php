@@ -478,7 +478,7 @@
                                                         </div>
 
                                                         <!-- Content - Clickable -->
-                                                        <a href="{{ route('instructor.materials.preview', [$course, $material]) }}"
+                                                        <a href="{{ route('instructor.courses.materials.preview', [$course, $material]) }}"
                                                             class="flex-1 min-w-0">
                                                             <h6 class="font-medium text-gray-900 truncate hover:text-blue-600 transition">
                                                                 {{ $material->judul }}
@@ -516,24 +516,24 @@
                                                                     <i class="fas fa-list"></i>
                                                                 </a>
                                                             @endif
-                                                            <a href="{{ route('instructor.materials.preview', [$course, $material]) }}"
+                                                            <a href="{{ route('instructor.courses.materials.preview', [$course, $material]) }}"
                                                                 class="p-1.5 text-green-600 hover:bg-green-50 rounded transition"
                                                                 title="Preview">
                                                                 <i class="fas fa-eye text-sm"></i>
                                                             </a>
-                                                            <a href="{{ route('instructor.materials.edit', [$course, $material]) }}"
+                                                            <a href="{{ route('instructor.courses.materials.edit', [$course, $material]) }}"
                                                                 class="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition"
                                                                 title="Edit">
                                                                 <i class="fas fa-edit text-sm"></i>
                                                             </a>
                                                             @if($material->type === 'class_session')
-                                                                <a href="{{ route('instructor.materials.attendance', [$course, $material]) }}"
+                                                                <a href="{{ route('instructor.courses.materials.attendance', [$course, $material]) }}"
                                                                     class="p-1.5 text-orange-600 hover:bg-orange-50 rounded transition"
                                                                     title="Kelola Absensi">
                                                                     <i class="fas fa-clipboard-list text-sm"></i>
                                                                 </a>
                                                             @endif
-                                                            <form action="{{ route('instructor.materials.destroy', [$course, $material]) }}"
+                                                            <form action="{{ route('instructor.courses.materials.destroy', [$course, $material]) }}"
                                                                 method="POST" class="instr-delete-form"
                                                                 data-confirm="Yakin ingin menghapus materi ini?">
                                                                 @csrf
@@ -622,7 +622,7 @@
                     <span id="materialModalTitleText">Tambah Materi</span>
                 </h3>
             </div>
-            <form action="{{ route('instructor.materials.store', $course) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('instructor.courses.materials.store', $course) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="section_id" id="materialSectionId">
                 <input type="hidden" name="type" id="materialType">

@@ -15,7 +15,7 @@
 
         <form id="materialCreateForm"
               data-redirect="{{ route('instructor.courses.show', $course->id) }}"
-              action="{{ route('instructor.materials.store', $course->id) }}"
+              action="{{ route('instructor.courses.materials.store', $course->id) }}"
               method="POST"
               enctype="multipart/form-data">
             @csrf

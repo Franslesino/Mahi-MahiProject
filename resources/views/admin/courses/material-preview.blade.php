@@ -76,8 +76,13 @@
                                 @php
                                     $videoSrc = $material->file_url_full ?? $material->url_konten;
                                     $mime = 'video/mp4';
-                                    if ($videoSrc && \Illuminate\Support\Str::endsWith(strtolower($videoSrc), ['.mov'])) {
-                                        $mime = 'video/quicktime';
+                                    if ($videoSrc) {
+                                        $cleanUrl = strtok($videoSrc, '?');
+                                        if (\Illuminate\Support\Str::endsWith(strtolower($cleanUrl), ['.mov'])) {
+                                            $mime = 'video/quicktime';
+                                        } elseif (\Illuminate\Support\Str::endsWith(strtolower($cleanUrl), ['.avi'])) {
+                                            $mime = 'video/x-msvideo';
+                                        }
                                     }
                                 @endphp
                                 @if($videoSrc)
@@ -100,12 +105,12 @@
                                 <!-- PDF Viewer -->
                                 @if($material->file_url || $material->url_konten)
                                     <div class="border border-gray-200 rounded-lg overflow-hidden" style="height: 600px;">
-                                        <iframe src="{{ $material->file_url ? $material->file_url_full : $material->url_konten }}"
+                                        <iframe src="{{ route('admin.courses.materials.file', [$course, $material]) }}"
                                             class="w-full h-full" frameborder="0">
                                         </iframe>
                                     </div>
                                     <div class="mt-4">
-                                        <a href="{{ $material->file_url ? $material->file_url_full : $material->url_konten }}"
+                                        <a href="{{ route('admin.courses.materials.file', [$course, $material]) }}"
                                             target="_blank"
                                             class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
                                             <i class="fas fa-download"></i>

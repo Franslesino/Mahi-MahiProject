@@ -69,8 +69,10 @@
                             onchange="toggleContentFields()">
                         <option value="video" {{ old('type', $material->type) === 'video' ? 'selected' : '' }}>Video</option>
                         <option value="document" {{ old('type', $material->type) === 'document' ? 'selected' : '' }}>Dokumen</option>
+                        <option value="pdf" {{ old('type', $material->type) === 'pdf' ? 'selected' : '' }}>PDF</option>
                         <option value="text" {{ old('type', $material->type) === 'text' ? 'selected' : '' }}>Teks</option>
                         <option value="quiz" {{ old('type', $material->type) === 'quiz' ? 'selected' : '' }}>Quiz</option>
+                        <option value="class_session" {{ old('type', $material->type) === 'class_session' ? 'selected' : '' }}>Sesi Kelas</option>
                     </select>
                     @error('type')
                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -142,6 +144,44 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Class Session Fields -->
+                <div id="class-session-fields" style="display: none;" class="space-y-4 bg-orange-50 p-4 rounded-lg border border-orange-200">
+                    <h4 class="font-semibold text-orange-900 mb-2 flex items-center gap-2">
+                        <i class="fas fa-calendar-alt"></i> Detail Sesi Kelas
+                    </h4>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Sesi *</label>
+                            <input type="date" name="session_date" value="{{ old('session_date', $material->session_date ? $material->session_date->format('Y-m-d') : '') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Jam Mulai *</label>
+                            <input type="time" name="session_start_time" value="{{ old('session_start_time', $material->session_start_time ? $material->session_start_time->format('H:i') : '') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Jam Selesai *</label>
+                            <input type="time" name="session_end_time" value="{{ old('session_end_time', $material->session_end_time ? $material->session_end_time->format('H:i') : '') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tipe Sesi *</label>
+                            <select name="session_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="online" {{ old('session_type', $material->session_type) === 'online' ? 'selected' : '' }}>Online (Zoom/Meet)</option>
+                                <option value="offline" {{ old('session_type', $material->session_type) === 'offline' ? 'selected' : '' }}>Offline (Tatap Muka)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi / Ruangan</label>
+                            <input type="text" name="session_location" value="{{ old('session_location', $material->session_location) }}" placeholder="Contoh: Ruang A atau Zoom" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Link Pertemuan (Jika Online)</label>
+                        <input type="url" name="session_meeting_link" value="{{ old('session_meeting_link', $material->session_meeting_link) }}" placeholder="https://zoom.us/..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                </div>
             </div>
 
             <!-- Settings -->
@@ -200,20 +240,24 @@ function toggleContentFields() {
     const videoUrlField = document.getElementById('video-url-field');
     const fileUploadField = document.getElementById('file-upload-field');
     const quizNote = document.getElementById('quiz-note');
+    const classSessionFields = document.getElementById('class-session-fields');
     
     // Hide all fields first
     videoUrlField.style.display = 'none';
     fileUploadField.style.display = 'none';
     quizNote.style.display = 'none';
+    classSessionFields.style.display = 'none';
     
     // Show relevant fields based on type
     if (type === 'video') {
         videoUrlField.style.display = 'block';
         fileUploadField.style.display = 'block';
-    } else if (type === 'document') {
+    } else if (type === 'document' || type === 'pdf') {
         fileUploadField.style.display = 'block';
     } else if (type === 'quiz') {
         quizNote.style.display = 'block';
+    } else if (type === 'class_session') {
+        classSessionFields.style.display = 'block';
     }
 }
 

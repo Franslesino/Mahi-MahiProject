@@ -217,11 +217,13 @@ class QuestionBankController extends Controller
 
             // Create options based on type
             if ($validated['type'] === 'multiple_choice') {
-                foreach ($validated['options'] as $index => $optionText) {
+                $options = array_values($validated['options']);
+                foreach ($options as $idx => $optionText) {
+                    $order = $idx + 1;
                     $question->options()->create([
                         'option_text' => $optionText,
-                        'is_correct' => ((string)$validated['correct_option'] === (string)($index + 1)),
-                        'order' => $index + 1,
+                        'is_correct' => ((string)$validated['correct_option'] === (string)$order),
+                        'order' => $order,
                     ]);
                 }
             } elseif ($validated['type'] === 'true_false') {

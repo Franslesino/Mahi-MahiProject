@@ -94,8 +94,8 @@ class InstructorController extends Controller
      */
     public function showCourse(Kursus $course)
     {
-        // Ensure instructor can only view their own courses
-        if ($course->pembuat !== Auth::id()) {
+        // Ensure instructor can only view their own courses (as creator or assigned instructor)
+        if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
             abort(403, 'Unauthorized action.');
         }
 

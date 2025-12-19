@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class MaterialController extends Controller
 {
@@ -69,7 +70,7 @@ class MaterialController extends Controller
             ->get();
 
         // Progress & score per participant
-        $passingScore = Assignment::where('kursus_id', $course->id)->firstWhere('passing_score')?->passing_score ?? 60;
+        $passingScore = Assignment::where('kursus_id', $course->id)->whereNotNull('passing_score')->first()?->passing_score ?? 60;
 
         $completionCounts = MaterialCompletion::select('user_id', DB::raw('COUNT(*) as completed_count'))
             ->whereIn('materi_id', $materialIds)
@@ -186,6 +187,96 @@ class MaterialController extends Controller
         ));
     }
 
+    public function streamMaterialFile(Kursus $course, Materi $material)
+    {
+        if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($material->kursus_id !== $course->id) {
+            abort(404);
+        }
+
+        return $this->streamMaterialAsset($material);
+    }
+
+    protected function streamMaterialAsset(Materi $material)
+    {
+        $source = $material->file_url ?: $material->url_konten;
+        if ($material->url_konten && Str::startsWith($material->url_konten, ['http://', 'https://'])) {
+            $source = $material->url_konten;
+        }
+        if (!$source) {
+            abort(404, 'File tidak ditemukan');
+        }
+
+        $filenameBase = Str::slug($material->judul ?? $material->title ?? 'material');
+        $extension = pathinfo(parse_url($source, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION);
+        $downloadName = $filenameBase . ($extension ? '.' . $extension : '');
+
+        $supabase = app(SupabaseStorageService::class);
+        $supabaseObject = $supabase->fetchObject($source);
+        if ($supabaseObject) {
+            return response($supabaseObject['body'], 200, [
+                'Content-Type' => $supabaseObject['content_type'],
+                'Content-Disposition' => 'inline; filename="' . $downloadName . '"',
+            ]);
+        }
+
+        if (!Str::startsWith($source, ['http://', 'https://'])) {
+            $path = ltrim($source, '/');
+            $disk = config('filesystems.materials_disk', 'public');
+
+            if (Str::startsWith($path, 'storage/')) {
+                $path = ltrim(substr($path, strlen('storage/')), '/');
+                $disk = 'public';
+            }
+
+            $storage = Storage::disk($disk);
+            if ($storage->exists($path)) {
+                $mime = $storage->mimeType($path) ?? 'application/octet-stream';
+                $stream = $storage->readStream($path);
+                if (!$stream) {
+                    abort(404, 'File tidak ditemukan');
+                }
+
+                return response()->stream(function () use ($stream) {
+                    fpassthru($stream);
+                }, 200, [
+                    'Content-Type' => $mime,
+                    'Content-Disposition' => 'inline; filename="' . $downloadName . '"',
+                ]);
+            }
+
+            if (Storage::exists($path)) {
+                $mime = Storage::mimeType($path) ?? 'application/octet-stream';
+                $stream = Storage::readStream($path);
+                if (!$stream) {
+                    abort(404, 'File tidak ditemukan');
+                }
+
+                return response()->stream(function () use ($stream) {
+                    fpassthru($stream);
+                }, 200, [
+                    'Content-Type' => $mime,
+                    'Content-Disposition' => 'inline; filename="' . $downloadName . '"',
+                ]);
+            }
+        }
+
+        $fallbackUrl = $material->file_url_full;
+        if ($fallbackUrl && filter_var($fallbackUrl, FILTER_VALIDATE_URL)) {
+            return redirect()->away($fallbackUrl);
+        }
+
+        if (filter_var($source, FILTER_VALIDATE_URL)) {
+            $fallback = $material->file_url_full ?? $source;
+            return redirect()->away($fallback);
+        }
+
+        abort(404, 'File tidak ditemukan');
+    }
+
 
     public function create(Kursus $course)
     {
@@ -209,11 +300,16 @@ class MaterialController extends Controller
 
         // Base validation rules
         $rules = [
-            'section_id' => 'nullable|exists:course_sections,id',
+            'section_id' => [
+                'nullable',
+                Rule::exists('course_sections', 'id')->where(function ($query) use ($course) {
+                    $query->where('course_id', $course->id);
+                }),
+            ],
             'judul' => 'required|string|max:255',
             'description' => 'nullable|string',
             'isi' => 'nullable|string',
-            'type' => 'required|in:video,pdf,text,quiz,class_session',
+            'type' => 'required|in:video,pdf,text,document,quiz,reading,class_session',
             'content' => 'nullable|string',
             'duration' => 'nullable|integer|min:0',
             'urutan' => 'nullable|integer|min:1',
@@ -343,11 +439,16 @@ class MaterialController extends Controller
 
         // Base validation rules
         $rules = [
-            'section_id' => 'nullable|exists:course_sections,id',
+            'section_id' => [
+                'nullable',
+                Rule::exists('course_sections', 'id')->where(function ($query) use ($course) {
+                    $query->where('course_id', $course->id);
+                }),
+            ],
             'judul' => 'required|string|max:255',
             'description' => 'nullable|string',
             'isi' => 'nullable|string',
-            'type' => 'required|in:video,pdf,text,quiz,class_session',
+            'type' => 'required|in:video,pdf,text,document,quiz,reading,class_session',
             'file' => [
                 'nullable',
                 'file',

@@ -254,11 +254,13 @@ class QuestionBankController extends Controller
 
             // Handle options based on type
             if ($validated['type'] === 'multiple_choice') {
-                foreach ($validated['options'] as $idx => $text) {
+                $options = array_values($validated['options']);
+                foreach ($options as $idx => $text) {
+                    $order = $idx + 1;
                     $question->options()->create([
                         'option_text' => $text,
-                        'is_correct' => ((string) $validated['correct_option'] === (string) ($idx + 1)),
-                        'order' => $idx + 1,
+                        'is_correct' => ((string) $validated['correct_option'] === (string) $order),
+                        'order' => $order,
                     ]);
                 }
             } elseif ($validated['type'] === 'true_false') {
@@ -413,11 +415,13 @@ class QuestionBankController extends Controller
             $question->options()->delete();
 
             if ($validated['type'] === 'multiple_choice') {
-                foreach ($validated['options'] as $idx => $text) {
+                $options = array_values($validated['options']);
+                foreach ($options as $idx => $text) {
+                    $order = $idx + 1;
                     $question->options()->create([
                         'option_text' => $text,
-                        'is_correct' => ((string) $validated['correct_option'] === (string) ($idx + 1)),
-                        'order' => $idx + 1,
+                        'is_correct' => ((string) $validated['correct_option'] === (string) $order),
+                        'order' => $order,
                     ]);
                 }
             } elseif ($validated['type'] === 'true_false') {

@@ -3,17 +3,50 @@
     $isAdmin = auth()->user()->role === 'admin';
     $layout = $isAdmin ? 'layouts.admin' : 'layouts.instructor';
     $routePrefix = $isAdmin ? 'admin.courses' : 'instructor.courses';
-    $materialRoutePrefix = $isAdmin ? 'admin.courses.modules.materials' : 'instructor.materials';
+    $materialRoutePrefix = $isAdmin ? 'admin.courses.materials' : 'instructor.courses.materials';
+    $editMaterialRoutePrefix = $isAdmin ? 'admin.courses.modules.materials' : 'instructor.courses.materials';
 @endphp
 
 @extends($layout)
 
 @section('content')
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+    /* smooth transitions */
+    .section-content {
+        transition: all 0.3s ease-in-out;
+    }
+    .modal-enter {
+        animation: modalScaleUp 0.3s ease-out;
+    }
+    @keyframes modalScaleUp {
+        from { transform: scale(0.95); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    
+    /* progress bar */
+    .progress-container {
+        display: none;
+        width: 100%;
+        background-color: #f3f4f6;
+        border-radius: 9999px;
+        height: 1rem;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+    .progress-bar {
+        width: 0%;
+        height: 100%;
+        background-color: #3b82f6;
+        transition: width 0.1s ease;
+    }
+</style>
 @php
-    // Tentukan route prefix berdasarkan role user
-    $isAdmin = auth()->user()->role === 'admin';
-    $routePrefix = $isAdmin ? 'admin.courses' : 'instructor.courses';
-    $materialRoutePrefix = $isAdmin ? 'admin.courses.modules.materials' : 'instructor.materials';
+    // Redefining variables if needed, though usually one block at top is enough.
+    // Keeping it for safety but making it consistent.
+    $materialRoutePrefix = $isAdmin ? 'admin.courses.materials' : 'instructor.courses.materials';
+    $editMaterialRoutePrefix = $isAdmin ? 'admin.courses.modules.materials' : 'instructor.courses.materials';
 @endphp
 
 <div class="p-8">
@@ -24,7 +57,7 @@
             <p class="text-gray-600 mt-1">{{ $course->deskripsi }}</p>
         </div>
         <div class="flex gap-3">
-            <a href="{{ route('admin.courses.final-quiz.edit', $course->id) }}" 
+            <a href="{{ route($routePrefix . '.final-quiz.edit', $course->id) }}" 
                class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-medium flex items-center gap-2">
                 <i class="fas fa-graduation-cap"></i>
                 <span>Final Quiz</span>
@@ -432,9 +465,13 @@
                                                 class="px-3 py-1.5 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition flex items-center gap-1">
                                             <i class="fas fa-align-left"></i> Buat Teks
                                         </button>
-                                        <button onclick="openQuizModal({{ $section->id }})" 
+                                        <button onclick="openMaterialModal({{ $section->id }}, 'quiz')" 
                                                 class="px-3 py-1.5 bg-yellow-600 text-white rounded text-xs hover:bg-yellow-700 transition flex items-center gap-1">
                                             <i class="fas fa-question-circle"></i> Buat Quiz
+                                        </button>
+                                        <button onclick="openMaterialModal({{ $section->id }}, 'class_session')" 
+                                                class="px-3 py-1.5 bg-orange-600 text-white rounded text-xs hover:bg-orange-700 transition flex items-center gap-1">
+                                            <i class="fas fa-users"></i> Sesi Kelas
                                         </button>
                                     </div>
                                 </div>
@@ -469,7 +506,7 @@
 
                                                     <!-- Content - Clickable Title -->
                                                     <div class="flex-1 min-w-0">
-                                                        <a href="{{ route('admin.courses.materials.preview', [$course, $material]) }}" 
+                                                        <a href="{{ route($materialRoutePrefix . '.preview', [$course, $material]) }}" 
                                                            class="block group/title">
                                                             <h6 class="font-medium text-gray-900 truncate group-hover/title:text-blue-600 transition">
                                                                 {{ $material->judul }}
@@ -492,17 +529,17 @@
                                                             <i class="fas fa-list text-sm"></i>
                                                         </a>
                                                         @endif
-                                                        <a href="{{ route('admin.courses.materials.preview', [$course, $material]) }}" 
+                                                        <a href="{{ route($materialRoutePrefix . '.preview', [$course, $material]) }}" 
                                                            class="p-1.5 text-green-600 hover:bg-green-50 rounded transition"
                                                            title="Preview">
                                                             <i class="fas fa-eye text-sm"></i>
                                                         </a>
-                                                        <a href="{{ $isAdmin ? route('admin.courses.modules.materials.edit', [$course, $material->section_id, $material]) : '#' }}" 
+                                                        <a href="{{ route($editMaterialRoutePrefix . '.edit', $isAdmin ? [$course, $material->section_id, $material] : [$course, $material]) }}" 
                                                            class="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition"
                                                            title="Edit">
                                                             <i class="fas fa-edit text-sm"></i>
                                                         </a>
-                                                        <form action="{{ $isAdmin ? route('admin.courses.modules.materials.destroy', [$course, $material->section_id, $material]) : route('instructor.materials.destroy', [$course, $material]) }}" 
+                                                        <form action="{{ $isAdmin ? route('admin.courses.modules.materials.destroy', [$course, $material->section_id, $material]) : route('instructor.courses.materials.destroy', [$course, $material]) }}" 
                                                               method="POST" 
                                                               class="inline"
                                                               onsubmit="return confirm('Yakin ingin menghapus materi ini?');">
@@ -619,10 +656,55 @@
                        class="w-full px-4 py-2 border border-gray-200 rounded-lg shadow-sm">
             </div>
 
-            <div class="mb-4 relative z-10" id="contentSection" style="display: none;">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Konten</label>
+            <div id="contentSection" class="mb-4 relative z-10" style="display: none;">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Konten / Isi Materi</label>
                 <textarea name="content" rows="6"
                           class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 shadow-sm"></textarea>
+            </div>
+
+            <div id="sessionSection" class="space-y-4 mb-4 relative z-10" style="display: none;">
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Sesi *</label>
+                        <input type="date" name="session_date" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Jam Mulai *</label>
+                        <input type="time" name="session_start_time" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Jam Selesai *</label>
+                        <input type="time" name="session_end_time" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipe Sesi *</label>
+                        <select name="session_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <option value="online">Online (Zoom/Meet)</option>
+                            <option value="offline">Offline (Tatap Muka)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi / Ruangan</label>
+                        <input type="text" name="session_location" placeholder="Contoh: Ruang A atau Zoom" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Link Pertemuan (Jika Online)</label>
+                    <input type="url" name="session_meeting_link" placeholder="https://zoom.us/..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="uploadProgress" class="progress-container relative z-10">
+                <div class="flex justify-between text-xs text-gray-600 mb-1">
+                    <span>Mengunggah file...</span>
+                    <span id="progressText">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progressBar" class="bg-blue-600 h-2 rounded-full" style="width: 0%"></div>
+                </div>
             </div>
 
             <div class="flex gap-3 justify-end relative z-10">
@@ -860,39 +942,134 @@ function scrollToAddMaterial() {
 }
 
 function openMaterialModal(sectionId, type = 'video') {
-    document.getElementById('materialModal').classList.remove('hidden');
+    const modal = document.getElementById('materialModal');
+    modal.classList.remove('hidden');
+    modal.querySelector('.bg-white').classList.add('modal-enter');
+    
     document.getElementById('materialSectionId').value = sectionId;
     document.getElementById('materialType').value = type;
     
-    // Update form action dengan section ID yang benar
+    // Reset progress
+    document.getElementById('uploadProgress').style.display = 'none';
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('progressText').textContent = '0%';
+
+    // Update form action dengan route yang benar (admin vs instructor)
     const form = document.getElementById('materialForm');
-    form.action = "{{ route('admin.courses.modules.materials.store', [$course, '__MODULE__']) }}".replace('__MODULE__', sectionId);
+    const adminRoute = "{{ route('admin.courses.modules.materials.store', [$course, '__MODULE__']) }}";
+    const instructorRoute = "{{ route('instructor.courses.materials.store', [$course]) }}";
+    
+    @if($isAdmin)
+        form.action = adminRoute.replace('__MODULE__', sectionId);
+    @else
+        form.action = instructorRoute;
+    @endif
     
     // Update alert berdasarkan tipe materi
     const alertText = document.getElementById('materialAlertText');
     const fileInput = document.querySelector('#fileUploadSection input[type="file"]');
     
+    // Element visibility control
+    const fileSection = document.getElementById('fileUploadSection');
+    const contentSection = document.getElementById('contentSection');
+    const sessionSection = document.getElementById('sessionSection');
+    
+    // Reset all
+    fileSection.style.display = 'none';
+    contentSection.style.display = 'none';
+    sessionSection.style.display = 'none';
+    
+    if (type === 'quiz') {
+        modal.classList.add('hidden');
+        openQuizModal(sectionId);
+        return;
+    }
+
     if (type === 'video') {
         alertText.textContent = 'Unggah file video dengan format .mp4 atau .mov. Maksimal ukuran file: 100 MB.';
         fileInput.accept = '.mp4,.mov,.avi';
-        document.getElementById('fileUploadSection').style.display = 'block';
-        document.getElementById('contentSection').style.display = 'none';
+        fileSection.style.display = 'block';
     } else if (type === 'pdf') {
         alertText.textContent = 'Unggah file PDF. Maksimal ukuran file: 100 MB.';
         fileInput.accept = '.pdf';
-        document.getElementById('fileUploadSection').style.display = 'block';
-        document.getElementById('contentSection').style.display = 'none';
+        fileSection.style.display = 'block';
     } else if (type === 'text') {
         alertText.textContent = 'Buat konten teks langsung di editor. Tidak perlu mengunggah file.';
-        document.getElementById('fileUploadSection').style.display = 'none';
-        document.getElementById('contentSection').style.display = 'block';
+        contentSection.style.display = 'block';
+    } else if (type === 'class_session') {
+        alertText.textContent = 'Atur jadwal dan detail sesi kelas (hybrid/offline) di bawah.';
+        sessionSection.style.display = 'block';
     } else {
         alertText.textContent = 'Unggah file sesuai dengan tipe materi yang dipilih. Maksimal ukuran: 100 MB.';
         fileInput.accept = '.pdf,.mp4,.avi,.mov';
-        document.getElementById('fileUploadSection').style.display = 'block';
-        document.getElementById('contentSection').style.display = 'none';
+        fileSection.style.display = 'block';
     }
 }
+
+// Tambahkan Handler Form Materi AJAX
+document.getElementById('materialForm').onsubmit = function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const progressContainer = document.getElementById('uploadProgress');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    // Show progress if file exists
+    const hasFile = form.querySelector('input[type="file"]').files.length > 0;
+    if (hasFile) {
+        progressContainer.style.display = 'block';
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpa...';
+
+    const xhr = new XMLHttpRequest();
+    xhr.open(form.method, form.action);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+    xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressBar.style.width = percentComplete + '%';
+            progressText.textContent = percentComplete + '%';
+        }
+    };
+
+    xhr.onload = function() {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Simpan Materi';
+        
+        if (xhr.status >= 200 && xhr.status < 300) {
+            const response = JSON.parse(xhr.responseText);
+            Swal.fire({
+                title: 'Berhasil!',
+                text: response.message || 'Materi berhasil disimpan.',
+                icon: 'success',
+                confirmButtonColor: '#3b82f6'
+            }).then(() => {
+                window.location.reload();
+            });
+        } else {
+            const error = JSON.parse(xhr.responseText);
+            Swal.fire({
+                title: 'Gagal!',
+                text: error.message || 'Terjadi kesalahan saat menyimpan materi.',
+                icon: 'error',
+                confirmButtonColor: '#3b82f6'
+            });
+        }
+    };
+
+    xhr.onerror = function() {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Simpan Materi';
+        Swal.fire('Error', 'Koneksi bermasalah.', 'error');
+    };
+
+    xhr.send(formData);
+};
 
 function closeMaterialModal() {
     document.getElementById('materialModal').classList.add('hidden');
@@ -960,8 +1137,26 @@ document.addEventListener('DOMContentLoaded', () => {
     apply();
 });
 
+window.showDeleteConfirm = function(text, callback) {
+    Swal.fire({
+        title: 'Apakah Anda yakin?',
+        text: text,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal',
+        borderRadius: '1rem'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            callback();
+        }
+    });
+};
+
 function deleteSection(sectionId) {
-    const submitDelete = () => {
+    window.showDeleteConfirm('Yakin ingin menghapus modul ini? Semua materi di dalamnya akan ikut terhapus.', () => {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = "{{ $isAdmin ? route('admin.courses.modules.destroy', [$course, '__SECTION_ID__']) : route('instructor.sections.destroy', '__SECTION_ID__') }}".replace('__SECTION_ID__', sectionId);
@@ -977,13 +1172,7 @@ function deleteSection(sectionId) {
         form.appendChild(methodField);
         document.body.appendChild(form);
         form.submit();
-    };
-    if (typeof window.showDeleteConfirm === 'function') {
-        window.showDeleteConfirm('Yakin ingin menghapus modul ini? Semua materi di dalamnya akan ikut terhapus.', submitDelete);
-    } else {
-        // Fallback native confirm
-        if (confirm('Yakin ingin menghapus modul ini? Semua materi di dalamnya akan ikut terhapus.')) submitDelete();
-    }
+    });
 }
 </script>
 @endpush

@@ -25,12 +25,26 @@ class MaterialController extends Controller
     public function store(Request $request, Kursus $course)
     {
         $validated = $request->validate([
+            'section_id' => 'nullable|exists:course_sections,id',
             'judul' => 'required|string|max:255',
             'isi' => 'nullable|string',
+            'description' => 'nullable|string',
+            'content' => 'nullable|string',
             'url_konten' => 'nullable|string',
-            'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,mp4,avi,mov|max:51200', // 50MB
+            'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,mp4,avi,mov|max:102400',
+            'type' => 'required|in:video,pdf,text,document,quiz,reading,class_session',
             'urutan' => 'nullable|integer|min:0',
+            'duration' => 'nullable|integer|min:0',
+            'is_preview' => 'nullable|boolean',
             'status_terkunci' => 'nullable|boolean',
+            'status' => 'nullable|in:published,draft',
+            // Class session fields
+            'session_date' => 'required_if:type,class_session|nullable|date',
+            'session_start_time' => 'required_if:type,class_session|nullable',
+            'session_end_time' => 'required_if:type,class_session|nullable',
+            'session_location' => 'nullable|string|max:255',
+            'session_meeting_link' => 'nullable|url',
+            'session_type' => 'required_if:type,class_session|nullable|in:offline,online',
         ]);
 
         $storage = app(SupabaseStorageService::class);
@@ -49,7 +63,12 @@ class MaterialController extends Controller
         }
 
         $validated['kursus_id'] = $course->id;
-        $validated['status_terkunci'] = $request->has('status_terkunci');
+        $validated['status_terkunci'] = $request->has('status_terkunci') || ($request->type !== 'video' && !$request->has('is_preview'));
+        
+        if ($request->type === 'class_session') {
+            $validated['status'] = 'published';
+            $validated['status_terkunci'] = false;
+        }
 
         Materi::create($validated);
 
@@ -76,12 +95,26 @@ class MaterialController extends Controller
         }
 
         $validated = $request->validate([
+            'section_id' => 'nullable|exists:course_sections,id',
             'judul' => 'required|string|max:255',
             'isi' => 'nullable|string',
+            'description' => 'nullable|string',
+            'content' => 'nullable|string',
             'url_konten' => 'nullable|string',
-            'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,mp4,avi,mov|max:51200',
+            'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,mp4,avi,mov|max:102400',
+            'type' => 'required|in:video,pdf,text,document,quiz,reading,class_session',
             'urutan' => 'nullable|integer|min:0',
+            'duration' => 'nullable|integer|min:0',
+            'is_preview' => 'nullable|boolean',
             'status_terkunci' => 'nullable|boolean',
+            'status' => 'nullable|in:published,draft',
+            // Class session fields
+            'session_date' => 'required_if:type,class_session|nullable|date',
+            'session_start_time' => 'required_if:type,class_session|nullable',
+            'session_end_time' => 'required_if:type,class_session|nullable',
+            'session_location' => 'nullable|string|max:255',
+            'session_meeting_link' => 'nullable|url',
+            'session_type' => 'required_if:type,class_session|nullable|in:offline,online',
         ]);
 
         $storage = app(SupabaseStorageService::class);

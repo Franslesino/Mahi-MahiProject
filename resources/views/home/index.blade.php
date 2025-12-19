@@ -335,7 +335,7 @@
         </div>
 
         <!-- Why Choose Us Section -->
-        <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-3xl p-12 mb-12 shadow-sm border border-gray-100">
+        <div id="about" class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-3xl p-12 mb-12 shadow-sm border border-gray-100 scroll-mt-32">
             <div class="text-center mb-12">
                 <h3 class="text-3xl font-bold text-gray-900 mb-3">Mengapa Memilih UpGrennius?</h3>
                 <p class="text-gray-600 text-lg">Platform pembelajaran terbaik untuk mahasiswa PNJ</p>

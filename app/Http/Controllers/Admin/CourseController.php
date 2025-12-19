@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class CourseController extends Controller
 {
@@ -63,7 +64,7 @@ class CourseController extends Controller
             'badge' => 'nullable|string|max:50',
             'badge_color' => 'nullable|string|max:50',
             'status' => 'required|in:active,inactive,draft',
-            'instructor_id' => 'required|exists:users,id',
+            'instructor_id' => 'nullable|exists:users,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'access_duration_days' => 'nullable|integer|min:1',
             'purchase_deadline_date' => 'nullable|date|after:now',
@@ -85,7 +86,7 @@ class CourseController extends Controller
             'learning' => $validated['learning'] ?? null,
             'badge' => $validated['badge'] ?? null,
             'badge_color' => $validated['badge_color'] ?? 'blue',
-            'instructor_id' => $validated['instructor_id'],
+            'instructor_id' => $validated['instructor_id'] ?? null,
             'created_by' => Auth::id(),
             'rating' => 0,
             'videos' => 0,
@@ -102,7 +103,7 @@ class CourseController extends Controller
         $course = Kursus::create($data);
 
         // Notifikasi ke instruktur
-        if (!empty($validated['instructor_id'])) {
+        if (!empty($validated['instructor_id'] ?? null)) {
             Notification::create([
                 'user_id' => $validated['instructor_id'],
                 'title' => 'Kursus baru ditugaskan',
@@ -144,7 +145,7 @@ class CourseController extends Controller
             'badge' => 'nullable|string|max:50',
             'badge_color' => 'nullable|string|max:50',
             'status' => 'required|in:active,inactive,draft',
-            'instructor_id' => 'required|exists:users,id',
+            'instructor_id' => 'nullable|exists:users,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'access_duration_days' => 'nullable|integer|min:1',
             'purchase_deadline_date' => 'nullable|date|after:now',
@@ -165,7 +166,7 @@ class CourseController extends Controller
             'learning' => $validated['learning'] ?? null,
             'badge' => $validated['badge'] ?? null,
             'badge_color' => $validated['badge_color'] ?? 'blue',
-            'instructor_id' => $validated['instructor_id'],
+            'instructor_id' => $validated['instructor_id'] ?? null,
             'access_duration_days' => $validated['access_duration_days'] ?? null,
             'purchase_deadline_date' => $validated['purchase_deadline_date'] ?? null,
         ];
@@ -186,7 +187,7 @@ class CourseController extends Controller
 
         // Cek apakah instructor berubah
         $oldInstructorId = $course->instructor_id;
-        $newInstructorId = $validated['instructor_id'];
+        $newInstructorId = $validated['instructor_id'] ?? null;
 
         $course->update($data);
 
@@ -249,7 +250,7 @@ class CourseController extends Controller
 
         // Progress & score per participant
         $materialIds = $course->materi->pluck('id');
-        $totalMaterials = max(1, $materialIds->count());
+        $totalMaterials = $materialIds->count();
         $passingScore = $assignments->firstWhere('passing_score')?->passing_score ?? 60;
 
         $completionCounts = MaterialCompletion::select('user_id', DB::raw('COUNT(*) as completed_count'))
@@ -358,7 +359,7 @@ class CourseController extends Controller
 
         // Progress & score per participant
         $materialIds = $course->materi()->pluck('id');
-        $totalMaterials = max(1, $materialIds->count());
+        $totalMaterials = $materialIds->count();
         $passingScore = \App\Models\Assignment::where('kursus_id', $course->id)->firstWhere('passing_score')?->passing_score ?? 60;
 
         $completionCounts = MaterialCompletion::select('user_id', DB::raw('COUNT(*) as completed_count'))
@@ -593,10 +594,22 @@ class CourseController extends Controller
         $validated = $request->validate([
             'judul' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'isi' => 'nullable|string',
             'content' => 'nullable|string',
-            'type' => 'required|in:video,text,document,quiz,pdf,reading',
-            'file' => 'nullable|file|mimes:pdf,mp4,avi,mov|max:102400', // 100MB
+            'type' => 'required|in:video,pdf,text,document,quiz,reading,class_session',
+            'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,mp4,avi,mov|max:102400', // 100MB
             'section_id' => 'required|exists:course_sections,id',
+            'duration' => 'nullable|integer|min:0',
+            'is_preview' => 'nullable|boolean',
+            'status' => 'nullable|in:published,draft',
+            'status_terkunci' => 'nullable|boolean',
+            // Class session fields
+            'session_date' => 'required_if:type,class_session|nullable|date',
+            'session_start_time' => 'required_if:type,class_session|nullable',
+            'session_end_time' => 'required_if:type,class_session|nullable',
+            'session_location' => 'nullable|string|max:255',
+            'session_meeting_link' => 'nullable|url',
+            'session_type' => 'required_if:type,class_session|nullable|in:offline,online',
         ]);
 
         $lastMaterial = \App\Models\Materi::where('section_id', $section->id)
@@ -604,8 +617,12 @@ class CourseController extends Controller
             ->first();
 
         $filePath = null;
+        $fileUrl = null;
         if ($request->hasFile('file')) {
-            $filePath = $request->file('file')->store('materials', 'public');
+            $storage = app(SupabaseStorageService::class);
+            $upload = $storage->upload($request->file('file'), 'materials');
+            $fileUrl = $upload['public_url'] ?? $upload['path'];
+            $filePath = $upload['path'];
         }
 
         \App\Models\Materi::create([
@@ -613,13 +630,32 @@ class CourseController extends Controller
             'section_id' => $section->id,
             'judul' => $validated['judul'],
             'description' => $validated['description'],
-            'content' => $validated['content'],
+            'isi' => $validated['content'] ?? $validated['isi'] ?? null,
+            'content' => $validated['content'] ?? null,
             'type' => $validated['type'],
-            'url_konten' => $filePath,
-            'duration' => 0,
+            'url_konten' => $fileUrl,
+            'file_url' => $filePath,
+            'duration' => $validated['duration'] ?? 0,
             'urutan' => $lastMaterial ? $lastMaterial->urutan + 1 : 1,
-            'status_terkunci' => false,
+            'is_preview' => $validated['is_preview'] ?? false,
+            'status' => $validated['status'] ?? ($validated['type'] === 'class_session' ? 'published' : 'draft'),
+            'status_terkunci' => $validated['status_terkunci'] ?? false,
+            // Class session
+            'session_date' => $validated['session_date'] ?? null,
+            'session_start_time' => $validated['session_start_time'] ?? null,
+            'session_end_time' => $validated['session_end_time'] ?? null,
+            'session_location' => $validated['session_location'] ?? null,
+            'session_meeting_link' => $validated['session_meeting_link'] ?? null,
+            'session_type' => $validated['session_type'] ?? null,
         ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Materi berhasil ditambahkan!',
+                'redirect' => route('admin.courses.detail', $course)
+            ]);
+        }
 
         return redirect()->route('admin.courses.detail', $course)
             ->with('success', 'Materi berhasil ditambahkan!');
@@ -633,34 +669,67 @@ class CourseController extends Controller
         $validated = $request->validate([
             'judul' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'file_path' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,mp4,avi,mov|max:51200',
+            'isi' => 'nullable|string',
+            'content' => 'nullable|string',
+            'file_path' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,mp4,avi,mov|max:102400',
             'video_url' => 'nullable|url',
-            'type' => 'required|in:video,document,text,quiz',
+            'type' => 'required|in:video,pdf,text,document,quiz,reading,class_session',
             'is_preview' => 'nullable|boolean',
             'status_terkunci' => 'nullable|boolean',
+            'status' => 'nullable|in:published,draft',
+            // Class session fields
+            'session_date' => 'required_if:type,class_session|nullable|date',
+            'session_start_time' => 'required_if:type,class_session|nullable',
+            'session_end_time' => 'required_if:type,class_session|nullable',
+            'session_location' => 'nullable|string|max:255',
+            'session_meeting_link' => 'nullable|url',
+            'session_type' => 'required_if:type,class_session|nullable|in:offline,online',
         ]);
 
         $data = [
             'judul' => $validated['judul'],
             'description' => $validated['description'] ?? null,
+            'isi' => $validated['content'] ?? $validated['isi'] ?? null,
+            'content' => $validated['content'] ?? null,
             'type' => $validated['type'],
             'is_preview' => $request->boolean('is_preview'),
             'status_terkunci' => $request->boolean('status_terkunci'),
+            'status' => $validated['status'] ?? $material->status,
         ];
 
         // Handle file upload
         if ($request->hasFile('file_path')) {
             $storage = app(SupabaseStorageService::class);
             $upload = $storage->upload($request->file('file_path'), 'materials');
-            $data['file_path'] = $upload['public_url'] ?? $upload['path'];
+
+            $data['file_url'] = $upload['path'];
+            $data['url_konten'] = $upload['public_url'] ?? $upload['path'];
         }
 
-        // Handle video URL
+        // Handle class session fields
+        if ($validated['type'] === 'class_session') {
+            $data['session_date'] = $validated['session_date'] ?? null;
+            $data['session_start_time'] = $validated['session_start_time'] ?? null;
+            $data['session_end_time'] = $validated['session_end_time'] ?? null;
+            $data['session_location'] = $validated['session_location'] ?? null;
+            $data['session_meeting_link'] = $validated['session_meeting_link'] ?? null;
+            $data['session_type'] = $validated['session_type'] ?? null;
+            $data['status'] = 'published';
+        }
+
         if ($request->filled('video_url')) {
-            $data['video_url'] = $validated['video_url'];
+            $data['url_konten'] = $validated['video_url'];
         }
 
         $material->update($data);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Materi berhasil diperbarui!',
+                'redirect' => route('admin.courses.detail', $course)
+            ]);
+        }
 
         return redirect()->route('admin.courses.detail', $course)
             ->with('success', 'Materi berhasil diperbarui!');
@@ -702,6 +771,92 @@ class CourseController extends Controller
             'prevMaterial',
             'nextMaterial'
         ));
+    }
+
+    public function streamMaterialFile(Kursus $course, Materi $material)
+    {
+        if ($material->kursus_id !== $course->id) {
+            abort(404);
+        }
+
+        return $this->streamMaterialAsset($material);
+    }
+
+    protected function streamMaterialAsset(Materi $material)
+    {
+        $source = $material->file_url ?: $material->url_konten;
+        if ($material->url_konten && Str::startsWith($material->url_konten, ['http://', 'https://'])) {
+            $source = $material->url_konten;
+        }
+        if (!$source) {
+            abort(404, 'File tidak ditemukan');
+        }
+
+        $filenameBase = Str::slug($material->judul ?? $material->title ?? 'material');
+        $extension = pathinfo(parse_url($source, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION);
+        $downloadName = $filenameBase . ($extension ? '.' . $extension : '');
+
+        $supabase = app(SupabaseStorageService::class);
+        $supabaseObject = $supabase->fetchObject($source);
+        if ($supabaseObject) {
+            return response($supabaseObject['body'], 200, [
+                'Content-Type' => $supabaseObject['content_type'],
+                'Content-Disposition' => 'inline; filename="' . $downloadName . '"',
+            ]);
+        }
+
+        if (!Str::startsWith($source, ['http://', 'https://'])) {
+            $path = ltrim($source, '/');
+            $disk = config('filesystems.materials_disk', 'public');
+
+            if (Str::startsWith($path, 'storage/')) {
+                $path = ltrim(substr($path, strlen('storage/')), '/');
+                $disk = 'public';
+            }
+
+            $storage = Storage::disk($disk);
+            if ($storage->exists($path)) {
+                $mime = $storage->mimeType($path) ?? 'application/octet-stream';
+                $stream = $storage->readStream($path);
+                if (!$stream) {
+                    abort(404, 'File tidak ditemukan');
+                }
+
+                return response()->stream(function () use ($stream) {
+                    fpassthru($stream);
+                }, 200, [
+                    'Content-Type' => $mime,
+                    'Content-Disposition' => 'inline; filename="' . $downloadName . '"',
+                ]);
+            }
+
+            if (Storage::exists($path)) {
+                $mime = Storage::mimeType($path) ?? 'application/octet-stream';
+                $stream = Storage::readStream($path);
+                if (!$stream) {
+                    abort(404, 'File tidak ditemukan');
+                }
+
+                return response()->stream(function () use ($stream) {
+                    fpassthru($stream);
+                }, 200, [
+                    'Content-Type' => $mime,
+                    'Content-Disposition' => 'inline; filename="' . $downloadName . '"',
+                ]);
+            }
+        }
+
+        $fallbackUrl = $material->file_url_full;
+        if ($fallbackUrl && filter_var($fallbackUrl, FILTER_VALIDATE_URL)) {
+            return redirect()->away($fallbackUrl);
+        }
+
+        if (filter_var($source, FILTER_VALIDATE_URL)) {
+            $fallback = $material->file_url_full ?? $source;
+            return redirect()->away($fallback);
+        }
+
+        abort(404, 'File tidak ditemukan');
     }
 
     /**

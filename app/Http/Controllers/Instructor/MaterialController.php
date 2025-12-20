@@ -588,6 +588,33 @@ class MaterialController extends Controller
     }
 
     /**
+     * Reorder materials via drag-and-drop
+     */
+    public function reorder(Request $request, Kursus $course)
+    {
+        if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'materials' => 'required|array',
+            'materials.*.id' => 'required|exists:materi,id',
+            'materials.*.urutan' => 'required|integer|min:1',
+        ]);
+
+        foreach ($validated['materials'] as $materialData) {
+            Materi::where('id', $materialData['id'])
+                ->where('kursus_id', $course->id)
+                ->update(['urutan' => $materialData['urutan']]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Urutan materi berhasil diperbarui!'
+        ]);
+    }
+
+    /**
      * Display attendance management for a class_session material
      */
     public function attendance(Kursus $course, Materi $material)

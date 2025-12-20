@@ -20,10 +20,10 @@ class AssignmentController extends Controller
     public function index()
     {
         $instructorId = Auth::id();
-        $assignments = Assignment::whereHas('kursus', function($query) use ($instructorId) {
-                $query->where('instructor_id', $instructorId)
-                      ->orWhere('pembuat', $instructorId);
-            })
+        $assignments = Assignment::whereHas('kursus', function ($query) use ($instructorId) {
+            $query->where('instructor_id', $instructorId)
+                ->orWhere('pembuat', $instructorId);
+        })
             ->with(['kursus', 'materi'])
             ->withCount(['questions', 'submissions'])
             ->latest()
@@ -38,14 +38,14 @@ class AssignmentController extends Controller
     public function create(Request $request)
     {
         $instructorId = Auth::id();
-        $courses = Kursus::where(function($query) use ($instructorId) {
-                $query->where('instructor_id', $instructorId)
-                      ->orWhere('pembuat', $instructorId);
-            })->get();
-        
+        $courses = Kursus::where(function ($query) use ($instructorId) {
+            $query->where('instructor_id', $instructorId)
+                ->orWhere('pembuat', $instructorId);
+        })->get();
+
         $selectedCourse = null;
         $materials = collect();
-        
+
         if ($request->has('course_id')) {
             $selectedCourse = Kursus::find($request->course_id);
             if ($selectedCourse && ($selectedCourse->instructor_id == $instructorId || $selectedCourse->pembuat == $instructorId)) {
@@ -68,7 +68,7 @@ class AssignmentController extends Controller
             'description' => 'nullable|string',
             'type' => 'required|in:quiz,assignment,exam',
             'time_limit' => 'nullable|integer|min:1',
-            'passing_score' => 'required|integer|min:0|max:100',
+            'passing_score' => 'nullable|integer|min:0|max:100',
             'start_date' => 'nullable|date',
             'due_date' => 'nullable|date|after_or_equal:start_date',
             'show_results_immediately' => 'boolean',
@@ -120,7 +120,10 @@ class AssignmentController extends Controller
             abort(403, 'Anda tidak dapat mengedit assignment ini.');
         }
 
-        $courses = Kursus::where(function($query) { $instructorId = Auth::id(); $query->where('instructor_id', $instructorId)->orWhere('pembuat', $instructorId); })->get();
+        $courses = Kursus::where(function ($query) {
+            $instructorId = Auth::id();
+            $query->where('instructor_id', $instructorId)->orWhere('pembuat', $instructorId);
+        })->get();
         $materials = $assignment->kursus->materi;
 
         return view('instructor.assignments.edit', compact('assignment', 'courses', 'materials'));
@@ -143,7 +146,7 @@ class AssignmentController extends Controller
             'description' => 'nullable|string',
             'type' => 'required|in:quiz,assignment,exam',
             'time_limit' => 'nullable|integer|min:1',
-            'passing_score' => 'required|integer|min:0|max:100',
+            'passing_score' => 'nullable|integer|min:0|max:100',
             'start_date' => 'nullable|date',
             'due_date' => 'nullable|date|after_or_equal:start_date',
             'show_results_immediately' => 'boolean',
@@ -197,12 +200,12 @@ class AssignmentController extends Controller
         }
 
         $assignment->load(['questions.options']);
-        
+
         // Get available question banks
-        $questionBanks = QuestionBank::where(function($query) {
-                $query->where('created_by', Auth::id())
-                      ->orWhere('is_public', true);
-            })
+        $questionBanks = QuestionBank::where(function ($query) {
+            $query->where('created_by', Auth::id())
+                ->orWhere('is_public', true);
+        })
             ->with(['questions.options'])
             ->withCount('questions')
             ->get();
@@ -323,7 +326,7 @@ class AssignmentController extends Controller
                 'description' => $validated['description'] ?? null,
                 'type' => 'quiz',
                 'time_limit' => $validated['time_limit'] ?? null,
-                'passing_score' => null, // Regular quizzes don't use passing score anymore
+                'passing_score' => null, // Regular quizzes are for review only, no passing requirement
                 'start_date' => null,
                 'due_date' => null,
                 'show_results_immediately' => true,
@@ -336,9 +339,9 @@ class AssignmentController extends Controller
             // Optional: import all questions from selected bank
             if (!empty($validated['question_bank_id'])) {
                 $bankQuery = QuestionBank::where('id', $validated['question_bank_id'])
-                    ->where(function($q) {
+                    ->where(function ($q) {
                         $q->where('created_by', Auth::id())
-                          ->orWhere('is_public', true);
+                            ->orWhere('is_public', true);
                     })->with('questions.options');
                 if (Schema::hasColumn('question_banks', 'is_internal')) {
                     $bankQuery->where('is_internal', false);
@@ -375,17 +378,17 @@ class AssignmentController extends Controller
         }
 
         $isMulti = $request->has('questions');
-            if ($isMulti) {
-                $validated = $request->validate([
-                    'question_bank_id' => 'nullable|exists:question_banks,id',
-                    'save_to_bank' => 'nullable|boolean',
-                    'questions' => 'required|array|min:1',
-                    'questions.*.type' => 'required|in:multiple_choice,true_false,essay,short_answer',
-                    'questions.*.question_text' => 'required|string',
-                    'questions.*.explanation' => 'nullable|string',
-                    'questions.*.points' => 'required|integer|min:1',
-                    'questions.*.correct_answer' => 'nullable|string',
-                    // opsi hanya wajib untuk multiple_choice / true_false
+        if ($isMulti) {
+            $validated = $request->validate([
+                'question_bank_id' => 'nullable|exists:question_banks,id',
+                'save_to_bank' => 'nullable|boolean',
+                'questions' => 'required|array|min:1',
+                'questions.*.type' => 'required|in:multiple_choice,true_false,essay,short_answer',
+                'questions.*.question_text' => 'required|string',
+                'questions.*.explanation' => 'nullable|string',
+                'questions.*.points' => 'required|integer|min:1',
+                'questions.*.correct_answer' => 'nullable|string',
+                // opsi hanya wajib untuk multiple_choice / true_false
                 // Opsi hanya digunakan untuk multiple_choice; tipe lain diabaikan
                 'questions.*.options' => 'nullable|array',
                 'questions.*.options.*.text' => 'required_if:questions.*.type,multiple_choice|nullable|string',
@@ -395,11 +398,11 @@ class AssignmentController extends Controller
             $validated = $request->validate([
                 'question_bank_id' => 'nullable|exists:question_banks,id',
                 'type' => 'required|in:multiple_choice,true_false,essay,short_answer',
-                    'question_text' => 'required|string',
-                    'explanation' => 'nullable|string',
-                    'points' => 'required|integer|min:1',
-                    'correct_answer' => 'nullable|string',
-                    // opsi hanya wajib untuk multiple_choice / true_false
+                'question_text' => 'required|string',
+                'explanation' => 'nullable|string',
+                'points' => 'required|integer|min:1',
+                'correct_answer' => 'nullable|string',
+                // opsi hanya wajib untuk multiple_choice / true_false
                 // Opsi hanya digunakan untuk multiple_choice; tipe lain diabaikan
                 'options' => 'nullable|array',
                 'options.*.text' => 'required_if:type,multiple_choice|nullable|string',
@@ -414,7 +417,7 @@ class AssignmentController extends Controller
         if ($saveToBank) {
             if (!empty($validated['question_bank_id'])) {
                 $bankQuery = QuestionBank::where('id', $validated['question_bank_id'])
-                    ->where(function($q) {
+                    ->where(function ($q) {
                         $q->where('created_by', Auth::id())->orWhere('is_public', true);
                     });
                 if (Schema::hasColumn('question_banks', 'is_internal')) {
@@ -455,14 +458,16 @@ class AssignmentController extends Controller
             $maxOrder = $questionBank->questions()->max('order') ?? 0;
             $nextAssignmentOrder = ($assignment->questions()->max('assignment_questions.order') ?? 0);
 
-            $items = $isMulti ? $validated['questions'] : [[
-                'type' => $validated['type'],
-                'question_text' => $validated['question_text'],
-                'explanation' => $validated['explanation'] ?? null,
-                'points' => $validated['points'],
-                'correct_answer' => $validated['correct_answer'] ?? null,
-                'options' => $validated['options'] ?? [],
-            ]];
+            $items = $isMulti ? $validated['questions'] : [
+                [
+                    'type' => $validated['type'],
+                    'question_text' => $validated['question_text'],
+                    'explanation' => $validated['explanation'] ?? null,
+                    'points' => $validated['points'],
+                    'correct_answer' => $validated['correct_answer'] ?? null,
+                    'options' => $validated['options'] ?? [],
+                ]
+            ];
 
             foreach ($items as $item) {
                 $question = $questionBank->questions()->create([
@@ -476,14 +481,14 @@ class AssignmentController extends Controller
 
                 if ($item['type'] === 'multiple_choice') {
                     $options = collect($item['options'] ?? [])
-                        ->filter(fn ($opt) => isset($opt['text']) && trim($opt['text']) !== '')
+                        ->filter(fn($opt) => isset($opt['text']) && trim($opt['text']) !== '')
                         ->values();
 
                     if ($options->count() < 2) {
                         throw new \Exception('Minimal dua opsi untuk pilihan ganda.');
                     }
 
-                    $hasCorrect = $options->contains(fn ($opt) => !empty($opt['is_correct']));
+                    $hasCorrect = $options->contains(fn($opt) => !empty($opt['is_correct']));
                     if (!$hasCorrect) {
                         throw new \Exception('Pilih minimal satu jawaban benar.');
                     }

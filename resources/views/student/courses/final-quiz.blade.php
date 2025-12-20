@@ -484,6 +484,32 @@
                                     <i class="fas fa-arrow-left"></i> Kembali ke Kursus
                                 </a>
                             </div>
+                        @elseif($hasIncompleteAttempt)
+                            {{-- Ada percobaan yang belum selesai --}}
+                            <div style="text-align: center; padding: 2rem 0;">
+                                <div style="margin-bottom: 1.5rem;">
+                                    <i class="fas fa-hourglass-half" style="font-size: 4rem; color: var(--warning);"></i>
+                                </div>
+                                <h3 style="font-weight: 700; color: var(--neutral-900); margin-bottom: 0.75rem;">
+                                    Anda Memiliki Percobaan yang Belum Selesai
+                                </h3>
+                                <p style="color: var(--neutral-600); margin-bottom: 2rem;">
+                                    Selesaikan percobaan ke-{{ $incompleteAttempt->attempt_number }} terlebih dahulu sebelum
+                                    memulai percobaan baru.
+                                </p>
+                                <a href="{{ route('courses.final-quiz.take', [$kursus->id, $incompleteAttempt->id]) }}"
+                                    class="btn-modern btn-primary-modern" style="padding: 1.25rem 2rem;">
+                                    <i class="fas fa-arrow-right"></i>
+                                    Lanjutkan Percobaan ke-{{ $incompleteAttempt->attempt_number }}
+                                </a>
+
+                                <div class="info-box" style="margin-top: 2rem; text-align: left;">
+                                    <small style="display: block;">
+                                        <i class="fas fa-info-circle"></i>
+                                        Anda tidak bisa memulai percobaan baru sampai percobaan saat ini diselesaikan.
+                                    </small>
+                                </div>
+                            </div>
                         @elseif($canRetake)
                             <div style="margin-bottom: 2rem;">
                                 <h3 style="font-weight: 700; color: var(--neutral-900); margin-bottom: 0.75rem;">
@@ -576,11 +602,11 @@
                                 <p>Belum ada percobaan.<br>Mulai final quiz sekarang.</p>
                             </div>
                         @endif
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
     <script>
         let startModal;
@@ -672,11 +698,12 @@
                     <p class="text-sm text-gray-600 mb-0">Apakah Anda yakin ingin memulai final quiz?</p>
                 </div>
             </div>
-            
+
             <!-- Info Box: Nilai Minimum & Durasi -->
             <div class="bg-gray-50 rounded-xl p-4 mb-6 space-y-3">
                 <div class="flex items-center justify-between text-sm">
-                    <span class="text-gray-600"><i class="fas fa-check-circle mr-2 text-emerald-500"></i>Nilai Minimum Kelulusan</span>
+                    <span class="text-gray-600"><i class="fas fa-check-circle mr-2 text-emerald-500"></i>Nilai Minimum
+                        Kelulusan</span>
                     <span class="font-bold text-emerald-700">{{ $kursus->min_passing_score }}%</span>
                 </div>
                 <div class="flex items-center justify-between text-sm">
@@ -689,17 +716,18 @@
                 </div>
                 <div class="flex items-center justify-between text-sm">
                     <span class="text-gray-600"><i class="fas fa-redo mr-2 text-amber-500"></i>Sisa Percobaan</span>
-                    <span class="font-bold text-amber-700">{{ $kursus->max_quiz_attempts - $attemptCount }} dari {{ $kursus->max_quiz_attempts }}</span>
+                    <span class="font-bold text-amber-700">{{ $kursus->max_quiz_attempts - $attemptCount }} dari
+                        {{ $kursus->max_quiz_attempts }}</span>
                 </div>
             </div>
-            
+
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                 <p class="text-xs text-yellow-800">
                     <i class="fas fa-exclamation-triangle mr-1"></i>
                     Setelah memulai quiz, timer akan berjalan. Pastikan Anda siap sebelum memulai.
                 </p>
             </div>
-            
+
             <div class="flex justify-end gap-2">
                 <button type="button"
                     class="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 font-semibold hover:bg-gray-200 transition"

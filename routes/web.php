@@ -111,7 +111,7 @@ Route::get('/all-courses', function (Request $request) {
 })->name('courses.all');
 
 // Instructors Page (public)
-Route::get('/instructors', function () {
+Route::get('/instructors', function (Request $request) {
     // Ambil user yang memiliki kursus published (baik sebagai pembuat atau instructor_id)
     $instructorIds = \App\Models\Kursus::where('status_diterbitkan', true)
         ->whereNotNull('instructor_id')
@@ -128,32 +128,35 @@ Route::get('/instructors', function () {
 
     // Ambil instruktur dan hitung kursus (exclude admin)
     // Gunakan subquery untuk menghitung total kursus unik (pembuat OR instructor_id)
-    $instructors = \App\Models\User::whereIn('id', $allInstructorIds)
+    $query = \App\Models\User::whereIn('id', $allInstructorIds)
         ->where('role', '!=', 'admin')
         ->select('*')
-        ->selectSub(function ($query) {
-            $query->from('kursus')
+        ->selectSub(function ($q) {
+            $q->from('kursus')
                 ->where('status_diterbitkan', true)
-                ->where(function ($q) {
-                    $q->whereColumn('kursus.pembuat', 'users.id')
+                ->where(function ($sq) {
+                    $sq->whereColumn('kursus.pembuat', 'users.id')
                         ->orWhereColumn('kursus.instructor_id', 'users.id');
                 })
                 ->selectRaw('count(*)');
-        }, 'total_courses')
+        }, 'total_courses');
+
+    // 🔍 Search by name or email
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'ilike', "%{$search}%")
+                ->orWhere('email', 'ilike', "%{$search}%")
+                ->orWhere('first_name', 'ilike', "%{$search}%")
+                ->orWhere('last_name', 'ilike', "%{$search}%");
+        });
+    }
+
+    $instructors = $query
         ->orderBy('total_courses', 'desc')
         ->orderBy('name')
-        ->get();
-
-    // Paginate manually
-    $page = request()->get('page', 1);
-    $perPage = 12;
-    $instructors = new \Illuminate\Pagination\LengthAwarePaginator(
-        $instructors->forPage($page, $perPage),
-        $instructors->count(),
-        $perPage,
-        $page,
-        ['path' => request()->url()]
-    );
+        ->paginate(12)
+        ->withQueryString();
 
     return view('instructors.index', compact('instructors'));
 })->name('instructors.index');
@@ -304,6 +307,7 @@ Route::middleware('auth')->group(function () {
         // Final Quiz Routes
         Route::get('/courses/{kursus}/final-quiz', [\App\Http\Controllers\Student\FinalQuizController::class, 'show'])->name('courses.final-quiz.show');
         Route::post('/courses/{kursus}/final-quiz/start', [\App\Http\Controllers\Student\FinalQuizController::class, 'start'])->name('courses.final-quiz.start');
+        Route::get('/courses/{kursus}/final-quiz/check-status', [\App\Http\Controllers\Student\FinalQuizController::class, 'checkStatus'])->name('courses.final-quiz.check-status');
         Route::get('/courses/{kursus}/final-quiz/{attempt}', [\App\Http\Controllers\Student\FinalQuizController::class, 'take'])->name('courses.final-quiz.take');
         Route::post('/courses/{kursus}/final-quiz/{attempt}/submit', [\App\Http\Controllers\Student\FinalQuizController::class, 'submit'])->name('courses.final-quiz.submit');
         Route::get('/courses/{kursus}/final-quiz/{attempt}/result', [\App\Http\Controllers\Student\FinalQuizController::class, 'result'])->name('courses.final-quiz.result');
@@ -429,11 +433,13 @@ Route::middleware('auth')->group(function () {
                 Route::post('modules', [AdminCourseController::class, 'storeModule'])->name('modules.store');
                 Route::put('modules/{section}', [AdminCourseController::class, 'updateModule'])->name('modules.update');
                 Route::delete('modules/{section}', [AdminCourseController::class, 'destroyModule'])->name('modules.destroy');
+                Route::post('modules/reorder', [AdminCourseController::class, 'reorderModules'])->name('modules.reorder');
                 Route::get('modules/{section}/materials', [AdminCourseController::class, 'moduleMaterials'])->name('modules.materials');
                 Route::post('modules/{section}/materials', [AdminCourseController::class, 'storeMaterial'])->name('modules.materials.store');
                 Route::get('modules/{section}/materials/{material}/edit', [AdminCourseController::class, 'editMaterial'])->name('modules.materials.edit');
                 Route::put('modules/{section}/materials/{material}', [AdminCourseController::class, 'updateMaterial'])->name('modules.materials.update');
                 Route::delete('modules/{section}/materials/{material}', [AdminCourseController::class, 'destroyMaterial'])->name('modules.materials.destroy');
+                Route::post('modules/{section}/materials/reorder', [AdminCourseController::class, 'reorderMaterials'])->name('modules.materials.reorder');
 
                 // Preview material
                 Route::get('materials/{material}/preview', [AdminCourseController::class, 'previewMaterial'])->name('materials.preview');
@@ -640,10 +646,12 @@ Route::middleware('auth')->group(function () {
 
             // Section Management (INSTRUKTUR)
             Route::delete('courses/{course}/sections-all', [\App\Http\Controllers\Instructor\SectionController::class, 'destroyAll'])->name('courses.modules.destroy-all');
+            Route::post('courses/{course}/sections/reorder', [\App\Http\Controllers\Instructor\SectionController::class, 'reorder'])->name('courses.sections.reorder');
             Route::resource('courses.sections', \App\Http\Controllers\Instructor\SectionController::class)->shallow();
 
             // Material-all deletion
             Route::delete('courses/{course}/materials-all', [\App\Http\Controllers\Instructor\MaterialController::class, 'destroyAll'])->name('courses.materials.destroy-all');
+            Route::post('courses/{course}/materials/reorder', [\App\Http\Controllers\Instructor\MaterialController::class, 'reorder'])->name('courses.materials.reorder');
 
             // Class Session Management (untuk offline/hybrid courses)
             Route::get('/courses/{course}/sessions', [\App\Http\Controllers\Instructor\ClassSessionController::class, 'index'])->name('courses.sessions.index');

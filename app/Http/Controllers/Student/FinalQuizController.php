@@ -50,8 +50,14 @@ class FinalQuizController extends Controller
 
         $latestAttempt = $attempts->first();
         $attemptCount = $attempts->count();
-        $canRetake = $attemptCount < $kursus->max_quiz_attempts;
         $hasPassed = $attempts->where('is_passed', true)->isNotEmpty();
+
+        // Check if there's an incomplete attempt (started but not completed)
+        $incompleteAttempt = $attempts->whereNull('completed_at')->first();
+        $hasIncompleteAttempt = $incompleteAttempt !== null;
+
+        // Can only retake if no incomplete attempt and within max attempts
+        $canRetake = !$hasIncompleteAttempt && $attemptCount < $kursus->max_quiz_attempts;
 
         return view('student.courses.final-quiz', compact(
             'kursus',
@@ -60,7 +66,9 @@ class FinalQuizController extends Controller
             'latestAttempt',
             'attemptCount',
             'canRetake',
-            'hasPassed'
+            'hasPassed',
+            'hasIncompleteAttempt',
+            'incompleteAttempt'
         ));
     }
 
@@ -97,6 +105,22 @@ class FinalQuizController extends Controller
             return response()->json([
                 'error' => 'Anda telah mencapai batas maksimal percobaan (' . $kursus->max_quiz_attempts . 'x).'
             ], 403);
+        }
+
+        // Cek apakah ada attempt yang belum selesai
+        $incompleteAttempt = QuizAttempt::where('user_id', $user->id)
+            ->where('quiz_id', $finalQuiz->id)
+            ->where('kursus_id', $kursusId)
+            ->whereNull('completed_at')
+            ->first();
+
+        if ($incompleteAttempt) {
+            // Redirect ke attempt yang belum selesai
+            return response()->json([
+                'success' => true,
+                'message' => 'Anda memiliki percobaan yang belum selesai.',
+                'redirect' => route('courses.final-quiz.take', [$kursusId, $incompleteAttempt->id])
+            ]);
         }
 
         // Cek apakah sudah pernah lulus
@@ -256,8 +280,8 @@ class FinalQuizController extends Controller
     {
         $user = Auth::user();
         $attempt = QuizAttempt::with([
-            'quiz.soal.options', 
-            'kursus', 
+            'quiz.soal.options',
+            'kursus',
             'jawabanPeserta.question.options'
         ])
             ->where('id', $attemptId)
@@ -303,12 +327,32 @@ class FinalQuizController extends Controller
         // Sync attempt score/pass flag if different
         $passingScore = $kursus->min_passing_score ?? ($quiz->passing_score ?? 70);
         $computedPassed = $computedScore >= $passingScore;
-        if (abs(($attempt->score ?? 0) - $computedScore) > 0.01 || (bool)$attempt->is_passed !== $computedPassed) {
+        if (abs(($attempt->score ?? 0) - $computedScore) > 0.01 || (bool) $attempt->is_passed !== $computedPassed) {
             $attempt->score = $computedScore;
             $attempt->is_passed = $computedPassed;
             $attempt->save();
         }
 
         return view('student.courses.final-quiz-result', compact('attempt', 'kursus', 'quiz'));
+    }
+
+    /**
+     * Check if final quiz is still active (for polling)
+     */
+    public function checkStatus($kursusId)
+    {
+        $kursus = Kursus::with('finalQuiz')->findOrFail($kursusId);
+
+        if (!$kursus->finalQuiz) {
+            return response()->json([
+                'is_active' => false,
+                'message' => 'Final quiz tidak ditemukan.'
+            ]);
+        }
+
+        return response()->json([
+            'is_active' => (bool) $kursus->finalQuiz->is_active,
+            'message' => $kursus->finalQuiz->is_active ? 'Quiz aktif' : 'Final quiz sedang dalam proses maintenance. Silakan coba lagi nanti.'
+        ]);
     }
 }

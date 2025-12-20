@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class CourseController extends Controller
 {
@@ -516,9 +517,22 @@ class CourseController extends Controller
     public function storeModule(Request $request, Kursus $course)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('course_sections', 'title')->where(fn($q) => $q->where('course_id', $course->id)),
+            ],
             'description' => 'nullable|string',
-            'order' => 'nullable|integer|min:0',
+            'order' => [
+                'nullable',
+                'integer',
+                'min:1',
+                Rule::unique('course_sections', 'order')->where(fn($q) => $q->where('course_id', $course->id)),
+            ],
+        ], [
+            'title.unique' => 'Modul dengan judul yang sama sudah ada.',
+            'order.unique' => 'Urutan modul sudah digunakan, pilih nomor lain.',
         ]);
 
         $order = $validated['order'] ?? null;
@@ -547,9 +561,22 @@ class CourseController extends Controller
     public function updateModule(Request $request, Kursus $course, \App\Models\CourseSection $section)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('course_sections', 'title')->where(fn($q) => $q->where('course_id', $course->id))->ignore($section->id),
+            ],
             'description' => 'nullable|string',
-            'order' => 'nullable|integer|min:0',
+            'order' => [
+                'nullable',
+                'integer',
+                'min:1',
+                Rule::unique('course_sections', 'order')->where(fn($q) => $q->where('course_id', $course->id))->ignore($section->id),
+            ],
+        ], [
+            'title.unique' => 'Modul dengan judul yang sama sudah ada.',
+            'order.unique' => 'Urutan modul sudah digunakan, pilih nomor lain.',
         ]);
 
         $section->update([
@@ -571,6 +598,52 @@ class CourseController extends Controller
 
         return redirect()->route('admin.courses.detail', $course)
             ->with('success', 'Modul berhasil dihapus!');
+    }
+
+    /**
+     * Reorder modules via drag-and-drop
+     */
+    public function reorderModules(Request $request, Kursus $course)
+    {
+        $validated = $request->validate([
+            'sections' => 'required|array',
+            'sections.*.id' => 'required|exists:course_sections,id',
+            'sections.*.order' => 'required|integer|min:1',
+        ]);
+
+        foreach ($validated['sections'] as $sectionData) {
+            \App\Models\CourseSection::where('id', $sectionData['id'])
+                ->where('course_id', $course->id)
+                ->update(['order' => $sectionData['order']]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Urutan modul berhasil diperbarui!'
+        ]);
+    }
+
+    /**
+     * Reorder materials via drag-and-drop
+     */
+    public function reorderMaterials(Request $request, Kursus $course, \App\Models\CourseSection $section)
+    {
+        $validated = $request->validate([
+            'materials' => 'required|array',
+            'materials.*.id' => 'required|exists:materi,id',
+            'materials.*.urutan' => 'required|integer|min:1',
+        ]);
+
+        foreach ($validated['materials'] as $materialData) {
+            \App\Models\Materi::where('id', $materialData['id'])
+                ->where('section_id', $section->id)
+                ->update(['urutan' => $materialData['urutan']]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Urutan materi berhasil diperbarui!'
+        ]);
     }
 
     /**
@@ -917,7 +990,7 @@ class CourseController extends Controller
                 'description' => $validated['description'] ?? null,
                 'type' => 'quiz',
                 'time_limit' => $validated['time_limit'] ?? null,
-                'passing_score' => null, // Regular quizzes don't use passing score anymore
+                'passing_score' => null, // Regular quizzes are for review only, no passing requirement
                 'start_date' => null,
                 'due_date' => null,
                 'show_results_immediately' => true,

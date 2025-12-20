@@ -52,8 +52,7 @@
     <div class="min-h-screen bg-[#f4f2f0] py-8">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex items-center justify-between mb-6">
-                <button type="button" id="back-link" 
-                    data-href="{{ route('student.course.learn', $kursusId) }}"
+                <button type="button" id="back-link" data-href="{{ route('student.course.learn', $kursusId) }}"
                     class="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 transition text-lg">
                     <i class="fa-solid fa-arrow-left"></i>
                     <span>Kembali ke Kursus</span>
@@ -118,14 +117,25 @@
     <!-- Modal konfirmasi keluar -->
     <div id="exit-modal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md text-center">
-            <div class="mb-4 text-red-500">
-                <i class="fas fa-exclamation-triangle text-4xl"></i>
+            <div class="mb-4 text-amber-500">
+                <i class="fas fa-clock text-4xl"></i>
             </div>
             <h3 class="text-lg font-semibold text-gray-900 mb-3">Yakin ingin keluar?</h3>
-            <p class="text-sm text-gray-600 mb-6 font-medium">Yakin ingin keluar? soal yang anda kerjakan akan mulai lagi dari 0.</p>
+            <p class="text-sm text-gray-600 mb-4 font-medium">
+                Anda dapat melanjutkan quiz ini nanti, tetapi <strong class="text-red-600">waktu tetap berjalan</strong>.
+            </p>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6 text-left">
+                <p class="text-xs text-amber-800">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Progress jawaban Anda akan tersimpan dan bisa dilanjutkan.
+                </p>
+            </div>
             <div class="flex justify-center gap-3">
-                <button type="button" id="exit-cancel-btn" class="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-medium">Batal</button>
-                <button type="button" id="exit-confirm-btn" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">Ya, Keluar</button>
+                <button type="button" id="exit-cancel-btn"
+                    class="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition font-medium">Batal</button>
+                <button type="button" id="exit-confirm-btn"
+                    class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition font-medium">Ya,
+                    Keluar</button>
             </div>
         </div>
     </div>
@@ -152,7 +162,6 @@
 
             const QUIZ_KEY = 'final_quiz_{{ $attempt->id }}';
             const QUIZ_INDEX_KEY = 'final_quiz_index_{{ $attempt->id }}';
-            const QUIZ_START_KEY = 'final_quiz_start_{{ $attempt->id }}';
             const quizDuration = {{ $quiz->durasi_quiz ?? 0 }} * 60;
 
             let answers = {};
@@ -193,14 +202,9 @@
                 const timerText = document.getElementById('timer-text');
                 let timeRemaining;
 
-                // Initialize timer from localStorage
-                let startTime = localStorage.getItem(QUIZ_START_KEY);
-                if (!startTime) {
-                    startTime = Date.now().toString();
-                    localStorage.setItem(QUIZ_START_KEY, startTime);
-                }
-
-                const elapsed = Math.floor((Date.now() - parseInt(startTime)) / 1000);
+                // Use started_at from database (more reliable than localStorage)
+                const startedAtFromDB = {{ $attempt->started_at->timestamp * 1000 }};
+                const elapsed = Math.floor((Date.now() - startedAtFromDB) / 1000);
                 timeRemaining = Math.max(0, quizDuration - elapsed);
 
                 function formatTime(seconds) {
@@ -247,8 +251,38 @@
                 function clearQuizData() {
                     localStorage.removeItem(QUIZ_KEY);
                     localStorage.removeItem(QUIZ_INDEX_KEY);
-                    localStorage.removeItem(QUIZ_START_KEY);
                 }
+
+            // Poll for quiz status every 30 seconds
+            const checkStatusUrl = '{{ route("courses.final-quiz.check-status", $kursusId) }}';
+            const courseLearnUrl = '{{ route("student.course.learn", $kursusId) }}';
+
+            function checkQuizStatus() {
+                fetch(checkStatusUrl, {
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.is_active) {
+                            // Quiz has been deactivated
+                            clearQuizData();
+                            isSubmitting = true; // prevent beforeunload alert
+                            alert('⚠️ Final quiz sedang dalam proses maintenance. Anda akan dialihkan ke halaman materi.');
+                            window.location.href = courseLearnUrl;
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error checking quiz status:', err);
+                    });
+            }
+
+            // Check status every 30 seconds
+            const statusCheckInterval = setInterval(checkQuizStatus, 30000);
+            // Also check immediately on load
+            checkQuizStatus();
 
             const allAnswered = () => {
                 return questions.every(q => {
@@ -295,9 +329,9 @@
                         const wrap = document.createElement('label');
                         wrap.className = 'flex items-center gap-3 text-gray-800 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition';
                         wrap.innerHTML = `
-                                        <input type="radio" name="question_${q.id}" id="${id}" value="${opt.id}" class="text-emerald-600 w-4 h-4">
-                                        <span>${opt.text}</span>
-                                    `;
+                                                    <input type="radio" name="question_${q.id}" id="${id}" value="${opt.id}" class="text-emerald-600 w-4 h-4">
+                                                    <span>${opt.text}</span>
+                                                `;
                         if (answers[q.id] == opt.id) {
                             wrap.querySelector('input').checked = true;
                             wrap.classList.add('bg-emerald-50');
@@ -453,8 +487,7 @@
             });
 
             exitConfirmBtn.addEventListener('click', () => {
-                // Clear quiz progress if user leaves
-                clearQuizData();
+                // Don't clear quiz data - progress is preserved in localStorage
                 isSubmitting = true; // prevent beforeunload alert
                 window.location.href = backLink.dataset.href;
             });

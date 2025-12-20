@@ -33,7 +33,7 @@
                         </div>
 
                         <!-- Info -->
-                        <div class="text-center sm:text-left flex-1 pt-4 sm:pt-0">
+                        <div class="text-center sm:text-left flex-1 pt-20 sm:pt-16">
                             <h1 class="text-2xl font-bold text-gray-900">{{ $instructor->full_name ?? $instructor->name }}
                             </h1>
                             <p class="text-gray-500">{{ $instructor->profesi ?? 'Instruktur' }}</p>

@@ -18,13 +18,39 @@
             </div>
 
             <!-- Header -->
-            <div class="text-center mb-10">
+            <div class="text-center mb-8">
                 <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                     <span class="text-teal-600">Instruktur</span> Kami
                 </h1>
                 <p class="text-gray-600 max-w-2xl mx-auto">
                     Belajar dari para ahli di bidangnya.
                 </p>
+            </div>
+
+            <!-- Search Form -->
+            <div class="max-w-xl mx-auto mb-8">
+                <form action="{{ route('instructors.index') }}" method="GET" class="relative">
+                    <div class="relative">
+                        <input type="text" 
+                               name="search" 
+                               value="{{ request('search') }}" 
+                               placeholder="Cari instruktur berdasarkan nama atau email..." 
+                               class="w-full pl-12 pr-24 py-4 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <button type="submit" 
+                                class="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition">
+                            Cari
+                        </button>
+                    </div>
+                </form>
+                @if(request('search'))
+                    <div class="mt-3 flex items-center justify-center gap-2 text-sm text-gray-600">
+                        <span>Menampilkan hasil untuk: <strong>"{{ request('search') }}"</strong></span>
+                        <a href="{{ route('instructors.index') }}" class="text-red-500 hover:text-red-600 ml-2">
+                            <i class="fas fa-times-circle"></i> Reset
+                        </a>
+                    </div>
+                @endif
             </div>
 
             <!-- Instructors Grid -->

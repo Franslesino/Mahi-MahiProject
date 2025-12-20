@@ -118,9 +118,10 @@ class UserController extends Controller
             ];
 
         } elseif ($user->role === 'student' || $user->role === 'user') {
-            // Untuk student/user: ambil courses yang diikuti dan transaksi
+            // Untuk student/user: ambil courses yang diikuti, transaksi, dan sertifikat
             $user->load([
                 'enrollments.kursus.instructor',
+                'enrollments.sertifikat',
                 'transactions' => function ($query) {
                     $query->latest()->limit(10);
                 }

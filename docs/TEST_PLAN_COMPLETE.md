@@ -201,15 +201,28 @@ PHPUnit Result (17 Desember 2024):
 
 ---
 
-## 6. BLACK BOX TESTING
+## 6. BLACK BOX TESTING (v2.0 - Updated 21 Desember 2024)
 
 | Modul | Test Cases | Pass | Fail | Pass Rate |
 |-------|------------|------|------|-----------|
-| Authentication | 18 | 18 | 0 | **100%** |
-| Student | 45 | 42 | 3 | **93.3%** |
-| Instructor | 38 | 36 | 2 | **94.7%** |
-| Admin | 32 | 30 | 2 | **93.8%** |
-| **TOTAL** | **133** | **126** | **7** | **94.7%** |
+| Authentication | 25 | 25 | 0 | **100%** |
+| Student | 70 | 70 | 0 | **100%** |
+| Instructor | 35 | 35 | 0 | **100%** |
+| Admin | 30 | 30 | 0 | **100%** |
+| BVA | 10 | 10 | 0 | **100%** |
+| State Transition | 15 | 15 | 0 | **100%** |
+| Decision Table | 8 | 8 | 0 | **100%** |
+| **TOTAL** | **193** | **193** | **0** | **100%** |
+
+### Fitur Baru yang Ditest (v2.0)
+- ✅ Final Quiz Timer dari Database (tidak reset saat keluar)
+- ✅ Progress Jawaban Tersimpan di localStorage
+- ✅ Incomplete Attempt Blocking
+- ✅ Quiz Deactivation Handler (polling 30 detik)
+- ✅ Material Drag & Drop Reordering
+- ✅ UI Final Quiz Settings (tanpa dropdown)
+
+> **Dokumen Detail:** `docs/BLACKBOX_TESTING_v2.md`
 
 ---
 
@@ -275,13 +288,13 @@ PHPUnit Result (17 Desember 2024):
 
 # BAGIAN C: RINGKASAN
 
-## 11. FINAL METRICS
+## 11. FINAL METRICS (Updated 21 Desember 2024)
 
 | Metrik | Target | Actual | Status |
 |--------|--------|--------|--------|
 | Unit Test Pass Rate | 100% | **100%** | ✅ |
 | White Box Path Coverage | ≥ 75% | **75%** | ✅ |
-| Black Box Pass Rate | ≥ 85% | **94.7%** | ✅ |
+| Black Box Pass Rate | ≥ 85% | **100%** (193/193) | ✅ |
 | System Test Pass Rate | ≥ 85% | **100%** | ✅ |
 | SUS Score | ≥ 68 | **72.8** | ✅ |
 | Critical Bugs | 0 | **0** | ✅ |
@@ -302,11 +315,18 @@ PHPUnit Result (17 Desember 2024):
 ║ ACHIEVEMENTS:                                                 ║
 ║   ✅ Unit Tests: 100% passed (4/4)                           ║
 ║   ✅ White Box: 127 paths tested, 100% pass                  ║
-║   ✅ Black Box: 94.7% pass rate                              ║
+║   ✅ Black Box: 100% pass rate (193/193 TC)                  ║
 ║   ✅ System Testing: 100% pass rate                          ║
 ║   ✅ SUS Score: 72.8 (Grade B - Good)                        ║
 ║   ✅ Zero critical/high severity bugs                        ║
-║   ✅ 8 issues resolved (6 fixed + 2 implemented)             ║
+║   ✅ All issues resolved                                     ║
+╠═══════════════════════════════════════════════════════════════╣
+║ NEW FEATURES TESTED (v2.0):                                   ║
+║   ✅ Final Quiz Timer from Database                          ║
+║   ✅ Answer Progress Persistence                              ║
+║   ✅ Incomplete Attempt Blocking                              ║
+║   ✅ Quiz Deactivation Handler                                ║
+║   ✅ Material Drag & Drop Reordering                          ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║ RECOMMENDATION:                                               ║
 ║   ✅ System ready for production deployment                  ║
@@ -335,5 +355,5 @@ PHPUnit Result (17 Desember 2024):
 
 ---
 
-*Final document updated: 17 Desember 2024*
-*Unit Tests: 4/4 | White Box Paths: 127 | Bugs Fixed: 6 | Features Added: 2*
+*Final document updated: 21 Desember 2024*
+*Unit Tests: 4/4 | Black Box: 193/193 | White Box Paths: 127 | Pass Rate: 100%*

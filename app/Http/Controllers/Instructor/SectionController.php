@@ -23,14 +23,14 @@ class SectionController extends Controller
             'order' => [
                 'nullable',
                 'integer',
-                'min:0',
-                Rule::unique('course_sections', 'order')->where(fn ($q) => $q->where('course_id', $course->id)),
+                'min:1',
+                Rule::unique('course_sections', 'order')->where(fn($q) => $q->where('course_id', $course->id)),
             ],
             'title' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('course_sections', 'title')->where(fn ($q) => $q->where('course_id', $course->id)),
+                Rule::unique('course_sections', 'title')->where(fn($q) => $q->where('course_id', $course->id)),
             ],
         ], [
             'title.unique' => 'Modul dengan judul yang sama sudah ada.',
@@ -64,9 +64,9 @@ class SectionController extends Controller
             'order' => [
                 'nullable',
                 'integer',
-                'min:0',
+                'min:1',
                 Rule::unique('course_sections', 'order')
-                    ->where(fn ($q) => $q->where('course_id', $course->id))
+                    ->where(fn($q) => $q->where('course_id', $course->id))
                     ->ignore($section->id),
             ],
             'title' => [
@@ -74,7 +74,7 @@ class SectionController extends Controller
                 'string',
                 'max:255',
                 Rule::unique('course_sections', 'title')
-                    ->where(fn ($q) => $q->where('course_id', $course->id))
+                    ->where(fn($q) => $q->where('course_id', $course->id))
                     ->ignore($section->id),
             ],
         ], [
@@ -120,6 +120,34 @@ class SectionController extends Controller
         return redirect()
             ->route('instructor.courses.show', $course)
             ->with('success', 'Semua modul berhasil dihapus.');
+    }
+
+    /**
+     * Reorder sections via drag-and-drop
+     */
+    public function reorder(Request $request, Kursus $course)
+    {
+        $ownerIds = $this->resolveOwnerIds($course);
+        if (!in_array(Auth::id(), $ownerIds, true)) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'sections' => 'required|array',
+            'sections.*.id' => 'required|exists:course_sections,id',
+            'sections.*.order' => 'required|integer|min:1',
+        ]);
+
+        foreach ($validated['sections'] as $sectionData) {
+            CourseSection::where('id', $sectionData['id'])
+                ->where('course_id', $course->id)
+                ->update(['order' => $sectionData['order']]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Urutan modul berhasil diperbarui!'
+        ]);
     }
 
     /**

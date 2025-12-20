@@ -1,6 +1,8 @@
 @extends('layouts.instructor')
 
 @section('content')
+<!-- SortableJS for drag-drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <div class="p-8">
         <!-- Header -->
         <div class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -396,19 +398,22 @@
                     </button>
                 </div>
             @else
-                <div class="divide-y divide-gray-200">
+            <div class="divide-y divide-gray-200" id="sortableSections">
                     @foreach($sections as $section)
                         <div class="section-container" data-section-id="{{ $section->id }}">
                             <!-- Section Header -->
-                            <div class="p-4 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
-                                onclick="toggleSection({{ $section->id }})">
+                            <div class="p-4 hover:bg-gray-50 flex items-center justify-between">
                                 <div class="flex items-center gap-3 flex-1">
-                                    <button
+                                    <!-- Drag Handle -->
+                                    <div class="drag-handle cursor-grab active:cursor-grabbing p-2 text-gray-400 hover:text-gray-600 transition" title="Drag untuk mengubah urutan">
+                                        <i class="fas fa-grip-vertical"></i>
+                                    </div>
+                                    <button onclick="toggleSection({{ $section->id }})"
                                         class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 transition">
                                         <i class="fas fa-chevron-right section-chevron transition-transform"
                                             id="chevron-{{ $section->id }}"></i>
                                     </button>
-                                    <div class="flex-1">
+                                    <div class="flex-1 cursor-pointer" onclick="toggleSection({{ $section->id }})">
                                         <h4 class="text-lg font-semibold text-gray-900">{{ $section->title }}</h4>
                                         @if($section->description)
                                             <p class="text-sm text-gray-600">{{ $section->description }}</p>
@@ -418,7 +423,7 @@
                                         {{ $section->materials->count() }} materi
                                     </span>
                                 </div>
-                                <div class="flex items-center gap-2 ml-4" onclick="event.stopPropagation()">
+                                <div class="flex items-center gap-2 ml-4">
                                     <button onclick="editSection({{ $section->id }})"
                                         class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition">
                                         <i class="fas fa-edit"></i>
@@ -469,19 +474,21 @@
                                             <p class="text-gray-500 text-sm">Belum ada materi di section ini</p>
                                         </div>
                                     @else
-                                        <div class="space-y-2">
+                                        <div class="space-y-2 sortable-materials" data-section-id="{{ $section->id }}">
                                             @foreach($section->materials as $material)
-                                                <div
-                                                    class="bg-white rounded-lg border border-gray-200 p-3 hover:border-blue-300 transition group">
+                                                <div class="bg-white rounded-lg border border-gray-200 p-3 hover:border-blue-300 transition group material-item" data-material-id="{{ $material->id }}">
                                                     <div class="flex items-center gap-3">
+                                                        <!-- Drag Handle -->
+                                                        <div class="material-drag-handle cursor-grab active:cursor-grabbing p-1 text-gray-400 hover:text-gray-600 transition" title="Drag untuk mengubah urutan">
+                                                            <i class="fas fa-grip-vertical text-sm"></i>
+                                                        </div>
                                                         <!-- Icon based on type -->
-                                                        <div
-                                                            class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0
-                                                                                                                                                                                                    {{ $material->type === 'video' ? 'bg-blue-100' : '' }}
-                                                                                                                                                                                                    {{ $material->type === 'pdf' ? 'bg-red-100' : '' }}
-                                                                                                                                                                                                    {{ $material->type === 'quiz' ? 'bg-yellow-100' : '' }}
-                                                                                                                                                                                                    {{ $material->type === 'text' ? 'bg-green-100' : '' }}
-                                                                                                                                                                                                    {{ $material->type === 'class_session' ? 'bg-orange-100' : '' }}">
+                                                        <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0
+                                                            {{ $material->type === 'video' ? 'bg-blue-100' : '' }}
+                                                            {{ $material->type === 'pdf' ? 'bg-red-100' : '' }}
+                                                            {{ $material->type === 'quiz' ? 'bg-yellow-100' : '' }}
+                                                            {{ $material->type === 'text' ? 'bg-green-100' : '' }}
+                                                            {{ $material->type === 'class_session' ? 'bg-orange-100' : '' }}">
                                                             @if($material->type === 'video')
                                                                 <i class="fas fa-play text-blue-600"></i>
                                                             @elseif($material->type === 'pdf')
@@ -590,7 +597,7 @@
                 <div
                     class="flex items-start gap-3 bg-purple-50 border border-purple-100 text-purple-800 rounded-xl px-3 py-2 text-sm">
                     <i class="fas fa-lightbulb text-yellow-500 mt-0.5"></i>
-                    <div>Modul akan muncul sesuai urutan. Pastikan nama dan urutan unik.</div>
+                    <div>Modul baru akan ditambahkan di urutan terakhir. Gunakan drag-and-drop untuk mengubah urutan.</div>
                 </div>
             </div>
             <form id="sectionForm" method="POST">
@@ -607,12 +614,6 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
                     <textarea name="description" id="sectionDescription" rows="3"
                         class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm"></textarea>
-                </div>
-
-                <div class="mb-4 relative z-10">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Urutan</label>
-                    <input type="number" name="order" id="sectionOrder" min="0"
-                        class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm">
                 </div>
 
                 <div class="flex gap-3 justify-end relative z-10">
@@ -1055,6 +1056,113 @@
                                                                 if (confirm('Yakin ingin menghapus modul ini? Semua materi di dalamnya akan ikut terhapus.')) submitDelete();
                                                             }
                                                         }
+
+                                                        // Initialize SortableJS for drag-and-drop module reordering
+                                                        document.addEventListener('DOMContentLoaded', function() {
+                                                            const sortableContainer = document.getElementById('sortableSections');
+                                                            if (sortableContainer) {
+                                                                new Sortable(sortableContainer, {
+                                                                    handle: '.drag-handle',
+                                                                    animation: 150,
+                                                                    ghostClass: 'bg-blue-50',
+                                                                    chosenClass: 'bg-blue-100',
+                                                                    dragClass: 'shadow-lg',
+                                                                    onEnd: function(evt) {
+                                                                        // Get all sections in new order
+                                                                        const sections = [];
+                                                                        sortableContainer.querySelectorAll('.section-container').forEach((el, index) => {
+                                                                            sections.push({
+                                                                                id: parseInt(el.dataset.sectionId),
+                                                                                order: index + 1
+                                                                            });
+                                                                        });
+                                                                        
+                                                                        // Save new order via AJAX
+                                                                        fetch('{{ route("instructor.courses.sections.reorder", $course) }}', {
+                                                                            method: 'POST',
+                                                                            headers: {
+                                                                                'Content-Type': 'application/json',
+                                                                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                                                'Accept': 'application/json'
+                                                                            },
+                                                                            body: JSON.stringify({ sections: sections })
+                                                                        })
+                                                                        .then(response => response.json())
+                                                                        .then(data => {
+                                                                            if (data.success) {
+                                                                                // Show success message
+                                                                                if (typeof Swal !== 'undefined') {
+                                                                                    Swal.fire({
+                                                                                        toast: true,
+                                                                                        position: 'top-end',
+                                                                                        icon: 'success',
+                                                                                        title: data.message || 'Urutan berhasil diperbarui',
+                                                                                        showConfirmButton: false,
+                                                                                        timer: 2000,
+                                                                                        timerProgressBar: true
+                                                                                    });
+                                                                                }
+                                                                            }
+                                                                        })
+                                                                        .catch(error => {
+                                                                            console.error('Error:', error);
+                                                                            alert('Gagal menyimpan urutan');
+                                                                        });
+                                                                    }
+                                                                });
+                                                            }
+                                                        });
+
+                                                        // Initialize SortableJS for materials within each section
+                                                        document.querySelectorAll('.sortable-materials').forEach(container => {
+                                                            new Sortable(container, {
+                                                                handle: '.material-drag-handle',
+                                                                animation: 150,
+                                                                ghostClass: 'bg-green-50',
+                                                                chosenClass: 'bg-green-100',
+                                                                dragClass: 'shadow-lg',
+                                                                onEnd: function(evt) {
+                                                                    const materials = [];
+                                                                    container.querySelectorAll('.material-item').forEach((el, index) => {
+                                                                        materials.push({
+                                                                            id: parseInt(el.dataset.materialId),
+                                                                            urutan: index + 1
+                                                                        });
+                                                                    });
+                                                                    
+                                                                    // Save new order via AJAX
+                                                                    fetch('{{ route("instructor.courses.materials.reorder", $course) }}', {
+                                                                        method: 'POST',
+                                                                        headers: {
+                                                                            'Content-Type': 'application/json',
+                                                                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                                            'Accept': 'application/json'
+                                                                        },
+                                                                        body: JSON.stringify({ materials: materials })
+                                                                    })
+                                                                    .then(response => response.json())
+                                                                    .then(data => {
+                                                                        if (data.success) {
+                                                                            if (typeof Swal !== 'undefined') {
+                                                                                Swal.fire({
+                                                                                    toast: true,
+                                                                                    position: 'top-end',
+                                                                                    icon: 'success',
+                                                                                    title: data.message || 'Urutan materi berhasil diperbarui',
+                                                                                    showConfirmButton: false,
+                                                                                    timer: 2000,
+                                                                                    timerProgressBar: true
+                                                                                });
+                                                                            }
+                                                                        }
+                                                                    })
+                                                                    .catch(error => {
+                                                                        console.error('Error:', error);
+                                                                        alert('Gagal menyimpan urutan materi');
+                                                                    });
+                                                                }
+                                                            });
+                                                        });
                                                         </script>
     @endpush
 @endsection

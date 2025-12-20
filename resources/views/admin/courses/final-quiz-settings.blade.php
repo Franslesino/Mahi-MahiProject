@@ -69,61 +69,51 @@
                     <!-- Pilih Quiz -->
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <label for="final_quiz_id" class="block text-sm font-bold text-gray-700">
-                                Pilih Quiz sebagai Final Quiz <span class="text-red-500">*</span>
+                            <label class="block text-sm font-bold text-gray-700">
+                                Final Quiz
                             </label>
-                            @if(!$kursus->final_quiz_id)
+                        </div>
+
+                        @if(!$kursus->final_quiz_id)
+                            {{-- Belum ada final quiz --}}
+                            <div class="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                                <i class="fas fa-question-circle text-4xl text-gray-400 mb-3"></i>
+                                <p class="text-gray-600 font-medium mb-3">Belum ada Final Quiz</p>
+                                <p class="text-gray-500 text-sm mb-4">Buat final quiz untuk mengukur pemahaman peserta di akhir kursus</p>
                                 <a href="{{ route('admin.courses.final-quiz.create-quiz', $kursus->id) }}" 
-                                   class="px-4 py-2 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700 transition inline-flex items-center gap-2">
-                                    <i class="fas fa-plus"></i> Buat Quiz Baru
+                                   class="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-semibold">
+                                    <i class="fas fa-plus"></i> Buat Final Quiz
                                 </a>
-                            @else
-                                <span class="px-4 py-2 bg-gray-100 text-gray-600 text-sm rounded-lg inline-flex items-center gap-2">
-                                    <i class="fas fa-info-circle"></i> 1 Quiz Sudah Dibuat
-                                </span>
-                            @endif
-                        </div>
-                        <select id="final_quiz_id" name="final_quiz_id" required
-                                {{ $kursus->final_quiz_id ? 'disabled' : '' }}
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('final_quiz_id') border-red-500 @enderror disabled:bg-gray-100 disabled:cursor-not-allowed">
-                            <option value="">-- Pilih Quiz --</option>
-                            @forelse($availableQuizzes as $quiz)
-                                <option value="{{ $quiz->id }}" 
-                                        {{ old('final_quiz_id', $kursus->final_quiz_id) == $quiz->id ? 'selected' : '' }}>
-                                    {{ $quiz->judul_quiz }}
-                                    @if($quiz->is_final_quiz)
-                                        (Final Quiz Saat Ini)
-                                    @endif
-                                </option>
-                            @empty
-                                <option value="" disabled>Belum ada quiz tersedia</option>
-                            @endforelse
-                        </select>
-                        @if($kursus->final_quiz_id)
+                            </div>
+                            <div class="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <p class="text-sm text-blue-700">
+                                    <i class="fas fa-lightbulb"></i> <strong>Tips:</strong>
+                                    Setiap kursus hanya dapat memiliki <strong>1 final quiz</strong>. Anda bisa menambahkan soal dari Question Banks setelah quiz dibuat.
+                                </p>
+                            </div>
+                        @else
+                            {{-- Sudah ada final quiz --}}
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-check-circle text-white text-xl"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-gray-800">{{ $kursus->finalQuiz->judul_quiz }}</p>
+                                        <p class="text-sm text-gray-600">
+                                            {{ $kursus->finalQuiz->soal->count() }} soal
+                                            @if($kursus->finalQuiz->durasi_quiz)
+                                                • {{ $kursus->finalQuiz->durasi_quiz }} menit
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <span class="px-3 py-1 {{ $kursus->finalQuiz->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }} rounded-full text-sm font-medium">
+                                        {{ $kursus->finalQuiz->is_active ? 'Aktif' : 'Nonaktif' }}
+                                    </span>
+                                </div>
+                            </div>
                             <input type="hidden" name="final_quiz_id" value="{{ $kursus->final_quiz_id }}">
-                            <p class="text-gray-600 text-sm mt-1">
-                                <i class="fas fa-lock"></i> Quiz sudah dipilih dan tidak dapat diubah. Gunakan fitur tambah/hapus soal untuk mengelola pertanyaan.
-                            </p>
                         @endif
-                        @error('final_quiz_id')
-                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                        <div class="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <p class="text-sm text-blue-700 mb-2">
-                                <i class="fas fa-lightbulb"></i> <strong>Informasi Penting:</strong>
-                            </p>
-                            <ul class="text-sm text-blue-600 ml-5 space-y-1">
-                                @if(!$kursus->final_quiz_id)
-                                    <li>• Setiap kursus hanya dapat memiliki <strong>1 final quiz</strong></li>
-                                    <li>• Klik tombol <strong>"Buat Quiz Baru"</strong> untuk membuat final quiz dengan soal dari bank soal</li>
-                                    <li>• Atau pilih quiz yang sudah ada dari dropdown di atas</li>
-                                @else
-                                    <li>• Setiap kursus hanya dapat memiliki <strong>1 final quiz</strong></li>
-                                    <li>• Gunakan tombol <strong>"Tambah Soal dari Bank Soal"</strong> untuk menambah pertanyaan</li>
-                                    <li>• Nonaktifkan quiz terlebih dahulu untuk mengubah soal</li>
-                                @endif
-                            </ul>
-                        </div>
                     </div>
 
                     <!-- Nilai Minimum Kelulusan -->
@@ -133,8 +123,8 @@
                         </label>
                         <div class="flex">
                             <input type="number" id="min_passing_score" name="min_passing_score" 
-                                   min="0" max="100" step="0.01"
-                                   value="{{ old('min_passing_score', $kursus->min_passing_score ?? 70) }}"
+                                   min="0" max="100" step="1"
+                                   value="{{ old('min_passing_score', intval($kursus->min_passing_score ?? 70)) }}"
                                    required
                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('min_passing_score') border-red-500 @enderror">
                             <span class="inline-flex items-center px-4 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg text-gray-700">%</span>

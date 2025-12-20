@@ -32,10 +32,9 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     @foreach($instructors as $instructor)
                         <div class="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 p-6 text-center">
-                            <!-- Avatar -->
                             <div class="mb-4">
-                                @if($instructor->avatar || $instructor->profile_url)
-                                    <img src="{{ $instructor->avatar ?? $instructor->profile_url }}" 
+                                @if($instructor->avatar_url)
+                                    <img src="{{ $instructor->avatar_url }}" 
                                          alt="{{ $instructor->name }}"
                                          class="w-20 h-20 rounded-full object-cover mx-auto border-4 border-teal-100">
                                 @else

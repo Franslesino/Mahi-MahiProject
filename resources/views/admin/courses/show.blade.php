@@ -59,7 +59,7 @@
         <div class="bg-white rounded-xl border border-gray-200 p-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600">Total Assignment</p>
+                    <p class="text-sm text-gray-600">Total Quiz</p>
                     <p class="text-2xl font-bold text-gray-900 mt-1">{{ $stats['total_assignments'] }}</p>
                 </div>
                 <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -219,11 +219,11 @@
                 <div class="p-6 border-b border-gray-200 flex items-center justify-between">
                     <h3 class="text-lg font-bold text-gray-900">
                         <i class="fas fa-clipboard-list text-purple-600 mr-2"></i>
-                        Assignment & Quiz ({{ $assignments->count() }})
+                        Quiz ({{ $assignments->count() }})
                     </h3>
                     <a href="{{ route('admin.courses.detail', $course->id) }}"
                        class="text-purple-600 hover:text-purple-700 text-sm font-medium">
-                        Tambah Assignment →
+                        Tambah Quiz →
                     </a>
                 </div>
 
@@ -285,10 +285,10 @@
                     @empty
                         <div class="text-center py-8 text-gray-500">
                             <i class="fas fa-clipboard-list text-4xl mb-3"></i>
-                            <p>Belum ada assignment</p>
+                            <p>Belum ada quiz</p>
                             <a href="{{ route('admin.courses.detail', $course->id) }}"
                                class="text-purple-600 hover:text-purple-700 text-sm mt-2 inline-block">
-                                Tambah Assignment Pertama →
+                                Tambah Quiz Pertama →
                             </a>
                         </div>
                     @endforelse

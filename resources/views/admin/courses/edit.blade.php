@@ -219,14 +219,15 @@
                 {{-- Instruktur --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Instruktur (opsional)
+                        Instruktur <span class="text-red-500">*</span>
                     </label>
                     <select
                         name="instructor_id"
+                        required
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white
                                focus:outline-none focus:ring-2 focus:ring-emerald-500
                                @error('instructor_id') border-red-500 @enderror">
-                        <option value="" {{ old('instructor_id', $course->instructor_id ?? '') === '' ? 'selected' : '' }}>Tanpa instruktur</option>
+                        <option value="" disabled {{ old('instructor_id', $course->instructor_id ?? '') === '' ? 'selected' : '' }}>Pilih instruktur</option>
                         @foreach($instructors as $instructor)
                             <option value="{{ $instructor->id }}"
                                 {{ old('instructor_id', $course->instructor_id) == $instructor->id ? 'selected' : '' }}>

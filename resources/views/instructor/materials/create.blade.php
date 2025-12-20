@@ -89,7 +89,7 @@
                     </div>
                 </div>
 
-                <div>
+                <div id="durationBlock">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Durasi (menit)</label>
                     <input type="number" name="duration" value="{{ old('duration') }}" min="0"
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -173,6 +173,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const successOkBtn = document.getElementById('successOkBtn');
     const fallbackRedirect = form?.dataset?.redirect;
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const typeSelect = document.getElementsByName('type')[0];
+    const durationBlock = document.getElementById('durationBlock');
 
     if (!form || !dropzone || !fileInput) return;
 
@@ -181,6 +183,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (progressBar) progressBar.style.width = '0%';
         if (progressText) progressText.textContent = '0%';
     };
+
+    const toggleDuration = () => {
+        if (typeSelect && durationBlock) {
+            durationBlock.style.display = typeSelect.value === 'quiz' ? 'none' : '';
+        }
+    };
+
+    if (typeSelect) {
+        typeSelect.addEventListener('change', toggleDuration);
+        toggleDuration();
+    }
 
     const showFileName = (file) => {
         if (!fileName) return;

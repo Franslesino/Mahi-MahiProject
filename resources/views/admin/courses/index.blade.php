@@ -109,9 +109,14 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if($course->instructor)
                                     <div class="flex items-center gap-2">
-                                        <div class="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center">
-                                            {{ strtoupper(substr($course->instructor->name, 0, 1)) }}
-                                        </div>
+                                        @if($course->instructor->avatar_url)
+                                            <img src="{{ $course->instructor->avatar_url }}" 
+                                                 class="w-8 h-8 rounded-full object-cover">
+                                        @else
+                                            <div class="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-xs font-bold">
+                                                {{ strtoupper(substr($course->instructor->name, 0, 1)) }}
+                                            </div>
+                                        @endif
                                         <span class="text-sm text-gray-900">{{ $course->instructor->name }}</span>
                                     </div>
                                 @else

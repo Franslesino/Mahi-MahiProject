@@ -6,7 +6,7 @@
 <div class="min-h-screen bg-[#f4f2f0] py-6">
     <div class="max-w-6xl mx-auto px-4">
         <div class="flex items-center justify-between mb-4">
-            <button type="button" onclick="if(confirm('Yakin ingin keluar? Soal yang anda kerjakan akan mulai lagi dari 0.')) { localStorage.removeItem('quiz_answers_assignment_{{ $assignment->id }}'); localStorage.removeItem('quiz_current_assignment_{{ $assignment->id }}'); localStorage.removeItem('quiz_timer_assignment_{{ $assignment->id }}'); window.location.href='{{ route('student.course.learn', $course) }}'; } return false;"
+            <button type="button" onclick="exitQuiz()"
                class="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 transition cursor-pointer bg-gray-100 px-4 py-2 rounded-lg"
                style="position: relative; z-index: 9999; pointer-events: auto !important;">
                 <i class="fa-solid fa-arrow-left"></i>
@@ -19,12 +19,7 @@
             <div class="lg:col-span-3">
                 <div class="flex items-center justify-between mb-4">
                     <div class="px-4 py-2 rounded-full bg-gray-100 text-sm font-semibold" id="question-counter">1/{{ $assignment->questions->count() }}</div>
-                    @if($assignment->time_limit)
-                    <div class="px-4 py-2 rounded-full text-sm font-semibold" id="timer-display">
-                        <i class="fas fa-clock mr-1"></i>
-                        <span id="timer-text">{{ $assignment->time_limit }}:00</span>
-                    </div>
-                    @endif
+
                     <div class="text-gray-700 font-semibold">Quiz Materi</div>
                 </div>
                 <div class="border border-gray-300 rounded-2xl p-6 min-h-[320px] flex flex-col justify-between">
@@ -88,6 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const storageIndexKey = 'quiz_current_assignment_{{ $assignment->id }}';
     const timerStorageKey = 'quiz_timer_assignment_{{ $assignment->id }}';
     
+    window.exitQuiz = function() {
+        if(confirm('Yakin ingin keluar? Soal yang anda kerjakan akan mulai lagi dari 0.')) {
+            localStorage.removeItem(storageKey);
+            localStorage.removeItem(storageIndexKey);
+            localStorage.removeItem(timerStorageKey);
+            window.location.href = "{{ route('student.course.learn', $course) }}";
+        }
+    };
+
     let answers = {};
     try {
         const saved = localStorage.getItem(storageKey);
@@ -112,63 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const finishModal = document.getElementById('finish-modal');
     const modalBackBtn = document.getElementById('modal-back-btn');
     const modalFinishBtn = document.getElementById('modal-finish-btn');
-
-    // Timer functionality
-    @if($assignment->time_limit)
-    const timeLimit = {{ $assignment->time_limit }}; // dalam menit
-    const timerDisplay = document.getElementById('timer-display');
-    const timerText = document.getElementById('timer-text');
-    
-    let timeRemaining;
-    const savedTime = localStorage.getItem(timerStorageKey);
-    if (savedTime) {
-        timeRemaining = parseInt(savedTime, 10);
-    } else {
-        timeRemaining = timeLimit * 60; // konversi ke detik
-        localStorage.setItem(timerStorageKey, timeRemaining);
-    }
-
-    function formatTime(seconds) {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    function updateTimerDisplay() {
-        timerText.textContent = formatTime(timeRemaining);
-        
-        // Ubah warna timer berdasarkan waktu tersisa
-        if (timeRemaining <= 60) {
-            timerDisplay.className = 'px-4 py-2 rounded-full text-sm font-semibold bg-red-100 text-red-700';
-        } else if (timeRemaining <= 300) {
-            timerDisplay.className = 'px-4 py-2 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-700';
-        } else {
-            timerDisplay.className = 'px-4 py-2 rounded-full text-sm font-semibold bg-green-100 text-green-700';
-        }
-    }
-
-    function autoSubmitQuiz() {
-        localStorage.removeItem(storageKey);
-        localStorage.removeItem(storageIndexKey);
-        localStorage.removeItem(timerStorageKey);
-        document.getElementById('answers_json').value = JSON.stringify(answers);
-        alert('Waktu habis! Quiz akan otomatis disubmit.');
-        document.getElementById('complete-form').submit();
-    }
-
-    const timerInterval = setInterval(() => {
-        timeRemaining--;
-        localStorage.setItem(timerStorageKey, timeRemaining);
-        updateTimerDisplay();
-
-        if (timeRemaining <= 0) {
-            clearInterval(timerInterval);
-            autoSubmitQuiz();
-        }
-    }, 1000);
-
-    updateTimerDisplay();
-    @endif
 
     const allAnswered = () => {
         return questions.every(q => {
@@ -269,13 +216,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     modalFinishBtn.addEventListener('click', () => {
-        @if($assignment->time_limit)
-        clearInterval(timerInterval);
-        @endif
         // bersihkan simpanan lokal agar tidak nyangkut
         localStorage.removeItem(storageKey);
         localStorage.removeItem(storageIndexKey);
-        localStorage.removeItem(timerStorageKey);
         document.getElementById('answers_json').value = JSON.stringify(answers);
         modalFinishBtn.disabled = true;
         document.getElementById('complete-form').submit();

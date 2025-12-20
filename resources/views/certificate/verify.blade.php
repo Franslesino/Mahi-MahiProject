@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Verifikasi Sertifikat - Mahi-Mahi Learning')
+@section('title', 'Verifikasi Sertifikat - UpGreenius')
 
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-20 px-4">
@@ -14,7 +14,7 @@
                 Verifikasi Keaslian Sertifikat
             </h1>
             <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                Validasi keaslian sertifikat kursus Mahi-Mahi Learning dengan memasukkan kode unik yang tertera pada dokumen sertifikat Anda.
+                Validasi keaslian sertifikat kursus UpGreenius dengan memasukkan kode unik yang tertera pada dokumen sertifikat Anda.
             </p>
         </div>
 
@@ -98,24 +98,22 @@
                                 </div>
                             </div>
 
-                            <!-- Right: Preview/Download -->
-                            <div class="flex flex-col justify-center bg-gray-50 rounded-3xl p-8 border border-gray-100 group">
-                                <div class="relative mb-6 rounded-xl overflow-hidden shadow-lg transform group-hover:scale-105 transition-transform duration-500">
-                                    <div class="absolute inset-0 bg-blue-600/10 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <i class="fas fa-search-plus text-white text-3xl"></i>
+                            <!-- Right: Download Button -->
+                            <div class="flex flex-col justify-center bg-gray-50 rounded-3xl p-8 border border-gray-100">
+                                <div class="text-center mb-6">
+                                    <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <i class="fas fa-certificate text-3xl"></i>
                                     </div>
-                                    <img src="{{ asset('assets/img/certificate_preview_placeholder.png') }}" 
-                                         onerror="this.src='https://placehold.co/600x400/004aad/white?text=Sertifikat+Mahi-Mahi'"
-                                         class="w-full h-auto brightness-95" 
-                                         alt="Certificate Preview">
+                                    <h4 class="text-lg font-bold text-gray-900 mb-2">Sertifikat Terverifikasi</h4>
+                                    <p class="text-sm text-gray-600">Sertifikat ini asli dan terdaftar dalam sistem kami</p>
                                 </div>
                                 <a href="{{ route('student.certificate.download', $certificate->enrollment_id) }}" 
-                                   class="inline-flex items-center justify-center gap-2 w-full bg-white text-gray-800 border-2 border-gray-200 hover:border-blue-600 hover:text-blue-600 font-bold py-4 rounded-xl transition-all duration-300 shadow-sm">
+                                   class="inline-flex items-center justify-center gap-2 w-full bg-blue-600 text-white hover:bg-blue-700 font-bold py-4 rounded-xl transition-all duration-300 shadow-lg shadow-blue-200">
                                     <i class="fas fa-download"></i>
-                                    <span>Unduh Salinan Sertifikat</span>
+                                    <span>Unduh Sertifikat</span>
                                 </a>
                                 <p class="text-center text-xs text-gray-500 mt-4">
-                                    <i class="fas fa-lock text-[10px] mr-1"></i> Data diverifikasi secara digital oleh Mahi-Mahi Learning System.
+                                    <i class="fas fa-lock text-[10px] mr-1"></i> Data diverifikasi secara digital oleh UpGreenius Learning System.
                                 </p>
                             </div>
                         </div>
@@ -145,7 +143,7 @@
 
         <!-- Footer Info -->
         <div class="mt-16 text-center text-gray-400 text-sm">
-            <p>© {{ date('Y') }} Mahi-Mahi Learning. Seluruh hak cipta dilindungi.</p>
+            <p>© {{ date('Y') }} UpGreenius. Seluruh hak cipta dilindungi.</p>
         </div>
     </div>
 </div>

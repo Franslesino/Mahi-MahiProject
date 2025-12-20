@@ -397,9 +397,29 @@
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
         <div class="p-6 border-b border-gray-200 flex items-center justify-between">
             <h3 class="text-lg font-semibold text-gray-800">Modul Kursus</h3>
-            <button onclick="toggleAllSections()" class="text-sm text-blue-600 hover:text-blue-700">
-                <i class="fas fa-expand-alt mr-1"></i> Toggle Semua
-            </button>
+            <div class="flex items-center gap-4">
+                <button onclick="toggleAllSections()" class="text-xs font-medium text-blue-600 hover:text-blue-700">
+                    <i class="fas fa-expand-alt mr-1"></i> Toggle Semua
+                </button>
+                @if($isAdmin || Auth::id() === $course->pembuat || Auth::id() === $course->instructor_id)
+                    <form action="{{ $isAdmin ? route('admin.courses.modules.destroy-all', $course) : route('instructor.courses.modules.destroy-all', $course) }}" 
+                          method="POST" onsubmit="return confirm('Yakin ingin menghapus SEMUA modul? Tindakan ini tidak dapat dibatalkan.')" class="inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-xs font-medium text-red-600 hover:text-red-700">
+                            <i class="fas fa-folder-minus mr-1"></i> Hapus Semua Modul
+                        </button>
+                    </form>
+                    <form action="{{ $isAdmin ? route('admin.courses.materials.destroy-all', $course) : route('instructor.courses.materials.destroy-all', $course) }}" 
+                          method="POST" onsubmit="return confirm('Yakin ingin menghapus SEMUA materi? Tindakan ini tidak dapat dibatalkan.')" class="inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-xs font-medium text-red-600 hover:text-red-700 ml-3">
+                            <i class="fas fa-trash-alt mr-1"></i> Hapus Semua Materi
+                        </button>
+                    </form>
+                @endif
+            </div>
         </div>
 
         @if($sections->isEmpty())
@@ -469,10 +489,12 @@
                                                 class="px-3 py-1.5 bg-yellow-600 text-white rounded text-xs hover:bg-yellow-700 transition flex items-center gap-1">
                                             <i class="fas fa-question-circle"></i> Buat Quiz
                                         </button>
+                                        @if($course->metode !== 'online')
                                         <button onclick="openMaterialModal({{ $section->id }}, 'class_session')" 
                                                 class="px-3 py-1.5 bg-orange-600 text-white rounded text-xs hover:bg-orange-700 transition flex items-center gap-1">
                                             <i class="fas fa-users"></i> Sesi Kelas
                                         </button>
+                                        @endif
                                     </div>
                                 </div>
 
@@ -775,10 +797,11 @@
                 <p class="text-xs text-gray-500 mt-1">Jika dipilih, semua soal di bank ini akan ditambahkan ke quiz.</p>
             </div>
 
-            <div class="grid md:grid-cols-2 gap-4 mb-4 relative z-10">
+            <div class="grid md:grid-cols-1 gap-4 mb-4 relative z-10">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Passing Score</label>
-                    <input type="number" name="passing_score" value="60" min="0" max="100" class="w-full px-4 py-2 border border-gray-200 rounded-lg shadow-sm">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Batas Waktu Pengerjaan (Menit)</label>
+                    <input type="number" name="time_limit" value="30" min="1" class="w-full px-4 py-2 border border-gray-200 rounded-lg shadow-sm" placeholder="Contoh: 30">
+                    <p class="text-xs text-gray-500 mt-1">Kosongkan jika tidak ada batas waktu.</p>
                 </div>
             </div>
 

@@ -108,6 +108,20 @@ class SectionController extends Controller
             ->with('success', 'Modul berhasil dihapus.');
     }
 
+    public function destroyAll(Kursus $course)
+    {
+        $ownerIds = $this->resolveOwnerIds($course);
+        if (!in_array(Auth::id(), $ownerIds, true)) {
+            abort(403);
+        }
+
+        $course->sections()->delete();
+
+        return redirect()
+            ->route('instructor.courses.show', $course)
+            ->with('success', 'Semua modul berhasil dihapus.');
+    }
+
     /**
      * Ambil daftar ID pemilik kursus (instructor/creator) tanpa memicu error kolom.
      */

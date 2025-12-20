@@ -67,6 +67,21 @@
                     <small class="text-gray-600 text-sm">Deskripsi ini akan ditampilkan kepada peserta sebelum mengerjakan quiz.</small>
                 </div>
 
+                <!-- Durasi Quiz -->
+                <div class="mb-6">
+                    <label for="durasi_quiz" class="block text-sm font-bold text-gray-700 mb-2">
+                        Durasi Quiz (menit)
+                    </label>
+                    <input type="number" id="durasi_quiz" name="durasi_quiz" 
+                           value="{{ old('durasi_quiz', 60) }}" min="1"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 @error('durasi_quiz') border-red-500 @enderror"
+                           placeholder="60">
+                    <small class="text-gray-600 text-sm">Kosongkan jika tidak ada batas waktu. Peserta akan memiliki waktu terbatas untuk menyelesaikan quiz jika diisi.</small>
+                    @error('durasi_quiz')
+                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- Information Box -->
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                     <h6 class="font-semibold text-blue-800 mb-2">

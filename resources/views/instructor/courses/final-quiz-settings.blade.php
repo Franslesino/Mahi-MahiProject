@@ -26,6 +26,26 @@
         </div>
     @endif
 
+    @if(session('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <i class="fas fa-check-circle"></i>
+            {{ session('success') }}
+        </div>
+    @endif
+
+    <!-- Item #23: Warning message for deactivating quiz with active participants -->
+    @if(session('warning'))
+        <div class="bg-amber-100 border border-amber-400 text-amber-800 px-4 py-3 rounded relative mb-4" role="alert">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-exclamation-triangle text-amber-600 text-xl mt-0.5"></i>
+                <div>
+                    <p class="font-semibold">Perhatian!</p>
+                    <p class="text-sm">{{ session('warning') }}</p>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Form Card -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
         <div class="bg-blue-600 text-white px-6 py-4 rounded-t-lg">
@@ -154,6 +174,27 @@
                             Berapa kali peserta dapat mengulang quiz jika belum lulus (1-10 kali).
                         </small>
                     </div>
+
+                    <!-- Durasi Quiz -->
+                    <div>
+                        <label for="durasi_quiz" class="block text-sm font-bold text-gray-700 mb-2">
+                            Durasi Quiz (menit)
+                        </label>
+                        <div class="flex">
+                            <input type="number" id="durasi_quiz" name="durasi_quiz" 
+                                   min="1"
+                                   value="{{ old('durasi_quiz', optional($kursus->finalQuiz)->durasi_quiz) }}"
+                                   class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('durasi_quiz') border-red-500 @enderror"
+                                   placeholder="Contoh: 60">
+                            <span class="inline-flex items-center px-4 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg text-gray-700">menit</span>
+                        </div>
+                        @error('durasi_quiz')
+                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                        <small class="text-gray-600 text-sm block mt-2">
+                            Batasan waktu pengerjaan quiz. Kosongkan jika tidak ada batas waktu.
+                        </small>
+                    </div>
                 </div>
 
                 <!-- Action Buttons -->
@@ -185,6 +226,13 @@
                     </div>
                     <div>
                         <p class="text-gray-700"><strong>Maksimal Percobaan:</strong> {{ $kursus->max_quiz_attempts }}x</p>
+                        <p class="text-gray-700"><strong>Durasi:</strong> 
+                            @if(optional($kursus->finalQuiz)->durasi_quiz)
+                                {{ $kursus->finalQuiz->durasi_quiz }} menit
+                            @else
+                                <span class="text-gray-500 italic">Tidak ada batas waktu</span>
+                            @endif
+                        </p>
                         <p class="text-gray-700"><strong>Status Quiz:</strong> 
                             @if(optional($kursus->finalQuiz)->is_active)
                                 <span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-semibold">
@@ -395,49 +443,87 @@
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-3"
                                onkeyup="filterImportQuestions()">
 
-                        <div id="importQuestionList" class="space-y-3 max-h-96 overflow-y-auto border border-gray-300 rounded-lg p-4">
+                        <div id="importQuestionList" class="space-y-4 max-h-96 overflow-y-auto border border-gray-300 rounded-lg p-4">
                             @php
-                                $allQuestions = \App\Models\Question::with('options', 'questionBank')
-                                    ->whereHas('questionBank', function($q) {
+                                // Ambil semua question banks dengan soal-soalnya
+                                $questionBanksWithQuestions = \App\Models\QuestionBank::with(['questions.options'])
+                                    ->where(function($q) {
                                         $q->where('created_by', Auth::id())
                                           ->orWhere('is_public', true);
                                     })
-                                    ->orderBy('created_at', 'desc')
+                                    ->whereHas('questions') // Hanya bank yang punya soal
+                                    ->orderBy('title')
                                     ->get();
                             @endphp
 
-                            @forelse($allQuestions as $question)
-                                <div class="import-question-item bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-500 transition">
-                                    <div class="flex items-start gap-3">
-                                        <input type="checkbox" name="questions[]" value="{{ $question->id }}" 
-                                               id="import_question_{{ $question->id }}"
-                                               class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                                        <label for="import_question_{{ $question->id }}" class="flex-1 cursor-pointer">
-                                            <div class="flex items-center gap-2 mb-2">
-                                                <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-                                                    {{ strtoupper($question->type) }}
-                                                </span>
-                                                @if($question->questionBank)
-                                                    <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-                                                        {{ $question->questionBank->title }}
-                                                    </span>
-                                                @endif
-                                            </div>
-                                            <div class="text-gray-800 font-medium mb-2 import-question-text">
-                                                {!! nl2br(e($question->question_text)) !!}
-                                            </div>
-                                            @if($question->options->count() > 0)
-                                                <div class="text-sm text-gray-600">
-                                                    <span class="font-semibold">{{ $question->options->count() }}</span> opsi jawaban
+                            @forelse($questionBanksWithQuestions as $bank)
+                                <div class="question-bank-group border-2 border-gray-200 rounded-xl overflow-hidden" data-bank-name="{{ strtolower($bank->title) }}">
+                                    <!-- Bank Header -->
+                                    <div class="bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3 border-b border-gray-200">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
+                                                    <i class="fas fa-folder-open text-white"></i>
                                                 </div>
-                                            @endif
-                                        </label>
+                                                <div>
+                                                    <h4 class="font-bold text-gray-800">{{ $bank->title }}</h4>
+                                                    <p class="text-xs text-gray-500">{{ $bank->questions->count() }} soal tersedia</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <button type="button" onclick="selectBankQuestions({{ $bank->id }})" 
+                                                        class="text-xs px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full hover:bg-emerald-200 transition">
+                                                    <i class="fas fa-check-double mr-1"></i> Pilih Semua
+                                                </button>
+                                                <button type="button" onclick="toggleBankCollapse({{ $bank->id }})"
+                                                        class="text-gray-500 hover:text-gray-700 transition">
+                                                    <i class="fas fa-chevron-down" id="bank-collapse-icon-{{ $bank->id }}"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Bank Questions -->
+                                    <div class="p-3 space-y-2 bg-white" id="bank-questions-{{ $bank->id }}">
+                                        @foreach($bank->questions as $question)
+                                            <div class="import-question-item bg-gray-50 border border-gray-200 rounded-lg p-3 hover:border-emerald-400 hover:bg-emerald-50/30 transition" 
+                                                 data-bank-id="{{ $bank->id }}">
+                                                <div class="flex items-start gap-3">
+                                                    <input type="checkbox" name="questions[]" value="{{ $question->id }}" 
+                                                           id="import_question_{{ $question->id }}"
+                                                           data-bank="{{ $bank->id }}"
+                                                           class="mt-1 w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                                    <label for="import_question_{{ $question->id }}" class="flex-1 cursor-pointer">
+                                                        <div class="flex items-center gap-2 mb-1">
+                                                            <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                                                                {{ strtoupper(str_replace('_', ' ', $question->type)) }}
+                                                            </span>
+                                                            @if($question->points)
+                                                                <span class="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full">
+                                                                    {{ $question->points }} poin
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                        <div class="text-gray-800 text-sm import-question-text line-clamp-2">
+                                                            {{ Str::limit(strip_tags($question->question_text), 150) }}
+                                                        </div>
+                                                        @if($question->options->count() > 0)
+                                                            <div class="text-xs text-gray-500 mt-1">
+                                                                <i class="fas fa-list-ul mr-1"></i>
+                                                                {{ $question->options->count() }} opsi jawaban
+                                                            </div>
+                                                        @endif
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 </div>
                             @empty
                                 <div class="text-center py-8 text-gray-500">
                                     <i class="fas fa-inbox text-4xl mb-2"></i>
                                     <p>Belum ada soal di Question Banks</p>
+                                    <p class="text-sm mt-1">Buat bank soal dan tambahkan soal terlebih dahulu</p>
                                 </div>
                             @endforelse
                         </div>
@@ -591,16 +677,51 @@ function deselectAllImport() {
     document.querySelectorAll('#importQuestionList input[name="questions[]"]').forEach(cb => cb.checked = false);
 }
 
+// Item #27: Pilih semua soal dari bank tertentu
+function selectBankQuestions(bankId) {
+    document.querySelectorAll(`#importQuestionList input[data-bank="${bankId}"]`).forEach(cb => cb.checked = true);
+}
+
+// Item #27: Toggle collapse bank soal
+function toggleBankCollapse(bankId) {
+    const questionsContainer = document.getElementById(`bank-questions-${bankId}`);
+    const icon = document.getElementById(`bank-collapse-icon-${bankId}`);
+    
+    if (questionsContainer.style.display === 'none') {
+        questionsContainer.style.display = 'block';
+        icon.classList.remove('fa-chevron-right');
+        icon.classList.add('fa-chevron-down');
+    } else {
+        questionsContainer.style.display = 'none';
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-right');
+    }
+}
+
 function filterImportQuestions() {
     const searchTerm = document.getElementById('searchImportQuestion').value.toLowerCase();
-    const questions = document.querySelectorAll('.import-question-item');
+    const bankGroups = document.querySelectorAll('.question-bank-group');
     
-    questions.forEach(question => {
-        const text = question.querySelector('.import-question-text').textContent.toLowerCase();
-        if (text.includes(searchTerm)) {
-            question.style.display = 'block';
+    bankGroups.forEach(bankGroup => {
+        const bankName = bankGroup.dataset.bankName || '';
+        const questions = bankGroup.querySelectorAll('.import-question-item');
+        let visibleCount = 0;
+        
+        questions.forEach(question => {
+            const text = question.querySelector('.import-question-text').textContent.toLowerCase();
+            if (text.includes(searchTerm) || bankName.includes(searchTerm)) {
+                question.style.display = 'block';
+                visibleCount++;
+            } else {
+                question.style.display = 'none';
+            }
+        });
+        
+        // Sembunyikan seluruh bank jika tidak ada soal yang cocok
+        if (visibleCount === 0 && searchTerm !== '') {
+            bankGroup.style.display = 'none';
         } else {
-            question.style.display = 'none';
+            bankGroup.style.display = 'block';
         }
     });
 }

@@ -851,14 +851,14 @@ HTML;
         $certificateNumber = $certificate->kode_sertifikat ?? $certificate->nomor_sertifikat ?? 'certificate';
 
         // Jika sudah PDF tersimpan, langsung download
-        $filePath = str_replace('/storage/', '', $certificate->url_unduhan);
-        if (str_ends_with(strtolower($certificate->url_unduhan), '.pdf') && Storage::disk('public')->exists($filePath)) {
+        $filePath = $this->resolveCertificatePublicPath($certificate->url_unduhan);
+        if ($filePath && str_ends_with(strtolower($certificate->url_unduhan), '.pdf') && Storage::disk('public')->exists($filePath)) {
             return Storage::disk('public')->download($filePath, $certificateNumber . '.pdf');
         }
 
         // Ambil HTML sertifikat (atau buat ulang jika hilang)
         $htmlContent = null;
-        if (Storage::disk('public')->exists($filePath)) {
+        if ($filePath && Storage::disk('public')->exists($filePath)) {
             $htmlContent = Storage::disk('public')->get($filePath);
         } elseif (filter_var($certificate->url_unduhan, FILTER_VALIDATE_URL)) {
             $htmlContent = @file_get_contents($certificate->url_unduhan);
@@ -917,9 +917,9 @@ HTML;
         }
 
         $url = $certificate->url_unduhan;
-        $publicPath = str_replace('/storage/', '', $url);
+        $publicPath = $this->resolveCertificatePublicPath($url);
 
-        if (Storage::disk('public')->exists($publicPath)) {
+        if ($publicPath && Storage::disk('public')->exists($publicPath)) {
             $mime = Storage::disk('public')->mimeType($publicPath) ?? 'application/octet-stream';
             $stream = Storage::disk('public')->readStream($publicPath);
             if (!$stream) {
@@ -934,12 +934,84 @@ HTML;
             ]);
         }
 
+        // Regenerate if missing or legacy path format
+        $course = $enrollment->kursus ?? $enrollment->course ?? null;
+        $user = $enrollment->user ?? Auth::user();
+        if ($course && $user) {
+            $certificateNumber = $certificate->kode_sertifikat ?? $certificate->nomor_sertifikat ?? 'certificate';
+            $instructorName = $course->pembuat->name ?? $course->instructor->name ?? 'Instructor';
+            $issuedDate = $certificate->tanggal_terbit ?? $certificate->tanggal_diterbitkan ?? $certificate->created_at ?? now();
+            $issuedDateString = $issuedDate instanceof \Illuminate\Support\Carbon
+                ? $issuedDate->format('F d, Y')
+                : now()->format('F d, Y');
+
+            $newPath = $this->generateCertificateImage(
+                $user->name ?? 'Student',
+                $course->judul ?? $course->title ?? 'Course',
+                $certificateNumber,
+                $issuedDateString,
+                $instructorName
+            );
+
+            $certificate->url_unduhan = Storage::url($newPath);
+            $certificate->save();
+
+            $url = $certificate->url_unduhan;
+            $publicPath = $this->resolveCertificatePublicPath($url);
+            if ($publicPath && Storage::disk('public')->exists($publicPath)) {
+                $mime = Storage::disk('public')->mimeType($publicPath) ?? 'application/octet-stream';
+                $stream = Storage::disk('public')->readStream($publicPath);
+                if (!$stream) {
+                    abort(404, 'Certificate file not readable');
+                }
+
+                return response()->stream(function () use ($stream) {
+                    fpassthru($stream);
+                }, 200, [
+                    'Content-Type' => $mime,
+                    'Content-Disposition' => 'inline; filename="' . basename($publicPath) . '"',
+                ]);
+            }
+        }
+
         // If stored remotely, redirect
         if (filter_var($url, FILTER_VALIDATE_URL)) {
             return redirect()->away($url);
         }
 
         abort(404, 'Certificate file not found');
+    }
+
+    private function resolveCertificatePublicPath(?string $url): ?string
+    {
+        if (!$url) {
+            return null;
+        }
+
+        $path = filter_var($url, FILTER_VALIDATE_URL)
+            ? (parse_url($url, PHP_URL_PATH) ?? '')
+            : $url;
+
+        $path = ltrim($path, '/');
+        if ($path === '') {
+            return null;
+        }
+
+        $prefixes = [
+            'storage/app/public/',
+            'app/public/',
+            'storage/',
+            'public/',
+        ];
+
+        foreach ($prefixes as $prefix) {
+            if (Str::startsWith($path, $prefix)) {
+                $path = Str::after($path, $prefix);
+                break;
+            }
+        }
+
+        return $path;
     }
 
     /**

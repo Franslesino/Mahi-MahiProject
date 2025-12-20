@@ -38,9 +38,9 @@
         <!-- Purchase Deadline Alert -->
         @if($course->purchase_deadline_date && $course->purchase_deadline_date->isFuture() && !$isEnrolled)
             @php
-                $hoursLeft = now()->diffInHours($course->purchase_deadline_date);
-                $daysLeft = now()->diffInDays($course->purchase_deadline_date);
-                $minutesLeft = now()->diffInMinutes($course->purchase_deadline_date);
+                $hoursLeft = (int) now()->diffInHours($course->purchase_deadline_date);
+                $daysLeft = (int) now()->diffInDays($course->purchase_deadline_date);
+                $minutesLeft = (int) now()->diffInMinutes($course->purchase_deadline_date);
             @endphp
             @if($hoursLeft <= 48)
                 <div class="bg-gradient-to-r from-red-600 to-red-700 text-white rounded-2xl shadow-lg p-6 mb-6 animate-pulse">
@@ -164,12 +164,17 @@
                 <!-- Instructor -->
                 @if($course->instructor)
                     <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span class="text-white text-sm font-bold">{{ substr($course->instructor->name, 0, 1) }}</span>
-                        </div>
+                        @if($course->instructor->avatar_url)
+                            <img src="{{ $course->instructor->avatar_url }}" alt="{{ $course->instructor->name }}"
+                                 class="w-10 h-10 rounded-full object-cover ring-2 ring-teal-100 flex-shrink-0">
+                        @else
+                            <div class="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="text-white text-sm font-bold">{{ substr($course->instructor->name, 0, 1) }}</span>
+                            </div>
+                        @endif
                         <div>
                             <p class="text-sm font-semibold text-gray-900">{{ $course->instructor->name }}</p>
-                            <p class="text-xs text-gray-500">Instructur</p>
+                            <p class="text-xs text-gray-500">Instructor</p>
                         </div>
                     </div>
                 @endif
@@ -215,7 +220,13 @@
                 <!-- Price & Action -->
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-6 bg-gray-50 rounded-xl">
                     <div>
-                        @if($hargaDiskon)
+                        @if($isEnrolled)
+                            {{-- Item #26: Hilangkan harga jika sudah beli --}}
+                            <span class="text-xl font-bold text-emerald-600">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                Anda sudah terdaftar di kursus ini
+                            </span>
+                        @elseif($hargaDiskon)
                             <div class="flex items-center gap-3 mb-1">
                                 <span class="text-3xl font-bold text-gray-900">
                                     Rp {{ number_format($hargaDiskon, 0, ',', '.') }}

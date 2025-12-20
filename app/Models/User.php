@@ -104,16 +104,31 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get avatar URL
+     * Get avatar URL with fallbacks
      */
     public function getAvatarUrlAttribute()
     {
+        // 1. Check avatar_path (newest system)
         if ($this->avatar_path) {
             if (str_starts_with($this->avatar_path, 'http')) {
                 return $this->avatar_path;
             }
             return asset('storage/' . $this->avatar_path);
         }
+
+        // 2. Check old avatar column
+        if ($this->avatar) {
+            if (str_starts_with($this->avatar, 'http')) {
+                return $this->avatar;
+            }
+            return asset('storage/' . $this->avatar);
+        }
+
+        // 3. Check profile_url (oldest system / social media)
+        if ($this->profile_url) {
+            return $this->profile_url;
+        }
+
         return null;
     }
 

@@ -64,7 +64,7 @@ class CourseController extends Controller
             'badge' => 'nullable|string|max:50',
             'badge_color' => 'nullable|string|max:50',
             'status' => 'required|in:active,inactive,draft',
-            'instructor_id' => 'nullable|exists:users,id',
+            'instructor_id' => 'required|exists:users,id,role,instructor',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'access_duration_days' => 'nullable|integer|min:1',
             'purchase_deadline_date' => 'nullable|date|after:now',
@@ -86,7 +86,7 @@ class CourseController extends Controller
             'learning' => $validated['learning'] ?? null,
             'badge' => $validated['badge'] ?? null,
             'badge_color' => $validated['badge_color'] ?? 'blue',
-            'instructor_id' => $validated['instructor_id'] ?? null,
+            'instructor_id' => $validated['instructor_id'],
             'created_by' => Auth::id(),
             'videos' => 0,
             'access_duration_days' => $validated['access_duration_days'] ?? null,
@@ -144,7 +144,7 @@ class CourseController extends Controller
             'badge' => 'nullable|string|max:50',
             'badge_color' => 'nullable|string|max:50',
             'status' => 'required|in:active,inactive,draft',
-            'instructor_id' => 'nullable|exists:users,id',
+            'instructor_id' => 'required|exists:users,id,role,instructor',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'access_duration_days' => 'nullable|integer|min:1',
             'purchase_deadline_date' => 'nullable|date|after:now',
@@ -165,7 +165,7 @@ class CourseController extends Controller
             'learning' => $validated['learning'] ?? null,
             'badge' => $validated['badge'] ?? null,
             'badge_color' => $validated['badge_color'] ?? 'blue',
-            'instructor_id' => $validated['instructor_id'] ?? null,
+            'instructor_id' => $validated['instructor_id'],
             'access_duration_days' => $validated['access_duration_days'] ?? null,
             'purchase_deadline_date' => $validated['purchase_deadline_date'] ?? null,
         ];
@@ -186,7 +186,7 @@ class CourseController extends Controller
 
         // Cek apakah instructor berubah
         $oldInstructorId = $course->instructor_id;
-        $newInstructorId = $validated['instructor_id'] ?? null;
+        $newInstructorId = $validated['instructor_id'];
 
         $course->update($data);
 
@@ -634,7 +634,7 @@ class CourseController extends Controller
             'type' => $validated['type'],
             'url_konten' => $fileUrl,
             'file_url' => $filePath,
-            'duration' => $validated['duration'] ?? 0,
+            'duration' => $validated['type'] === 'quiz' ? null : ($validated['duration'] ?? 0),
             'urutan' => $lastMaterial ? $lastMaterial->urutan + 1 : 1,
             'is_preview' => $validated['is_preview'] ?? false,
             'status' => $validated['status'] ?? ($validated['type'] === 'class_session' ? 'published' : 'draft'),
@@ -676,6 +676,7 @@ class CourseController extends Controller
             'is_preview' => 'nullable|boolean',
             'status_terkunci' => 'nullable|boolean',
             'status' => 'nullable|in:published,draft',
+            'duration' => 'nullable|integer|min:0',
             // Class session fields
             'session_date' => 'required_if:type,class_session|nullable|date',
             'session_start_time' => 'required_if:type,class_session|nullable',
@@ -694,6 +695,7 @@ class CourseController extends Controller
             'is_preview' => $request->boolean('is_preview'),
             'status_terkunci' => $request->boolean('status_terkunci'),
             'status' => $validated['status'] ?? $material->status,
+            'duration' => $validated['type'] === 'quiz' ? null : ($request->duration ?? $material->duration),
         ];
 
         // Handle file upload
@@ -876,8 +878,7 @@ class CourseController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'question_bank_id' => 'nullable|exists:question_banks,id',
-            'duration_minutes' => 'nullable|integer|min:1',
-            'passing_score' => 'nullable|integer|min:0|max:100',
+            'time_limit' => 'nullable|integer|min:1',
             'randomize_questions' => 'nullable|in:0,1,true,false,on,off',
             'status' => 'nullable|in:published,draft',
         ]);
@@ -915,8 +916,8 @@ class CourseController extends Controller
                 'title' => $validated['title'],
                 'description' => $validated['description'] ?? null,
                 'type' => 'quiz',
-                'duration_minutes' => $validated['duration_minutes'] ?? null,
-                'passing_score' => $validated['passing_score'] ?? 60,
+                'time_limit' => $validated['time_limit'] ?? null,
+                'passing_score' => null, // Regular quizzes don't use passing score anymore
                 'start_date' => null,
                 'due_date' => null,
                 'show_results_immediately' => true,
@@ -954,5 +955,25 @@ class CourseController extends Controller
         }
     }
 
-    // Final quiz methods removed - createFinalQuiz() and storeFinalQuiz()
+    /**
+     * Delete all modules in a course
+     */
+    public function destroyAllModules(Kursus $course)
+    {
+        $course->sections()->delete();
+
+        return redirect()->route('admin.courses.detail', $course)
+            ->with('success', 'Semua modul berhasil dihapus!');
+    }
+
+    /**
+     * Delete all materials in a course
+     */
+    public function destroyAllMaterials(Kursus $course)
+    {
+        $course->materi()->delete();
+
+        return redirect()->route('admin.courses.detail', $course)
+            ->with('success', 'Semua materi berhasil dihapus!');
+    }
 }

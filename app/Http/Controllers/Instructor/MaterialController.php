@@ -381,7 +381,7 @@ class MaterialController extends Controller
             'file_url' => $fileUrl,
             'url_konten' => $filePublicUrl ?? null,
             'content' => $request->content,
-            'duration' => $request->duration,
+            'duration' => $request->type === 'quiz' ? null : $request->duration,
             'urutan' => $urutan,
             'is_preview' => $request->is_preview ?? false,
             'status' => $request->status ?? 'draft',
@@ -406,6 +406,7 @@ class MaterialController extends Controller
             : 'Materi berhasil ditambahkan.';
 
         if ($request->ajax() || $request->wantsJson() || $request->expectsJson()) {
+            session()->flash('success', $successMessage);
             return response()->json([
                 'success' => true,
                 'message' => $successMessage,
@@ -494,7 +495,7 @@ class MaterialController extends Controller
             'isi' => $request->content ?? $request->isi,
             'type' => $request->type,
             'content' => $request->content,
-            'duration' => $request->duration,
+            'duration' => $request->type === 'quiz' ? null : $request->duration,
             'urutan' => $request->urutan ?? $material->urutan,
             'is_preview' => $request->is_preview ?? false,
             'status' => $request->status ?? 'draft',
@@ -572,6 +573,18 @@ class MaterialController extends Controller
 
         return redirect()->route('instructor.courses.show', $course)
             ->with('success', 'Materi berhasil dihapus.');
+    }
+
+    public function destroyAll(Kursus $course)
+    {
+        if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $course->materi()->delete();
+
+        return redirect()->route('instructor.courses.show', $course)
+            ->with('success', 'Semua materi berhasil dihapus.');
     }
 
     /**

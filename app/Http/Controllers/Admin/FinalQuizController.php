@@ -41,6 +41,7 @@ class FinalQuizController extends Controller
             'final_quiz_id' => 'required_if:require_final_quiz,1|nullable|exists:quiz,id',
             'min_passing_score' => 'required_if:require_final_quiz,1|nullable|integer|min:0|max:100',
             'max_attempts' => 'required_if:require_final_quiz,1|nullable|integer|min:1',
+            'durasi_quiz' => 'nullable|integer|min:1',
         ]);
 
         DB::transaction(function() use ($kursus, $validated) {
@@ -62,7 +63,8 @@ class FinalQuizController extends Controller
                 Quiz::where('id', $validated['final_quiz_id'])->update([
                     'is_final_quiz' => true,
                     'passing_grade' => $validated['min_passing_score'],
-                    'kesempatan_mengerjakan' => $validated['max_attempts']
+                    'kesempatan_mengerjakan' => $validated['max_attempts'],
+                    'durasi_quiz' => $validated['durasi_quiz']
                 ]);
             }
         });
@@ -97,6 +99,7 @@ class FinalQuizController extends Controller
         $validated = $request->validate([
             'judul_quiz' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
+            'durasi_quiz' => 'nullable|integer|min:1',
         ]);
 
         DB::transaction(function() use ($kursus, $validated) {
@@ -108,7 +111,7 @@ class FinalQuizController extends Controller
                 'is_active' => false,
                 'passing_grade' => 60, // Default passing grade
                 'kesempatan_mengerjakan' => 3, // Default attempts
-                'durasi_quiz' => 60, // Default duration in minutes
+                'durasi_quiz' => $validated['durasi_quiz'] ?? 60,
             ]);
 
             $kursus->update([

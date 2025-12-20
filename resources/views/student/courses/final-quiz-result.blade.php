@@ -12,8 +12,8 @@
                 </div>
                 <a href="{{ route('student.course.learn', $kursus->id) }}" 
                    class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-700 text-white rounded-xl hover:bg-emerald-800 transition font-semibold">
-                    <i class="fas fa-arrow-right"></i>
-                    Lanjut Materi Berikutnya
+                    <i class="fas fa-arrow-left"></i>
+                    Kembali ke Materi Kursus
                 </a>
             </div>
         </div>

@@ -80,30 +80,18 @@
                     </select>
                 </div>
 
-                <!-- Duration and Passing Score -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Durasi (Menit)
-                        </label>
-                        <input type="number" 
-                               name="duration_minutes" 
-                               value="{{ old('duration_minutes', $assignment->duration_minutes) }}"
-                               min="1"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Nilai Minimal Lulus (%) <span class="text-red-500">*</span>
-                        </label>
-                        <input type="number" 
-                               name="passing_score" 
-                               value="{{ old('passing_score', $assignment->passing_score) }}"
-                               min="0"
-                               max="100"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                               required>
-                    </div>
+                <!-- Passing Score -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Nilai Minimal Lulus (%) <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" 
+                           name="passing_score" 
+                           value="{{ old('passing_score', $assignment->passing_score) }}"
+                           min="0"
+                           max="100"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                           required>
                 </div>
 
                 <!-- Time Limit -->

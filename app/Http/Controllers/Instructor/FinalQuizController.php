@@ -59,6 +59,7 @@ class FinalQuizController extends Controller
             'final_quiz_id' => 'nullable|exists:quiz,id',
             'min_passing_score' => 'required|numeric|min:0|max:100',
             'max_quiz_attempts' => 'required|integer|min:1|max:10',
+            'durasi_quiz' => 'nullable|integer|min:1',
         ]);
 
         // Jika require_final_quiz true, maka final_quiz_id harus ada
@@ -81,7 +82,8 @@ class FinalQuizController extends Controller
                 Quiz::where('id', $validated['final_quiz_id'])->update([
                     'is_final_quiz' => true,
                     'passing_grade' => $validated['min_passing_score'],
-                    'kesempatan_mengerjakan' => $validated['max_quiz_attempts']
+                    'kesempatan_mengerjakan' => $validated['max_quiz_attempts'],
+                    'durasi_quiz' => $validated['durasi_quiz']
                 ]);
                 
                 // Set quiz lain yang bukan final quiz
@@ -407,6 +409,32 @@ class FinalQuizController extends Controller
         // Check if quiz has questions before activating
         if (!$quiz->is_active && $quiz->soal()->count() == 0) {
             return back()->withErrors(['error' => 'Tidak bisa mengaktifkan final quiz tanpa soal. Tambahkan soal terlebih dahulu.']);
+        }
+
+        // Item #23: Check if there are students currently taking the quiz before deactivating
+        $activeAttempts = [];
+        if ($quiz->is_active) {
+            // Quiz is being deactivated, check for in-progress attempts
+            $inProgressAttempts = \App\Models\QuizAttempt::where('quiz_id', $quiz->id)
+                ->where('kursus_id', $kursusId)
+                ->whereNull('completed_at')
+                ->with('user:id,name,email')
+                ->get();
+            
+            if ($inProgressAttempts->count() > 0) {
+                $studentNames = $inProgressAttempts->map(fn($a) => $a->user->name ?? $a->user->email ?? 'Unknown')->implode(', ');
+                $activeAttempts = $inProgressAttempts;
+                
+                // Still deactivate but add warning
+                $quiz->is_active = false;
+                $quiz->save();
+                
+                return back()->with('warning', 
+                    'Final quiz berhasil dinonaktifkan. PERHATIAN: ' . $inProgressAttempts->count() . 
+                    ' peserta sedang mengerjakan quiz (' . $studentNames . '). ' .
+                    'Jawaban mereka yang belum diselesaikan tidak akan bisa dilanjutkan.'
+                );
+            }
         }
 
         $quiz->is_active = !$quiz->is_active;

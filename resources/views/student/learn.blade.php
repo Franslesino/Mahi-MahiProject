@@ -235,31 +235,66 @@
                                                 </div>
                                             @else
                                                 {{-- Regular material display --}}
-                                                <a href="{{ $targetUrl }}"
-                                                        class="{{ trim($rowClass) }}"
-                                                        aria-current="{{ $isActive ? 'step' : 'false' }}">
-                                                    <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 text-gray-700 font-semibold">
-                                                        {{ sprintf('%02d', $index) }}
-                                                    </div>
-                                                    <div class="flex-1 min-w-0">
-                                                        <p class="text-sm font-semibold text-gray-800 truncate">{{ $material->judul ?? $material->title }}</p>
-                                                        <p class="text-xs text-gray-500 truncate">
-                                                            {{ $material->duration ? $material->duration . ' menit' : ' ' }}
-                                                        </p>
-                                                    </div>
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="text-xs text-gray-400 capitalize">{{ $material->type }}</span>
-                                                        @if(!empty($completedIds) && in_array($material->id, $completedIds))
-                                                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">
-                                                                <i class="fas fa-check-circle"></i> Selesai
-                                                            </span>
-                                                        @else
-                                                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-50 text-gray-500 text-xs font-semibold rounded-full border border-gray-200">
-                                                                <i class="far fa-circle"></i> Belum Selesai
-                                                            </span>
-                                                        @endif
-                                                    </div>
-                                                </a>
+                                                @if($material->type === 'quiz')
+                                                    {{-- Quiz with modal --}}
+                                                    <button type="button"
+                                                            onclick="openQuizInfoModal('{{ $targetUrl }}', '{{ $material->judul ?? $material->title }}', '{{ $material->assignment?->time_limit ?? '0' }}', '{{ $material->assignment?->questions?->count() ?? '0' }}')"
+                                                            class="{{ trim($rowClass) }}"
+                                                            aria-current="{{ $isActive ? 'step' : 'false' }}">
+                                                        <div class="w-10 h-10 rounded-full flex items-center justify-center bg-yellow-100 text-yellow-700 font-semibold">
+                                                            <i class="fas fa-question-circle"></i>
+                                                        </div>
+                                                        <div class="flex-1 min-w-0">
+                                                            <p class="text-sm font-semibold text-gray-800 truncate">{{ $material->judul ?? $material->title }}</p>
+                                                            <p class="text-xs text-gray-500 truncate">
+                                                                @if($material->assignment?->time_limit)
+                                                                    {{ $material->assignment->time_limit }} menit
+                                                                @else
+                                                                    Quiz
+                                                                @endif
+                                                            </p>
+                                                        </div>
+                                                        <div class="flex items-center gap-2">
+                                                            <span class="text-xs text-gray-400 capitalize">quiz</span>
+                                                            @if(!empty($completedIds) && in_array($material->id, $completedIds))
+                                                                <span class="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">
+                                                                    <i class="fas fa-check-circle"></i> Selesai
+                                                                </span>
+                                                            @else
+                                                                <span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-50 text-gray-500 text-xs font-semibold rounded-full border border-gray-200">
+                                                                    <i class="far fa-circle"></i> Belum Selesai
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                    </button>
+                                                @else
+                                                    {{-- Non-quiz material --}}
+                                                    <a href="{{ $targetUrl }}"
+                                                            class="{{ trim($rowClass) }}"
+                                                            aria-current="{{ $isActive ? 'step' : 'false' }}">
+                                                        <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 text-gray-700 font-semibold">
+                                                            {{ sprintf('%02d', $index) }}
+                                                        </div>
+                                                        <div class="flex-1 min-w-0">
+                                                            <p class="text-sm font-semibold text-gray-800 truncate">{{ $material->judul ?? $material->title }}</p>
+                                                            <p class="text-xs text-gray-500 truncate">
+                                                                {{ $material->duration ? $material->duration . ' menit' : ' ' }}
+                                                            </p>
+                                                        </div>
+                                                        <div class="flex items-center gap-2">
+                                                            <span class="text-xs text-gray-400 capitalize">{{ $material->type }}</span>
+                                                            @if(!empty($completedIds) && in_array($material->id, $completedIds))
+                                                                <span class="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">
+                                                                    <i class="fas fa-check-circle"></i> Selesai
+                                                                </span>
+                                                            @else
+                                                                <span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-50 text-gray-500 text-xs font-semibold rounded-full border border-gray-200">
+                                                                    <i class="far fa-circle"></i> Belum Selesai
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                    </a>
+                                                @endif
                                             @endif
                                             @php $index++; @endphp
                                         @empty
@@ -396,5 +431,64 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+</script>
+
+<!-- Modal Quiz Info -->
+<div id="quizInfoModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-question-circle text-yellow-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2" id="quizModalTitle">Mulai Quiz</h3>
+            <p class="text-gray-600 text-sm">Perhatikan informasi berikut sebelum memulai</p>
+        </div>
+        
+        <div class="bg-gray-50 rounded-xl p-4 mb-6 space-y-3">
+            <div class="flex items-center justify-between text-sm" id="quizTimeLimitRow">
+                <span class="text-gray-600"><i class="fas fa-clock mr-2 text-blue-500"></i>Waktu Pengerjaan</span>
+                <span class="font-semibold text-gray-900" id="quizTimeLimit">-</span>
+            </div>
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600"><i class="fas fa-list mr-2 text-purple-500"></i>Jumlah Soal</span>
+                <span class="font-semibold text-gray-900" id="quizQuestionCount">-</span>
+            </div>
+        </div>
+        
+
+        
+        <div class="flex gap-3">
+            <button type="button" onclick="closeQuizInfoModal()" class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition">
+                Batal
+            </button>
+            <a id="quizStartLink" href="#" class="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition text-center">
+                <i class="fas fa-play mr-2"></i>Mulai Quiz
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function openQuizInfoModal(url, title, timeLimit, questionCount) {
+    document.getElementById('quizStartLink').href = url;
+    document.getElementById('quizModalTitle').textContent = title;
+    document.getElementById('quizQuestionCount').textContent = questionCount + ' soal';
+    
+    const timeLimitRow = document.getElementById('quizTimeLimitRow');
+    if (timeLimit && parseInt(timeLimit) > 0) {
+        document.getElementById('quizTimeLimit').textContent = timeLimit + ' menit';
+        timeLimitRow.style.display = 'flex';
+    } else {
+        timeLimitRow.style.display = 'none';
+    }
+    
+    document.getElementById('quizInfoModal').classList.remove('hidden');
+    document.getElementById('quizInfoModal').classList.add('flex');
+}
+
+function closeQuizInfoModal() {
+    document.getElementById('quizInfoModal').classList.add('hidden');
+    document.getElementById('quizInfoModal').classList.remove('flex');
+}
 </script>
 @endsection

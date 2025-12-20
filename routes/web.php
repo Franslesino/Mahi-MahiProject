@@ -441,6 +441,10 @@ Route::middleware('auth')->group(function () {
 
                 // Quiz routes
                 Route::post('quizzes', [AdminCourseController::class, 'storeQuiz'])->name('quizzes.store');
+
+                // Delete All routes
+                Route::delete('modules-all', [AdminCourseController::class, 'destroyAllModules'])->name('modules.destroy-all');
+                Route::delete('materials-all', [AdminCourseController::class, 'destroyAllMaterials'])->name('materials.destroy-all');
             });
 
             // Assignment/Quiz management routes for Admin (using instructor controller)
@@ -635,7 +639,11 @@ Route::middleware('auth')->group(function () {
             ]);
 
             // Section Management (INSTRUKTUR)
+            Route::delete('courses/{course}/sections-all', [\App\Http\Controllers\Instructor\SectionController::class, 'destroyAll'])->name('courses.modules.destroy-all');
             Route::resource('courses.sections', \App\Http\Controllers\Instructor\SectionController::class)->shallow();
+
+            // Material-all deletion
+            Route::delete('courses/{course}/materials-all', [\App\Http\Controllers\Instructor\MaterialController::class, 'destroyAll'])->name('courses.materials.destroy-all');
 
             // Class Session Management (untuk offline/hybrid courses)
             Route::get('/courses/{course}/sessions', [\App\Http\Controllers\Instructor\ClassSessionController::class, 'index'])->name('courses.sessions.index');

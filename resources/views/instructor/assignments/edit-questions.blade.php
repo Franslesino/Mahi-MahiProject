@@ -40,7 +40,7 @@
             <input type="hidden" name="max_attempts" value="{{ $assignment->max_attempts }}">
             <input type="hidden" name="randomize_questions" value="{{ $assignment->randomize_questions ? '1' : '0' }}">
 
-            <div class="grid md:grid-cols-3 gap-4">
+            <div class="grid md:grid-cols-1 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-clock text-blue-600 mr-1"></i>
@@ -56,38 +56,11 @@
                         Timer akan berjalan mundur dan quiz otomatis tersubmit saat waktu habis
                     </p>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-hourglass-half text-green-600 mr-1"></i>
-                        Durasi (Menit)
-                    </label>
-                    <input type="number" 
-                           name="duration_minutes" 
-                           value="{{ old('duration_minutes', $assignment->duration_minutes) }}"
-                           min="1"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                           placeholder="0 = Tanpa batas">
-                    <p class="text-xs text-gray-500 mt-1">
-                        Estimasi durasi pengerjaan
-                    </p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-trophy text-yellow-600 mr-1"></i>
-                        Nilai Minimal Lulus (%)
-                    </label>
-                    <input type="number" 
-                           name="passing_score" 
-                           value="{{ old('passing_score', $assignment->passing_score) }}"
-                           min="0"
-                           max="100"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                           required>
-                    <p class="text-xs text-gray-500 mt-1">
-                        Nilai minimum untuk lulus quiz
-                    </p>
-                </div>
             </div>
+            
+            {{-- Hidden fields to preserve values --}}
+            <input type="hidden" name="duration_minutes" value="{{ $assignment->duration_minutes }}">
+            <input type="hidden" name="passing_score" value="{{ $assignment->passing_score ?? 0 }}">
 
             <div class="flex justify-end">
                 <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
@@ -219,7 +192,20 @@
                         </a>
                     </div>
                 @else
-                    <div class="space-y-4">
+                    <!-- Search Box -->
+                    <div class="mb-4">
+                        <div class="relative">
+                            <input type="text" 
+                                   id="bankQuestionSearch" 
+                                   placeholder="Cari soal berdasarkan teks pertanyaan..." 
+                                   class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   onkeyup="filterBankQuestions()">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Ketik untuk mencari soal dari semua bank soal</p>
+                    </div>
+                    
+                    <div class="space-y-4" id="bankQuestionsContainer">
                         @foreach($questionBanks as $bank)
                         <div class="border border-gray-200 rounded-lg p-4">
                             <div class="flex items-start justify-between mb-3">
@@ -502,6 +488,39 @@ function handleBack() {
     @else
         window.location.href = "{{ route('instructor.courses.show', $assignment->kursus_id) }}";
     @endif
+}
+
+function filterBankQuestions() {
+    const searchTerm = document.getElementById('bankQuestionSearch').value.toLowerCase().trim();
+    const container = document.getElementById('bankQuestionsContainer');
+    const bankCards = container.querySelectorAll('.border.border-gray-200.rounded-lg.p-4');
+    
+    bankCards.forEach(bankCard => {
+        const bankQuestions = bankCard.querySelectorAll('label.flex.items-start');
+        let hasVisibleQuestions = false;
+        
+        bankQuestions.forEach(questionLabel => {
+            const questionText = questionLabel.textContent.toLowerCase();
+            if (searchTerm === '' || questionText.includes(searchTerm)) {
+                questionLabel.style.display = 'flex';
+                hasVisibleQuestions = true;
+            } else {
+                questionLabel.style.display = 'none';
+            }
+        });
+        
+        // Show/hide the bank card based on whether it has matching questions
+        const questionsContainer = bankCard.querySelector('[id^="bank-"]');
+        if (searchTerm !== '' && hasVisibleQuestions) {
+            // Expand bank if has matching questions
+            if (questionsContainer) {
+                questionsContainer.classList.remove('hidden');
+            }
+        }
+        
+        // Show bank card if it has matching questions or if search is empty
+        bankCard.style.display = (searchTerm === '' || hasVisibleQuestions) ? 'block' : 'none';
+    });
 }
 </script>
 @endsection

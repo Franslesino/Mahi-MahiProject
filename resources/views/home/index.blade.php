@@ -169,7 +169,11 @@
         <!-- Courses Grid -->
         <div id="courseGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden">
             @forelse($courses as $course)
-                <a href="{{ route('courses.show', $course) }}"
+                @php
+                    // Check if user is enrolled in this course
+                    $userEnrolled = auth()->check() ? \App\Models\Enrollment::where('user_id', auth()->id())->where('kursus_id', $course->id)->whereIn('status_pendaftaran', ['active', 'completed'])->exists() : false;
+                @endphp
+                <a href="{{ $userEnrolled ? route('student.course.learn', $course) : route('courses.show', $course) }}"
                     class="bg-white rounded-xl shadow-sm hover:shadow-xl border border-gray-100 hover:-translate-y-1 transition overflow-hidden group cursor-pointer">
 
                     <!-- Image -->
@@ -217,8 +221,8 @@
                         <!-- Purchase Deadline Badge -->
                         @if($course->purchase_deadline_date && $course->purchase_deadline_date->isFuture())
                             @php
-                                $hoursLeft = now()->diffInHours($course->purchase_deadline_date);
-                                $daysLeft = now()->diffInDays($course->purchase_deadline_date);
+                                $hoursLeft = (int) now()->diffInHours($course->purchase_deadline_date);
+                                $daysLeft = (int) now()->diffInDays($course->purchase_deadline_date);
                             @endphp
                             @if($hoursLeft <= 48)
                                 <div class="absolute bottom-3 left-3 right-3">
@@ -259,28 +263,28 @@
                             <span>{{ $course->materi_count ?? 0 }} Materi</span>
                         </div>
 
-                        {{-- Purchase Deadline Info --}}
-                        @if($course->purchase_deadline_date && $course->purchase_deadline_date->isFuture())
+                        {{-- Purchase Deadline Info - Item #16: kurangi angka --}}
+                        @if($course->purchase_deadline_date && $course->purchase_deadline_date->isFuture() && !$userEnrolled)
                             @php
-                                $hoursLeft = now()->diffInHours($course->purchase_deadline_date);
-                                $daysLeft = now()->diffInDays($course->purchase_deadline_date);
+                                $hoursLeft = (int) now()->diffInHours($course->purchase_deadline_date);
+                                $daysLeft = (int) now()->diffInDays($course->purchase_deadline_date);
                             @endphp
+                            @if($daysLeft <= 7)
                             <div
-                                class="mb-3 p-2 rounded-lg {{ $hoursLeft <= 48 ? 'bg-red-50 border border-red-200' : ($daysLeft <= 7 ? 'bg-orange-50 border border-orange-200' : 'bg-blue-50 border border-blue-200') }}">
+                                class="mb-3 p-2 rounded-lg {{ $hoursLeft <= 48 ? 'bg-red-50 border border-red-200' : 'bg-orange-50 border border-orange-200' }}">
                                 <div
-                                    class="flex items-center gap-2 text-xs {{ $hoursLeft <= 48 ? 'text-red-700' : ($daysLeft <= 7 ? 'text-orange-700' : 'text-blue-700') }}">
+                                    class="flex items-center gap-2 text-xs {{ $hoursLeft <= 48 ? 'text-red-700' : 'text-orange-700' }}">
                                     <i class="fas fa-clock"></i>
                                     <span class="font-semibold">
                                         @if($hoursLeft <= 48)
-                                            Berakhir dalam {{ $hoursLeft }} jam
-                                        @elseif($daysLeft <= 7)
-                                            Berakhir dalam {{ $daysLeft }} hari
+                                            {{ $hoursLeft }}j lagi
                                         @else
-                                            Tersedia hingga {{ $course->purchase_deadline_date->format('d M Y') }}
+                                            {{ $daysLeft }} hari lagi
                                         @endif
                                     </span>
                                 </div>
                             </div>
+                            @endif
                         @endif
 
                         <div class="flex items-center justify-between">
@@ -294,18 +298,26 @@
                                     : $basePrice;
                             @endphp
 
-                            <div class="flex flex-col gap-1">
-                                <span class="text-2xl font-bold text-pnj-teal">
-                                    Rp {{ number_format($finalPrice, 0, ',', '.') }}
+                            {{-- Item #25: Button Lanjut Belajar jika sudah enrolled --}}
+                            @if($userEnrolled)
+                                <span class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700 transition">
+                                    <i class="fas fa-play-circle"></i>
+                                    Lanjut Belajar
                                 </span>
-
-                                {{-- kalau lagi diskon, tampilkan harga asli dicoret --}}
-                                @if(($course->discount_price ?? 0) > 0)
-                                    <span class="text-sm text-gray-500 line-through">
-                                        Rp {{ number_format($basePrice, 0, ',', '.') }}
+                            @else
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-2xl font-bold text-pnj-teal">
+                                        Rp {{ number_format($finalPrice, 0, ',', '.') }}
                                     </span>
-                                @endif
-                            </div>
+
+                                    {{-- kalau lagi diskon, tampilkan harga asli dicoret --}}
+                                    @if(($course->discount_price ?? 0) > 0)
+                                        <span class="text-sm text-gray-500 line-through">
+                                            Rp {{ number_format($basePrice, 0, ',', '.') }}
+                                        </span>
+                                    @endif
+                                </div>
+                            @endif
 
 
                         </div>

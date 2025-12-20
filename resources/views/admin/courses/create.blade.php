@@ -129,10 +129,10 @@
 
                 <!-- Instruktur -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Instruktur (opsional)</label>
-                    <select name="instructor_id"
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Instruktur *</label>
+                    <select name="instructor_id" required
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 @error('instructor_id') border-red-500 @enderror">
-                        <option value="" {{ old('instructor_id') ? '' : 'selected' }}>Tanpa instruktur</option>
+                        <option value="" disabled {{ old('instructor_id') ? '' : 'selected' }}>Pilih instruktur</option>
                         @foreach($instructors as $instructor)
                         <option value="{{ $instructor->id }}" {{ old('instructor_id') == $instructor->id ? 'selected' : '' }}>
                             {{ $instructor->name }}

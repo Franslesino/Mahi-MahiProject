@@ -20,10 +20,9 @@
                 <div class="bg-gradient-to-r from-teal-600 to-emerald-600 h-32"></div>
                 <div class="px-6 pb-6">
                     <div class="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-16">
-                        <!-- Avatar -->
                         <div class="flex-shrink-0">
-                            @if($instructor->avatar || $instructor->profile_url)
-                                <img src="{{ $instructor->avatar ?? $instructor->profile_url }}" alt="{{ $instructor->name }}"
+                            @if($instructor->avatar_url)
+                                <img src="{{ $instructor->avatar_url }}" alt="{{ $instructor->name }}"
                                     class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg">
                             @else
                                 <div

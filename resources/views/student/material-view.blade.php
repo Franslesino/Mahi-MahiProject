@@ -214,11 +214,10 @@
         }
 
         .content-viewer {
-            padding: 2rem;
-            background: white;
+            padding: 1rem 0;
             color: var(--neutral-800);
             line-height: 1.8;
-            min-height: 400px;
+            font-size: 1.1rem;
         }
 
         .quiz-prompt {
@@ -360,37 +359,41 @@
                 </div>
 
                 <!-- Material Viewer -->
-                <div id="materialViewer" class="viewer-container">
+                <div id="materialViewer">
                     @if($material->type === 'video')
-                        @php
-                            $videoSrc = $material->video_url ?? $material->file_url_full ?? $material->url_konten;
-                            $mimeType = 'video/mp4';
-                            if ($videoSrc && \Illuminate\Support\Str::endsWith(strtolower($videoSrc), ['.mov'])) {
-                                $mimeType = 'video/quicktime';
-                            }
-                        @endphp
+                        <div class="viewer-container">
+                            @php
+                                $videoSrc = $material->video_url ?? $material->file_url_full ?? $material->url_konten;
+                                $mimeType = 'video/mp4';
+                                if ($videoSrc && \Illuminate\Support\Str::endsWith(strtolower($videoSrc), ['.mov'])) {
+                                    $mimeType = 'video/quicktime';
+                                }
+                            @endphp
 
-                        @if($videoSrc)
-                            <video controls playsinline style="width: 100%; height: auto; min-height: 500px;">
-                                <source src="{{ $videoSrc }}" type="{{ $mimeType }}">
-                                Browser Anda tidak mendukung pemutaran video.
-                            </video>
-                        @else
-                            <p class="viewer-placeholder">Video belum tersedia</p>
-                        @endif
+                            @if($videoSrc)
+                                <video controls playsinline>
+                                    <source src="{{ $videoSrc }}" type="{{ $mimeType }}">
+                                    Browser Anda tidak mendukung pemutaran video.
+                                </video>
+                            @else
+                                <p class="viewer-placeholder">Video belum tersedia</p>
+                            @endif
+                        </div>
 
                     @elseif($material->type === 'pdf')
-                        @php $pdfSrc = $material->file_url_full ?? $material->url_konten; @endphp
+                        <div class="viewer-container">
+                            @php $pdfSrc = $material->file_url_full ?? $material->url_konten; @endphp
 
-                        @if($pdfSrc)
-                            <iframe src="{{ $pdfSrc }}" frameborder="0" style="width: 100%; height: 100%; min-height: 600px;">
-                            </iframe>
-                        @else
-                            <p class="viewer-placeholder">PDF belum tersedia</p>
-                        @endif
+                            @if($pdfSrc)
+                                <iframe src="{{ $pdfSrc }}" frameborder="0">
+                                </iframe>
+                            @else
+                                <p class="viewer-placeholder">PDF belum tersedia</p>
+                            @endif
+                        </div>
 
                     @elseif($material->type === 'quiz')
-                        <div class="quiz-prompt">
+                        <div class="quiz-prompt" style="border: 2px solid var(--teal-100); border-radius: 16px;">
                             <div class="quiz-icon">
                                 <i class="fas fa-clipboard-question"></i>
                             </div>
@@ -409,7 +412,7 @@
                             $attendanceStatus = $attendance ? $attendance->status : null;
                             $isHadir = $attendanceStatus === 'hadir';
                         @endphp
-                        <div class="p-8 bg-gradient-to-br from-orange-50 to-amber-50" style="border-radius: 16px;">
+                        <div class="p-8 bg-gradient-to-br from-orange-50 to-amber-50" style="border-radius: 16px; border: 2px solid var(--teal-100);">
                             {{-- Session Type Badge --}}
                             <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
                                 <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold {{ ($material->session_type ?? 'offline') === 'online' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700' }}">
@@ -554,74 +557,15 @@
                                     return '<a href="' . $url . '" target="_blank" rel="noopener noreferrer" class="inline-link">' . $url . ' <i class="fas fa-external-link-alt" style="font-size: 0.75rem;"></i></a>';
                                 }, $escaped);
                                 $finalContent = nl2br($linkedContent);
-                                preg_match_all($pattern, $escaped, $urlMatches);
-                                $uniqueUrls = array_unique($urlMatches[0] ?? []);
                             @endphp
 
                             <div class="text-content-display">{!! $finalContent !!}</div>
-
-                            @if(count($uniqueUrls) > 0)
-                                <div style="margin-top: 1.5rem;">
-                                    <p style="font-weight: 600; color: var(--neutral-700); margin-bottom: 0.75rem;">
-                                        <i class="fas fa-link" style="margin-right: 0.5rem;"></i>Link dalam materi ini:
-                                    </p>
-                                    @foreach($uniqueUrls as $url)
-                                        @php
-                                            $parsedUrl = parse_url($url);
-                                            $domain = $parsedUrl['host'] ?? $url;
-                                            $iconClass = 'fas fa-globe';
-                                            if (str_contains($domain, 'youtube.com') || str_contains($domain, 'youtu.be'))
-                                                $iconClass = 'fab fa-youtube';
-                                            elseif (str_contains($domain, 'github.com'))
-                                                $iconClass = 'fab fa-github';
-                                            elseif (str_contains($domain, 'drive.google.com'))
-                                                $iconClass = 'fab fa-google-drive';
-                                            elseif (str_contains($domain, 'google.com'))
-                                                $iconClass = 'fab fa-google';
-                                            elseif (str_contains($domain, 'facebook.com'))
-                                                $iconClass = 'fab fa-facebook';
-                                            elseif (str_contains($domain, 'instagram.com'))
-                                                $iconClass = 'fab fa-instagram';
-                                            elseif (str_contains($domain, 'twitter.com') || str_contains($domain, 'x.com'))
-                                                $iconClass = 'fab fa-twitter';
-                                            elseif (str_contains($domain, 'linkedin.com'))
-                                                $iconClass = 'fab fa-linkedin';
-                                        @endphp
-                                        <a href="{{ $url }}" target="_blank" rel="noopener noreferrer" class="link-preview-card">
-                                            <div class="link-icon"><i class="{{ $iconClass }}"></i></div>
-                                            <div class="link-info">
-                                                <div class="link-title">{{ $domain }}</div>
-                                                <div class="link-url">{{ Str::limit($url, 60) }}</div>
-                                            </div>
-                                            <i class="fas fa-external-link-alt link-external-icon"></i>
-                                        </a>
-                                    @endforeach
-                                </div>
-                            @endif
                         </div>
-
-                        <style>
-                            .link-preview-card {
-                                display: flex;
-                                align-items: center;
-                                gap: 1rem;
-                                padding: 1rem;
-                                margin: 0.5rem 0; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-left: 4px solid var(--primary); border-radius: 12px; transition: all 0.2s ease; text-decoration: none; }
-                                    .link-preview-card:hover { background: linear-gradient(135deg, #f0fdfa 0%, #e0f7fa 100%); border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(13, 148, 136, 0.15); }
-                                    .link-icon { width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-                                    .link-icon i { color: white; font-size: 1.25rem; }
-                                    .link-info { flex: 1; min-width: 0; }
-                                    .link-title { font-weight: 600; color: var(--neutral-800); font-size: 0.9375rem; margin-bottom: 0.25rem; }
-                                    .link-url { font-size: 0.8125rem; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                                    .link-external-icon { color: var(--neutral-600); font-size: 1rem; }
-                                    .inline-link { color: var(--primary); text-decoration: underline; font-weight: 500; }
-                                    .inline-link:hover { color: var(--primary-dark); }
-                                </style>
                     @endif
-                    </div>
                 </div>
             </div>
         </div>
+    </div>
 
         <script>
             // Fullscreen toggle

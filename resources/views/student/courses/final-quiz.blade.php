@@ -660,7 +660,7 @@
         }
     </script>
 
-    <!-- Modal Konfirmasi Mulai Quiz -->
+    <!-- Modal Konfirmasi Mulai Quiz - Item #10: Tampilkan info nilai minimum dan durasi -->
     <div id="startQuizModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
             <div class="flex items-center gap-3 mb-4">
@@ -669,10 +669,37 @@
                 </div>
                 <div>
                     <h4 class="text-lg font-semibold text-gray-900 mb-1">Mulai Final Quiz?</h4>
-                    <p class="text-sm text-gray-600 mb-0">Apakah Anda yakin ingin memulai final quiz? Pastikan Anda siap.
-                    </p>
+                    <p class="text-sm text-gray-600 mb-0">Apakah Anda yakin ingin memulai final quiz?</p>
                 </div>
             </div>
+            
+            <!-- Info Box: Nilai Minimum & Durasi -->
+            <div class="bg-gray-50 rounded-xl p-4 mb-6 space-y-3">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-600"><i class="fas fa-check-circle mr-2 text-emerald-500"></i>Nilai Minimum Kelulusan</span>
+                    <span class="font-bold text-emerald-700">{{ $kursus->min_passing_score }}%</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-600"><i class="fas fa-clock mr-2 text-blue-500"></i>Durasi Pengerjaan</span>
+                    <span class="font-bold text-blue-700">{{ $finalQuiz->durasi_quiz ?? '∞' }} menit</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-600"><i class="fas fa-list mr-2 text-purple-500"></i>Jumlah Soal</span>
+                    <span class="font-bold text-purple-700">{{ $finalQuiz->soal->count() }} soal</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-600"><i class="fas fa-redo mr-2 text-amber-500"></i>Sisa Percobaan</span>
+                    <span class="font-bold text-amber-700">{{ $kursus->max_quiz_attempts - $attemptCount }} dari {{ $kursus->max_quiz_attempts }}</span>
+                </div>
+            </div>
+            
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                <p class="text-xs text-yellow-800">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    Setelah memulai quiz, timer akan berjalan. Pastikan Anda siap sebelum memulai.
+                </p>
+            </div>
+            
             <div class="flex justify-end gap-2">
                 <button type="button"
                     class="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 font-semibold hover:bg-gray-200 transition"
@@ -680,7 +707,7 @@
                 <button type="button"
                     class="px-4 py-2 rounded-lg bg-teal-600 text-white font-semibold hover:bg-teal-700 transition"
                     onclick="confirmStartQuiz()">
-                    Mulai Sekarang
+                    <i class="fas fa-play mr-1"></i> Mulai Sekarang
                 </button>
             </div>
         </div>

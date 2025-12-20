@@ -105,12 +105,12 @@
                                 <!-- PDF Viewer -->
                                 @if($material->file_url || $material->url_konten)
                                     <div class="border border-gray-200 rounded-lg overflow-hidden" style="height: 600px;">
-                                        <iframe src="{{ route('instructor.materials.file', [$course, $material]) }}"
+                                        <iframe src="{{ route('instructor.courses.materials.file', [$course, $material]) }}"
                                             class="w-full h-full" frameborder="0">
                                         </iframe>
                                     </div>
                                     <div class="mt-4">
-                                        <a href="{{ route('instructor.materials.file', [$course, $material]) }}"
+                                        <a href="{{ route('instructor.courses.materials.file', [$course, $material]) }}"
                                             target="_blank"
                                             class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
                                             <i class="fas fa-download"></i>

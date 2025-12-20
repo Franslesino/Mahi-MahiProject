@@ -36,10 +36,10 @@
                         <div class="p-6 border-b border-gray-200">
                             <div class="flex items-start gap-3">
                                 <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
-                                            {{ $material->type === 'video' ? 'bg-blue-100' : '' }}
-                                            {{ $material->type === 'pdf' ? 'bg-red-100' : '' }}
-                                            {{ $material->type === 'quiz' ? 'bg-yellow-100' : '' }}
-                                            {{ $material->type === 'text' ? 'bg-green-100' : '' }}">
+                                                {{ $material->type === 'video' ? 'bg-blue-100' : '' }}
+                                                {{ $material->type === 'pdf' ? 'bg-red-100' : '' }}
+                                                {{ $material->type === 'quiz' ? 'bg-yellow-100' : '' }}
+                                                {{ $material->type === 'text' ? 'bg-green-100' : '' }}">
                                     @if($material->type === 'video')
                                         <i class="fas fa-video text-blue-600"></i>
                                     @elseif($material->type === 'pdf')
@@ -98,15 +98,14 @@
 
                             @elseif($material->type === 'pdf')
                                 <!-- PDF Viewer -->
-                                @if($material->file_url || $material->url_konten)
+                                @php $pdfUrl = $material->file_url_full; @endphp
+                                @if($pdfUrl)
                                     <div class="border border-gray-200 rounded-lg overflow-hidden" style="height: 600px;">
-                                        <iframe src="{{ $material->file_url ? $material->file_url_full : $material->url_konten }}"
-                                            class="w-full h-full" frameborder="0">
+                                        <iframe src="{{ $pdfUrl }}" class="w-full h-full" frameborder="0">
                                         </iframe>
                                     </div>
                                     <div class="mt-4">
-                                        <a href="{{ $material->file_url ? $material->file_url_full : $material->url_konten }}"
-                                            target="_blank"
+                                        <a href="{{ $pdfUrl }}" target="_blank"
                                             class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
                                             <i class="fas fa-download"></i>
                                             <span>Download PDF</span>
@@ -389,10 +388,10 @@
                                     class="block p-4 border-b border-gray-100 hover:bg-gray-50 transition {{ $mat->id === $material->id ? 'bg-blue-50 border-l-4 border-l-blue-600' : '' }}">
                                     <div class="flex items-start gap-3">
                                         <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0
-                                                                {{ $mat->type === 'video' ? 'bg-blue-100' : '' }}
-                                                                {{ $mat->type === 'pdf' ? 'bg-red-100' : '' }}
-                                                                {{ $mat->type === 'quiz' ? 'bg-yellow-100' : '' }}
-                                                                {{ $mat->type === 'text' ? 'bg-green-100' : '' }}">
+                                                                        {{ $mat->type === 'video' ? 'bg-blue-100' : '' }}
+                                                                        {{ $mat->type === 'pdf' ? 'bg-red-100' : '' }}
+                                                                        {{ $mat->type === 'quiz' ? 'bg-yellow-100' : '' }}
+                                                                        {{ $mat->type === 'text' ? 'bg-green-100' : '' }}">
                                             @if($mat->type === 'video')
                                                 <i class="fas fa-play text-blue-600 text-xs"></i>
                                             @elseif($mat->type === 'pdf')

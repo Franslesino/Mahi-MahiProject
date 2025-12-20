@@ -83,7 +83,14 @@ class AuthController extends Controller
                 },
             ],
             'phone' => 'nullable|string|max:15',
-            'password' => 'required|min:8|confirmed',
+            'password' => [
+                'required',
+                'min:8',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_\-+=\[\]{}|\\:;"\'<>,.\/~`])[A-Za-z\d@$!%*?&#^()_\-+=\[\]{}|\\:;"\'<>,.\/~`]{8,}$/'
+            ],
+        ], [
+            'password.regex' => 'Password harus mengandung minimal 1 huruf besar, 1 huruf kecil, 1 angka, dan 1 simbol.',
         ]);
 
         if ($validator->fails()) {

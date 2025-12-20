@@ -75,8 +75,8 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input type="email" name="email" value="{{ old('email', $email ?? '') }}" required autofocus
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ug @error('email') border-red-500 @enderror">
+                    <input type="email" name="email" value="{{ old('email', $email ?? '') }}" required readonly
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed focus:outline-none @error('email') border-red-500 @enderror">
                     @error('email')
                         @if (!str_contains($message, 'token') && !str_contains($message, 'expired') && !str_contains($message, 'invalid'))
                             <p class="text-sm text-red-500 mt-1">{{ $message }}</p>
@@ -87,10 +87,12 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Password Baru</label>
                     <input type="password" name="password" required
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ug @error('password') border-red-500 @enderror">
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ug @error('password') border-red-500 @enderror"
+                        placeholder="Masukkan password baru">
                     @error('password')
                         <p class="text-sm text-red-500 mt-1">{{ $message }}</p>
                     @enderror
+                    <p class="text-xs text-gray-500 mt-1">Min. 8 karakter, huruf besar, kecil, angka, simbol</p>
                 </div>
 
                 <div>

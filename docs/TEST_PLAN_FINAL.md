@@ -561,7 +561,901 @@ Pengujian akan dihentikan sementara jika:
 
 ## 19. Acceptance Testing
 
-### 19.1 User Acceptance Criteria
+### KASUS 1: User Registration
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 4** |
+| | **Detail Test Cases:** |
+| | 1. User register dengan data valid **(Passed)** |
+| | 2. User register dengan email kosong muncul alert error **(Passed)** |
+| | 3. User register dengan email duplikat muncul error **(Passed)** |
+| | 4. User register dengan password < 8 karakter muncul error **(Passed)** |
+| | **Total Passing: 4** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-REG-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 4 |
+| | Total test cases passing: 4 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 2: User Login
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 5** |
+| | **Detail Test Cases:** |
+| | 1. User login dengan email dan password valid **(Passed)** |
+| | 2. User login dengan email salah muncul alert error **(Passed)** |
+| | 3. User login dengan password salah muncul alert error **(Passed)** |
+| | 4. User login dengan email belum terverifikasi muncul error **(Passed)** |
+| | 5. User login dengan checkbox "Remember Me" **(Passed)** |
+| | **Total Passing: 5** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-LOGIN-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 5 |
+| | Total test cases passing: 5 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 3: Google OAuth Login
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 3** |
+| | **Detail Test Cases:** |
+| | 1. User login dengan Google akun baru **(Passed)** |
+| | 2. User login dengan Google akun yang sudah terdaftar **(Passed)** |
+| | 3. User cancel Google OAuth redirect ke login **(Passed)** |
+| | **Total Passing: 3** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-OAUTH-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 3 |
+| | Total test cases passing: 3 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 4: Password Reset
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 4** |
+| | **Detail Test Cases:** |
+| | 1. Request reset password dengan email valid **(Passed)** |
+| | 2. Request reset password dengan email tidak terdaftar muncul error **(Passed)** |
+| | 3. Reset password dengan token valid **(Passed)** |
+| | 4. Reset password dengan token expired muncul error **(Passed)** |
+| | **Total Passing: 4** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: BUG-AC-01 |
+| | Description of Issue: BUG-AC-01: Token expired awalnya tidak menampilkan pesan error yang jelas, sudah diperbaiki |
+| **ACC Number(s)** | ACC-RESET-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 4 |
+| | Total test cases passing: 4 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 5: Add Course (Admin)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 5** |
+| | **Detail Test Cases:** |
+| | 1. Admin menambahkan kursus dengan data lengkap **(Passed)** |
+| | 2. Admin menambahkan kursus tanpa judul muncul validation error **(Passed)** |
+| | 3. Admin menambahkan kursus dengan upload gambar **(Passed)** |
+| | 4. Admin menambahkan kursus berbayar dengan harga valid **(Passed)** |
+| | 5. Admin menambahkan kursus dengan kategori baru **(Passed)** |
+| | **Total Passing: 5** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-COURSE-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 5 |
+| | Total test cases passing: 5 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 6: Edit Course (Admin)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 4** |
+| | **Detail Test Cases:** |
+| | 1. Admin mengedit judul kursus **(Passed)** |
+| | 2. Admin mengedit harga kursus **(Passed)** |
+| | 3. Admin mengganti gambar kursus **(Passed)** |
+| | 4. Admin mengubah status publikasi kursus **(Passed)** |
+| | **Total Passing: 4** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-COURSE-02 |
+| **Cumulative Test Execution Status** | Total test cases executed: 4 |
+| | Total test cases passing: 4 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 7: Delete Course (Admin)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 3** |
+| | **Detail Test Cases:** |
+| | 1. Admin menghapus kursus tanpa enrollment **(Passed)** |
+| | 2. Admin menghapus kursus dengan materi terhapus juga **(Passed)** |
+| | 3. Konfirmasi hapus muncul sebelum delete **(Passed)** |
+| | **Total Passing: 3** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-COURSE-03 |
+| **Cumulative Test Execution Status** | Total test cases executed: 3 |
+| | Total test cases passing: 3 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 8: Add User (Admin)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 4** |
+| | **Detail Test Cases:** |
+| | 1. Admin menambahkan user student **(Passed)** |
+| | 2. Admin menambahkan user instructor **(Passed)** |
+| | 3. Admin menambahkan user admin **(Passed)** |
+| | 4. Admin menambahkan user dengan email duplikat muncul error **(Passed)** |
+| | **Total Passing: 4** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-USER-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 4 |
+| | Total test cases passing: 4 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 9: Edit User (Admin)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 3** |
+| | **Detail Test Cases:** |
+| | 1. Admin mengedit nama user **(Passed)** |
+| | 2. Admin mengedit role user **(Passed)** |
+| | 3. Admin mengedit email user dengan validasi unik **(Passed)** |
+| | **Total Passing: 3** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-USER-02 |
+| **Cumulative Test Execution Status** | Total test cases executed: 3 |
+| | Total test cases passing: 3 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 10: Delete User (Admin)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 3** |
+| | **Detail Test Cases:** |
+| | 1. Admin menghapus user student **(Passed)** |
+| | 2. Admin tidak dapat menghapus diri sendiri **(Passed)** |
+| | 3. Bulk delete multiple users **(Passed)** |
+| | **Total Passing: 3** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-USER-03 |
+| **Cumulative Test Execution Status** | Total test cases executed: 3 |
+| | Total test cases passing: 3 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 11: Add Voucher (Admin)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 5** |
+| | **Detail Test Cases:** |
+| | 1. Admin menambahkan voucher dengan tipe percentage **(Passed)** |
+| | 2. Admin menambahkan voucher dengan tipe fixed amount **(Passed)** |
+| | 3. Admin menambahkan voucher dengan kode duplikat muncul error **(Passed)** |
+| | 4. Admin menambahkan voucher dengan percentage > 100% muncul error **(Passed)** |
+| | 5. Admin menambahkan voucher dengan max usage limit **(Passed)** |
+| | **Total Passing: 5** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-VOUCHER-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 5 |
+| | Total test cases passing: 5 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 12: Edit Voucher (Admin)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 3** |
+| | **Detail Test Cases:** |
+| | 1. Admin mengedit nilai diskon voucher **(Passed)** |
+| | 2. Admin mengedit tanggal berlaku voucher **(Passed)** |
+| | 3. Admin toggle status aktif/nonaktif voucher **(Passed)** |
+| | **Total Passing: 3** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-VOUCHER-02 |
+| **Cumulative Test Execution Status** | Total test cases executed: 3 |
+| | Total test cases passing: 3 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 13: Delete Voucher (Admin)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 2** |
+| | **Detail Test Cases:** |
+| | 1. Admin menghapus voucher yang belum digunakan **(Passed)** |
+| | 2. Admin tidak dapat menghapus voucher yang sudah digunakan muncul error **(Passed)** |
+| | **Total Passing: 2** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-VOUCHER-03 |
+| **Cumulative Test Execution Status** | Total test cases executed: 2 |
+| | Total test cases passing: 2 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 14: Add Section/Module (Instructor)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 4** |
+| | **Detail Test Cases:** |
+| | 1. Instructor menambahkan modul dengan judul valid **(Passed)** |
+| | 2. Instructor menambahkan modul tanpa judul muncul error **(Passed)** |
+| | 3. Instructor menambahkan modul dengan judul duplikat muncul error **(Passed)** |
+| | 4. Instructor menambahkan modul dengan urutan custom **(Passed)** |
+| | **Total Passing: 4** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-SECTION-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 4 |
+| | Total test cases passing: 4 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 15: Edit Section/Module (Instructor)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 3** |
+| | **Detail Test Cases:** |
+| | 1. Instructor mengedit judul modul **(Passed)** |
+| | 2. Instructor mengedit deskripsi modul **(Passed)** |
+| | 3. Instructor mengubah urutan modul **(Passed)** |
+| | **Total Passing: 3** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-SECTION-02 |
+| **Cumulative Test Execution Status** | Total test cases executed: 3 |
+| | Total test cases passing: 3 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 16: Delete Section/Module (Instructor)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 2** |
+| | **Detail Test Cases:** |
+| | 1. Instructor menghapus modul kosong **(Passed)** |
+| | 2. Instructor menghapus modul dengan materi (materi ikut terhapus) **(Passed)** |
+| | **Total Passing: 2** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-SECTION-03 |
+| **Cumulative Test Execution Status** | Total test cases executed: 2 |
+| | Total test cases passing: 2 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 17: Add Material - Text (Instructor)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 3** |
+| | **Detail Test Cases:** |
+| | 1. Instructor menambahkan materi teks dengan konten valid **(Passed)** |
+| | 2. Instructor menambahkan materi teks tanpa judul muncul error **(Passed)** |
+| | 3. Instructor menambahkan materi teks dengan format HTML **(Passed)** |
+| | **Total Passing: 3** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-MATERIAL-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 3 |
+| | Total test cases passing: 3 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 18: Add Material - Video (Instructor)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 3** |
+| | **Detail Test Cases:** |
+| | 1. Instructor menambahkan materi video YouTube **(Passed)** |
+| | 2. Instructor menambahkan materi video dengan URL invalid muncul error **(Passed)** |
+| | 3. Preview video menampilkan embed player **(Passed)** |
+| | **Total Passing: 3** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: BUG-AC-02 |
+| | Description of Issue: BUG-AC-02: Broken video URL awalnya menampilkan halaman blank, sudah diperbaiki dengan fallback error message |
+| **ACC Number(s)** | ACC-MATERIAL-02 |
+| **Cumulative Test Execution Status** | Total test cases executed: 3 |
+| | Total test cases passing: 3 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 19: Add Material - File Upload (Instructor)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 4** |
+| | **Detail Test Cases:** |
+| | 1. Instructor mengupload file PDF **(Passed)** |
+| | 2. Instructor mengupload file dengan ukuran valid **(Passed)** |
+| | 3. Instructor mengupload file dengan format tidak diizinkan muncul error **(Passed)** |
+| | 4. Download file materi berfungsi **(Passed)** |
+| | **Total Passing: 4** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: BUG-AC-03 |
+| | Description of Issue: BUG-AC-03: File not found awalnya menampilkan error 500, sudah diperbaiki dengan proper error handling |
+| **ACC Number(s)** | ACC-MATERIAL-03 |
+| **Cumulative Test Execution Status** | Total test cases executed: 4 |
+| | Total test cases passing: 4 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 20: Add Material - Link (Instructor)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 3** |
+| | **Detail Test Cases:** |
+| | 1. Instructor menambahkan materi link eksternal **(Passed)** |
+| | 2. Link preview menampilkan informasi dengan benar **(Passed)** |
+| | 3. Link dapat diklik dan membuka tab baru **(Passed)** |
+| | **Total Passing: 3** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: BUG-AC-04 |
+| | Description of Issue: BUG-AC-04: Link preview awalnya tampil double, sudah diperbaiki dengan server-side rendering |
+| **ACC Number(s)** | ACC-MATERIAL-04 |
+| **Cumulative Test Execution Status** | Total test cases executed: 3 |
+| | Total test cases passing: 3 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 21: Add Material - Class Session (Instructor)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 4** |
+| | **Detail Test Cases:** |
+| | 1. Instructor menambahkan jadwal sesi kelas offline **(Passed)** |
+| | 2. Instructor menambahkan jadwal sesi dengan meeting link **(Passed)** |
+| | 3. Instructor menambahkan lokasi dan alamat lengkap **(Passed)** |
+| | 4. Validasi tanggal dan waktu berfungsi **(Passed)** |
+| | **Total Passing: 4** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-MATERIAL-05 |
+| **Cumulative Test Execution Status** | Total test cases executed: 4 |
+| | Total test cases passing: 4 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 22: Attendance Management (Instructor)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 4** |
+| | **Detail Test Cases:** |
+| | 1. Generate attendance records untuk semua student **(Passed)** |
+| | 2. Update status kehadiran individual (Hadir/Izin/Alpha) **(Passed)** |
+| | 3. Mark all students as present berfungsi **(Passed)** |
+| | 4. Attendance tersimpan dengan catatan **(Passed)** |
+| | **Total Passing: 4** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-ATTENDANCE-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 4 |
+| | Total test cases passing: 4 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 23: Bank Soal Management (Instructor)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 5** |
+| | **Detail Test Cases:** |
+| | 1. Instructor membuat bank soal baru **(Passed)** |
+| | 2. Instructor menambahkan pertanyaan ke bank soal **(Passed)** |
+| | 3. Instructor mengedit pertanyaan **(Passed)** |
+| | 4. Instructor menghapus pertanyaan **(Passed)** |
+| | 5. Import soal dari bank soal ke quiz **(Passed)** |
+| | **Total Passing: 5** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: BUG-AC-05 |
+| | Description of Issue: BUG-AC-05: Delete question yang sedang digunakan quiz awalnya menyebabkan error, sudah diperbaiki dengan validation check |
+| **ACC Number(s)** | ACC-BANKSOAL-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 5 |
+| | Total test cases passing: 5 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 24: Checkout Course (Student)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 4** |
+| | **Detail Test Cases:** |
+| | 1. Student dapat masuk ke halaman checkout **(Passed)** |
+| | 2. Detail harga kursus ditampilkan dengan benar **(Passed)** |
+| | 3. Student tidak dapat checkout kursus yang sudah di-enroll **(Passed)** |
+| | 4. Redirect ke login jika belum login **(Passed)** |
+| | **Total Passing: 4** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-CHECKOUT-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 4 |
+| | Total test cases passing: 4 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 25: Apply Voucher (Student)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 5** |
+| | **Detail Test Cases:** |
+| | 1. Apply voucher dengan kode valid **(Passed)** |
+| | 2. Apply voucher dengan kode invalid muncul error **(Passed)** |
+| | 3. Apply voucher yang sudah expired muncul error **(Passed)** |
+| | 4. Apply voucher yang sudah mencapai max usage muncul error **(Passed)** |
+| | 5. Diskon dihitung dengan benar (percentage dan fixed) **(Passed)** |
+| | **Total Passing: 5** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-VOUCHER-04 |
+| **Cumulative Test Execution Status** | Total test cases executed: 5 |
+| | Total test cases passing: 5 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 26: Payment via Midtrans (Student)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 5** |
+| | **Detail Test Cases:** |
+| | 1. Midtrans Snap popup muncul dengan benar **(Passed)** |
+| | 2. Pembayaran berhasil mengubah status ke Paid **(Passed)** |
+| | 3. Pembayaran berhasil membuat enrollment otomatis **(Passed)** |
+| | 4. Pembayaran pending menampilkan instruksi **(Passed)** |
+| | 5. Pembayaran gagal menampilkan error message **(Passed)** |
+| | **Total Passing: 5** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-PAYMENT-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 5 |
+| | Total test cases passing: 5 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 27: Regenerate Payment Token (Student)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 3** |
+| | **Detail Test Cases:** |
+| | 1. Tombol regenerate muncul saat token expired **(Passed)** |
+| | 2. Token baru berhasil dibuat **(Passed)** |
+| | 3. Pembayaran dapat dilanjutkan dengan token baru **(Passed)** |
+| | **Total Passing: 3** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-PAYMENT-02 |
+| **Cumulative Test Execution Status** | Total test cases executed: 3 |
+| | Total test cases passing: 3 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 28: Cancel Transaction (Student)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 3** |
+| | **Detail Test Cases:** |
+| | 1. Cancel transaksi dengan status pending **(Passed)** |
+| | 2. Transaksi yang sudah paid tidak dapat dibatalkan **(Passed)** |
+| | 3. Voucher usage dikembalikan saat cancel **(Passed)** |
+| | **Total Passing: 3** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-TRANSACTION-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 3 |
+| | Total test cases passing: 3 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 29: Enroll Free Course (Student)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 3** |
+| | **Detail Test Cases:** |
+| | 1. Student dapat enroll kursus gratis langsung **(Passed)** |
+| | 2. Enrollment status menjadi active **(Passed)** |
+| | 3. Student dapat langsung akses materi **(Passed)** |
+| | **Total Passing: 3** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-ENROLL-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 3 |
+| | Total test cases passing: 3 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 30: Access Learning Page (Student)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 4** |
+| | **Detail Test Cases:** |
+| | 1. Halaman learn menampilkan daftar materi **(Passed)** |
+| | 2. Progress bar ditampilkan dengan benar **(Passed)** |
+| | 3. Materi yang sudah selesai ditandai dengan checkmark **(Passed)** |
+| | 4. Student tidak enrolled tidak dapat akses halaman learn **(Passed)** |
+| | **Total Passing: 4** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-LEARN-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 4 |
+| | Total test cases passing: 4 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 31: View Material Content (Student)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 5** |
+| | **Detail Test Cases:** |
+| | 1. Konten teks ditampilkan dengan format benar **(Passed)** |
+| | 2. Video embed ditampilkan dan dapat diputar **(Passed)** |
+| | 3. File dapat didownload **(Passed)** |
+| | 4. Link eksternal dapat diklik **(Passed)** |
+| | 5. Class session menampilkan jadwal dan lokasi **(Passed)** |
+| | **Total Passing: 5** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-MATERIAL-06 |
+| **Cumulative Test Execution Status** | Total test cases executed: 5 |
+| | Total test cases passing: 5 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 32: Mark Material Complete (Student)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 3** |
+| | **Detail Test Cases:** |
+| | 1. Tombol tandai selesai berfungsi **(Passed)** |
+| | 2. Progress percentage diupdate **(Passed)** |
+| | 3. Status completion tersimpan di database **(Passed)** |
+| | **Total Passing: 3** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-PROGRESS-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 3 |
+| | Total test cases passing: 3 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 33: Quiz Attempt (Student)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 5** |
+| | **Detail Test Cases:** |
+| | 1. Quiz dapat dimulai **(Passed)** |
+| | 2. Pertanyaan ditampilkan dengan opsi jawaban **(Passed)** |
+| | 3. Jawaban dapat dipilih dan disubmit **(Passed)** |
+| | 4. Skor dihitung dengan benar **(Passed)** |
+| | 5. Hasil quiz ditampilkan setelah submit **(Passed)** |
+| | **Total Passing: 5** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-QUIZ-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 5 |
+| | Total test cases passing: 5 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 34: Final Quiz (Student)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 4** |
+| | **Detail Test Cases:** |
+| | 1. Final quiz hanya dapat diakses jika progress 100% **(Passed)** |
+| | 2. Skor final quiz dihitung dengan benar **(Passed)** |
+| | 3. Passing grade validation berfungsi **(Passed)** |
+| | 4. Max attempts limitation berfungsi **(Passed)** |
+| | **Total Passing: 4** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-QUIZ-02 |
+| **Cumulative Test Execution Status** | Total test cases executed: 4 |
+| | Total test cases passing: 4 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 35: Generate Certificate (Student)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 4** |
+| | **Detail Test Cases:** |
+| | 1. Sertifikat digenerate otomatis saat lulus final quiz **(Passed)** |
+| | 2. Sertifikat menampilkan nama student dan kursus **(Passed)** |
+| | 3. Sertifikat memiliki nomor unik **(Passed)** |
+| | 4. Sertifikat dapat didownload sebagai PDF **(Passed)** |
+| | **Total Passing: 4** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-CERT-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 4 |
+| | Total test cases passing: 4 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 36: Update Profile (User)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 4** |
+| | **Detail Test Cases:** |
+| | 1. User dapat mengupdate nama **(Passed)** |
+| | 2. User dapat mengupdate nomor telepon **(Passed)** |
+| | 3. User dapat mengupload foto profil **(Passed)** |
+| | 4. User dapat mengubah password **(Passed)** |
+| | **Total Passing: 4** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: BUG-AC-06 |
+| | Description of Issue: BUG-AC-06: Large avatar upload awalnya menyebabkan timeout, sudah diperbaiki dengan file size validation |
+| **ACC Number(s)** | ACC-PROFILE-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 4 |
+| | Total test cases passing: 4 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 37: Promo Banner Management (Admin)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 4** |
+| | **Detail Test Cases:** |
+| | 1. Admin menambahkan promo banner baru **(Passed)** |
+| | 2. Admin mengedit promo banner **(Passed)** |
+| | 3. Admin toggle status aktif/nonaktif banner **(Passed)** |
+| | 4. Admin menghapus promo banner **(Passed)** |
+| | **Total Passing: 4** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-BANNER-01 |
+| **Cumulative Test Execution Status** | Total test cases executed: 4 |
+| | Total test cases passing: 4 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### KASUS 38: Transaction Management (Admin)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 19 Desember 2024 |
+| **Test Case Execution Status** | **Test Cases Executed Today: 4** |
+| | **Detail Test Cases:** |
+| | 1. Admin dapat melihat semua transaksi **(Passed)** |
+| | 2. Admin dapat filter transaksi berdasarkan status **(Passed)** |
+| | 3. Admin dapat update status transaksi **(Passed)** |
+| | 4. Admin dapat export transaksi ke CSV **(Passed)** |
+| | **Total Passing: 4** |
+| | **Total Failing: 0** |
+| **Defect Identifier** | Submitted Defect Number: N/A |
+| | Description of Issue: Tidak ada defect ditemukan |
+| **ACC Number(s)** | ACC-TRANSACTION-02 |
+| **Cumulative Test Execution Status** | Total test cases executed: 4 |
+| | Total test cases passing: 4 |
+| | Total test cases failing: 0 |
+| | Total test cases not executed yet: 0 |
+
+---
+
+### 19.2 Acceptance Testing Summary
+
+| Metric | Value |
+|--------|-------|
+| **Total Kasus Pengujian** | 38 |
+| **Total Test Cases Executed** | 142 |
+| **Total Test Cases Passing** | 142 |
+| **Total Test Cases Failing** | 0 |
+| **Pass Rate** | **100%** |
+
+### 19.3 Defect Summary
+
+| Defect ID | Module | Severity | Description | Status |
+|-----------|--------|----------|-------------|--------|
+| BUG-AC-01 | Auth | Medium | Token expired tidak menampilkan pesan error yang jelas | ✅ FIXED |
+| BUG-AC-02 | Material | Medium | Broken video URL menampilkan halaman blank | ✅ FIXED |
+| BUG-AC-03 | Material | Medium | File not found menampilkan error 500 | ✅ FIXED |
+| BUG-AC-04 | Material | Low | Link preview tampil double | ✅ FIXED |
+| BUG-AC-05 | Bank Soal | High | Delete question yang sedang digunakan quiz error | ✅ FIXED |
+| BUG-AC-06 | Profile | Low | Large avatar upload menyebabkan timeout | ✅ FIXED |
+
+**Defect Summary:**
+- Total Defects Found: 6
+- Critical: 0
+- High: 1 (Fixed)
+- Medium: 3 (All Fixed)
+- Low: 2 (All Fixed)
+- **Defect Resolution Rate: 100%**
+
+### 19.4 User Acceptance Criteria
 
 | No | Requirement | Priority | Acceptance Criteria | Status |
 |----|-------------|----------|---------------------|--------|
@@ -581,7 +1475,7 @@ Pengujian akan dihentikan sementara jika:
 | 14 | Transaction History | High | User dapat melihat riwayat transaksi | ✅ ACCEPTED |
 | 15 | Responsive Design | Medium | Aplikasi tampil baik di mobile | ✅ ACCEPTED |
 
-### 19.2 UAT Summary
+### 19.5 UAT Final Summary
 
 | Metric | Value |
 |--------|-------|

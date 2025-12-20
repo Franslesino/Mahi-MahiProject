@@ -247,9 +247,11 @@ class CourseController extends Controller
             'active_students' => $course->enrollments->where('status', 'active')->count(),
         ];
 
-        // Progress & score per participant
-        $materialIds = $course->materi->pluck('id');
-        $totalMaterials = max(1, $materialIds->count());
+        // Progress & score per participant - only count materials in sections
+        $sectionIds = $course->sections()->pluck('id');
+        $materialIds = Materi::whereIn('section_id', $sectionIds)->pluck('id');
+        $totalMaterials = $materialIds->count();
+        $totalMaterialsForProgress = max(1, $totalMaterials); // divisor for progress calculation
         $passingScore = $assignments->firstWhere('passing_score')?->passing_score ?? 60;
 
         $completionCounts = MaterialCompletion::select('user_id', DB::raw('COUNT(*) as completed_count'))
@@ -299,9 +301,9 @@ class CourseController extends Controller
             ];
         });
 
-        $participantProgress = $course->enrollments->map(function ($enrollment) use ($completionCounts, $submissionStats, $completionAggregated, $totalMaterials, $passingScore) {
+        $participantProgress = $course->enrollments->map(function ($enrollment) use ($completionCounts, $submissionStats, $completionAggregated, $totalMaterialsForProgress, $passingScore, $totalMaterials) {
             $completed = $completionCounts[$enrollment->user_id]->completed_count ?? 0;
-            $progress = $totalMaterials > 0 ? round(($completed / $totalMaterials) * 100) : 0;
+            $progress = $totalMaterialsForProgress > 0 ? round(($completed / $totalMaterialsForProgress) * 100) : 0;
             $submission = $submissionStats[$enrollment->user_id] ?? null;
             $fallback = $completionAggregated[$enrollment->user_id] ?? null;
             $bestScore = $submission->best_score ?? $fallback->best_score ?? null;
@@ -341,9 +343,10 @@ class CourseController extends Controller
             ->orderBy('order')
             ->get();
 
-        // Stats
-        $totalMaterials = $course->materi()->count();
-        $totalVideos = $course->materi()->where('type', 'video')->count();
+        // Stats - only count materials that are in sections
+        $sectionMaterialIds = Materi::whereIn('section_id', $sections->pluck('id'))->pluck('id');
+        $totalMaterials = $sectionMaterialIds->count();
+        $totalVideos = Materi::whereIn('id', $sectionMaterialIds)->where('type', 'video')->count();
         $studentsCount = $course->enrollments()
             ->whereIn('status_pendaftaran', ['active', 'completed', 'paid'])
             ->distinct('user_id')
@@ -357,8 +360,8 @@ class CourseController extends Controller
             ->get();
 
         // Progress & score per participant
-        $materialIds = $course->materi()->pluck('id');
-        $totalMaterials = max(1, $materialIds->count());
+        $materialIds = $sectionMaterialIds;
+        $totalMaterialsForProgress = max(1, $totalMaterials); // divisor for progress calculation
         $passingScore = \App\Models\Assignment::where('kursus_id', $course->id)->firstWhere('passing_score')?->passing_score ?? 60;
 
         $completionCounts = MaterialCompletion::select('user_id', DB::raw('COUNT(*) as completed_count'))
@@ -413,9 +416,9 @@ class CourseController extends Controller
         $participantProgress = $course->enrollments()
             ->with('user')
             ->get()
-            ->map(function ($enrollment) use ($completionCounts, $submissionStats, $completionAggregated, $totalMaterials, $passingScore) {
+            ->map(function ($enrollment) use ($completionCounts, $submissionStats, $completionAggregated, $totalMaterialsForProgress, $passingScore, $totalMaterials) {
                 $completed = $completionCounts[$enrollment->user_id]->completed_count ?? 0;
-                $progress = $totalMaterials > 0 ? round(($completed / $totalMaterials) * 100) : 0;
+                $progress = $totalMaterialsForProgress > 0 ? round(($completed / $totalMaterialsForProgress) * 100) : 0;
                 $submission = $submissionStats[$enrollment->user_id] ?? null;
                 $fallback = $completionAggregated[$enrollment->user_id] ?? null;
                 $bestScore = $submission->best_score ?? $fallback->best_score ?? null;
@@ -584,7 +587,6 @@ class CourseController extends Controller
 
         return view('admin.courses.materials', compact('course', 'section', 'materials'));
     }
-
     /**
      * Store new material in module
      */
@@ -603,9 +605,13 @@ class CourseController extends Controller
             ->orderBy('urutan', 'desc')
             ->first();
 
-        $filePath = null;
+        $fileUrl = null;
+        $filePublicUrl = null;
         if ($request->hasFile('file')) {
-            $filePath = $request->file('file')->store('materials', 'public');
+            $storage = app(SupabaseStorageService::class);
+            $upload = $storage->upload($request->file('file'), 'materials');
+            $fileUrl = $upload['path'];
+            $filePublicUrl = $upload['public_url'] ?? $upload['path'];
         }
 
         \App\Models\Materi::create([
@@ -615,7 +621,8 @@ class CourseController extends Controller
             'description' => $validated['description'],
             'content' => $validated['content'],
             'type' => $validated['type'],
-            'url_konten' => $filePath,
+            'file_url' => $fileUrl,
+            'url_konten' => $filePublicUrl,
             'duration' => 0,
             'urutan' => $lastMaterial ? $lastMaterial->urutan + 1 : 1,
             'status_terkunci' => false,
@@ -652,7 +659,8 @@ class CourseController extends Controller
         if ($request->hasFile('file_path')) {
             $storage = app(SupabaseStorageService::class);
             $upload = $storage->upload($request->file('file_path'), 'materials');
-            $data['file_path'] = $upload['public_url'] ?? $upload['path'];
+            $data['file_url'] = $upload['path'];
+            $data['url_konten'] = $upload['public_url'] ?? $upload['path'];
         }
 
         // Handle video URL

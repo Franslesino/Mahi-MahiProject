@@ -109,21 +109,30 @@ class Materi extends Model
 
     public function getFileUrlFullAttribute()
     {
-        if ($this->file_url) {
+        // First, check url_konten - if it's a full URL, return it directly
+        if (!empty($this->url_konten)) {
+            if (str_starts_with($this->url_konten, 'http')) {
+                return $this->url_konten;
+            }
+            // url_konten is a local path (e.g. "materials/xxx.pdf") - generate URL
+            $generated = $this->generateUrl($this->url_konten);
+            if ($generated) {
+                return $generated;
+            }
+        }
+
+        // Second, check file_url
+        if (!empty($this->file_url)) {
             if (str_starts_with($this->file_url, 'http')) {
                 return $this->file_url;
             }
+            // file_url is a local path - generate URL
             $generated = $this->generateUrl($this->file_url);
             if ($generated) {
                 return $generated;
             }
         }
-        if (!empty($this->url_konten)) {
-            if (str_starts_with($this->url_konten, 'http')) {
-                return $this->url_konten;
-            }
-            return $this->normalizeLocalUrl($this->url_konten);
-        }
+
         return null;
     }
 

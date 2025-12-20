@@ -53,11 +53,12 @@ class MaterialController extends Controller
             ->orderBy('order')
             ->get();
 
-        // Stats
-        $materialIds = $course->materi()->pluck('id');
-        $totalMaterials = $materialIds->count(); // angka display apa adanya
+        // Stats - only count materials that belong to sections (ignore orphan materials)
+        $sectionIds = $sections->pluck('id');
+        $materialIds = Materi::whereIn('section_id', $sectionIds)->pluck('id');
+        $totalMaterials = $materialIds->count(); // only count materials in sections
         $totalMaterialsForProgress = max(1, $totalMaterials); // divisor progress supaya tidak 0
-        $totalVideos = $course->materi()->where('type', 'video')->count();
+        $totalVideos = Materi::whereIn('id', $materialIds)->where('type', 'video')->count();
         $studentsCount = $course->enrollments()
             ->whereIn('status_pendaftaran', ['active', 'completed', 'paid'])
             ->distinct('user_id')

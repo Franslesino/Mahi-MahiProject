@@ -130,7 +130,7 @@
             <div class="relative">
               <input type="password" name="password" id="password" required minlength="8"
                 class="w-full rounded-md border border-gray-300 px-3 py-2 pr-12 focus:ring-ug focus:border-ug outline-none text-sm"
-                placeholder="Minimal 8 karakter" />
+                placeholder="Min. 8 karakter, huruf besar, kecil, angka, simbol" />
 
               <button type="button" data-eye="password"
                 class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -142,12 +142,7 @@
                 </svg>
               </button>
             </div>
-            <div class="mt-2 flex items-center gap-2 text-xs">
-              <div class="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
-                <div id="passwordStrengthBar" class="h-full w-1/4 bg-red-500 transition-all"></div>
-              </div>
-              <span id="passwordStrengthText" class="text-gray-500">Lemah</span>
-            </div>
+            <p class="text-xs text-gray-500 mt-1">Min. 8 karakter, huruf besar, kecil, angka, simbol</p>
           </div>
 
           <!-- Confirm Password -->
@@ -210,41 +205,6 @@
         input.type = input.type === 'password' ? 'text' : 'password';
       });
     });
-
-    // Password strength indicator
-    const strengthBar = document.getElementById('passwordStrengthBar');
-    const strengthText = document.getElementById('passwordStrengthText');
-    const passwordInput = document.getElementById('password');
-    if (passwordInput && strengthBar && strengthText) {
-      const calcStrength = (val) => {
-        let score = 0;
-        if (val.length >= 8) score += 1;
-        if (/[A-Z]/.test(val)) score += 1;
-        if (/[0-9]/.test(val)) score += 1;
-        if (/[^A-Za-z0-9]/.test(val)) score += 1;
-        return score;
-      };
-      const mapStrength = (score) => {
-        const widths = ['25%', '50%', '75%', '100%'];
-        const colors = ['bg-red-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-600'];
-        const labels = ['Lemah', 'Cukup', 'Baik', 'Kuat'];
-        return {
-          width: widths[score - 1] || '25%',
-          color: colors[score - 1] || 'bg-red-500',
-          label: labels[score - 1] || 'Lemah'
-        };
-      };
-      const updateStrength = (val) => {
-        const score = calcStrength(val);
-        const { width, color, label } = mapStrength(score);
-        strengthBar.style.width = width;
-        strengthBar.className = `h-full transition-all ${color}`;
-        strengthText.textContent = label;
-        strengthText.className = `text-xs ${score >= 3 ? 'text-green-600' : 'text-gray-500'}`;
-      };
-      passwordInput.addEventListener('input', (e) => updateStrength(e.target.value));
-      updateStrength(passwordInput.value || '');
-    }
 
     // Submit loading state
     const registerForm = document.getElementById('registerForm');

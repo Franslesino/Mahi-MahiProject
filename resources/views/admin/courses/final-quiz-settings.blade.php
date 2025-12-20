@@ -5,7 +5,7 @@
     <!-- Header -->
     <div class="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div class="flex-1">
-            <a href="{{ route('admin.courses.show', $kursus->id) }}" class="text-blue-600 hover:text-blue-700 mb-2 inline-flex items-center gap-2">
+            <a href="{{ route('admin.courses.detail', $kursus->id) }}#materials" class="text-blue-600 hover:text-blue-700 mb-2 inline-flex items-center gap-2">
                 <i class="fas fa-arrow-left"></i>
                 <span>Kembali</span>
             </a>

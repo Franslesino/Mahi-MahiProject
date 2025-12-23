@@ -9,8 +9,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
+/**
+ * Controller untuk fitur bagian.
+ */
 class SectionController extends Controller
 {
+    /**
+     * Menyimpan bagian.
+     */
     public function store(Request $request, Kursus $course)
     {
         $ownerIds = $this->resolveOwnerIds($course);
@@ -47,6 +53,9 @@ class SectionController extends Controller
             ->with('success', 'Modul berhasil ditambahkan.');
     }
 
+    /**
+     * Memperbarui bagian.
+     */
     public function update(Request $request, CourseSection $section)
     {
         $course = $section->course;
@@ -92,6 +101,9 @@ class SectionController extends Controller
             ->with('success', 'Modul berhasil diperbarui.');
     }
 
+    /**
+     * Menghapus bagian.
+     */
     public function destroy(CourseSection $section)
     {
         $course = $section->course;
@@ -108,6 +120,9 @@ class SectionController extends Controller
             ->with('success', 'Modul berhasil dihapus.');
     }
 
+    /**
+     * Menghapus all.
+     */
     public function destroyAll(Kursus $course)
     {
         $ownerIds = $this->resolveOwnerIds($course);

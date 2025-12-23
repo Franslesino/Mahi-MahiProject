@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Controller untuk fitur bank soal.
+ */
 class QuestionBankController extends Controller
 {
     /**
@@ -189,6 +192,11 @@ class QuestionBankController extends Controller
         if ($questionBank->is_internal) {
             abort(404);
         }
+        // Jika bukan pilihan ganda, hapus options agar validasi string tidak terpanggil.
+        if ($request->input('type') !== 'multiple_choice') {
+            $request->request->remove('options');
+        }
+
         $validated = $request->validate([
             'type' => 'required|in:multiple_choice,true_false,short_answer',
             'question_text' => 'required|string',

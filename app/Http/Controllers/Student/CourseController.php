@@ -12,6 +12,9 @@ use App\Models\Enrollment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Controller untuk fitur kursus.
+ */
 class CourseController extends Controller
 {
     /**

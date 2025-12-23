@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 
 /**
+ * Model untuk entitas materi.
+ *
  * @property int $id
  * @property int $kursus_id
  * @property string $judul
@@ -42,11 +44,17 @@ class Material extends Model
         'status_terkunci' => 'boolean',
     ];
 
+    /**
+     * Relasi belongsTo ke Kursus.
+     */
     public function kursus()
     {
         return $this->belongsTo(Kursus::class, 'kursus_id');
     }
 
+    /**
+     * Relasi belongsTo ke CourseSection.
+     */
     public function section(): BelongsTo
 {
     return $this->belongsTo(CourseSection::class, 'section_id');

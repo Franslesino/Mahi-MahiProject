@@ -10,8 +10,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Controller untuk fitur admin.
+ */
 class AdminController extends Controller
 {
+    /**
+     * Menampilkan daftar admin.
+     */
     public function index(Request $request)
     {
         $query = Kursus::with(['pembuat', 'instructor'])
@@ -41,12 +47,18 @@ class AdminController extends Controller
         return view('admin.courses.index', compact('courses'));
     }
 
+    /**
+     * Menampilkan form tambah admin.
+     */
     public function create()
     {
         $instructors = User::where('role', 'instructor')->get();
         return view('admin.courses.create', compact('instructors'));
     }
 
+    /**
+     * Menyimpan admin.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -97,6 +109,9 @@ class AdminController extends Controller
             ->with('success', 'Kursus berhasil ditambahkan!');
     }
 
+    /**
+     * Menampilkan form ubah admin.
+     */
     public function edit(Kursus $kursus)
     {
         $instructors = User::where('role', 'instructor')->get();
@@ -106,6 +121,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Memperbarui admin.
+     */
     public function update(Request $request, Kursus $kursus)
     {
         $validated = $request->validate([
@@ -160,6 +178,9 @@ class AdminController extends Controller
             ->with('success', 'Kursus berhasil diupdate!');
     }
 
+    /**
+     * Menghapus admin.
+     */
     public function destroy(Kursus $kursus)
     {
         if ($kursus->image) {
@@ -177,6 +198,9 @@ class AdminController extends Controller
             ->with('success', 'Kursus berhasil dihapus!');
     }
 
+    /**
+     * Menampilkan detail admin.
+     */
     public function show(Kursus $kursus)
     {
         $kursus->load(['pembuat', 'materi']);

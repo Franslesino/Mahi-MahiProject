@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Model untuk entitas diskon.
+ */
 class Diskon extends Model
 {
     protected $table = 'diskon';
@@ -28,6 +31,9 @@ class Diskon extends Model
         'dibuat_pada' => 'datetime',
     ];
 
+    /**
+     * Relasi belongsTo ke Kursus.
+     */
     public function kursus()
     {
         return $this->belongsTo(Kursus::class, 'kursus_id');

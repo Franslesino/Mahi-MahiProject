@@ -9,6 +9,9 @@ use App\Models\Attendance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Controller untuk fitur kelas sesi.
+ */
 class ClassSessionController extends Controller
 {
     /**
@@ -46,15 +49,19 @@ class ClassSessionController extends Controller
     {
         $this->authorizeInstructor($course);
 
+        // Validasi dengan custom rule untuk prevent back date
         $validated = $request->validate([
             'judul' => 'nullable|string|max:255',
-            'tanggal' => 'required|date',
+            'tanggal' => 'required|date|date_format:Y-m-d|after_or_equal:today',
             'waktu_mulai' => 'required|date_format:H:i',
             'waktu_selesai' => 'required|date_format:H:i|after:waktu_mulai',
             'lokasi' => 'nullable|string|max:255',
             'tipe' => 'required|in:online,offline',
             'meeting_link' => 'nullable|url|max:500',
             'catatan' => 'nullable|string|max:1000',
+        ], [
+            // Custom error message untuk validasi back date
+            'tanggal.after_or_equal' => 'Tanggal sesi kelas tidak boleh lebih awal dari hari ini.',
         ]);
 
         $validated['kursus_id'] = $course->id;
@@ -98,9 +105,10 @@ class ClassSessionController extends Controller
     {
         $this->authorizeInstructor($course);
 
+        // Validasi dengan custom rule untuk prevent back date
         $validated = $request->validate([
             'judul' => 'nullable|string|max:255',
-            'tanggal' => 'required|date',
+            'tanggal' => 'required|date|date_format:Y-m-d|after_or_equal:today',
             'waktu_mulai' => 'required|date_format:H:i',
             'waktu_selesai' => 'required|date_format:H:i|after:waktu_mulai',
             'lokasi' => 'nullable|string|max:255',
@@ -108,6 +116,9 @@ class ClassSessionController extends Controller
             'meeting_link' => 'nullable|url|max:500',
             'catatan' => 'nullable|string|max:1000',
             'status' => 'required|in:scheduled,ongoing,completed,cancelled',
+        ], [
+            // Custom error message untuk validasi back date
+            'tanggal.after_or_equal' => 'Tanggal sesi kelas tidak boleh lebih awal dari hari ini.',
         ]);
 
         $session->update($validated);

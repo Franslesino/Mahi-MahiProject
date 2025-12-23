@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 
 /**
+ * Model untuk entitas pendaftaran.
+ *
  * @property int $id
  * @property int $user_id
  * @property int $kursus_id
@@ -35,21 +37,33 @@ class Enrollment extends Model
         'tanggal_selesai' => 'datetime',
     ];
 
+    /**
+     * Relasi belongsTo ke User.
+     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Relasi belongsTo ke Kursus.
+     */
     public function kursus()
     {
         return $this->belongsTo(Kursus::class);
     }
 
+    /**
+     * Relasi belongsTo ke Kursus.
+     */
     public function course()
     {
         return $this->belongsTo(Kursus::class, 'kursus_id');
     }
 
+    /**
+     * Relasi hasOne ke Sertifikat.
+     */
     public function sertifikat()
     {
         $certificateFk = static::getCertificateForeignKey();
@@ -62,6 +76,9 @@ class Enrollment extends Model
         return $this->hasOne(Sertifikat::class, $certificateFk);
     }
 
+    /**
+     * Mengambil kunci asing sertifikat.
+     */
     public static function getCertificateForeignKey(): ?string
     {
         static $cached = null;
@@ -73,6 +90,9 @@ class Enrollment extends Model
         return $cached;
     }
 
+    /**
+     * Menentukan kunci asing sertifikat.
+     */
     private static function resolveCertificateForeignKey(): ?string
     {
         try {

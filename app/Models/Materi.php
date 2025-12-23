@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Assignment;
 use App\Models\Attendance;
 
+/**
+ * Model untuk entitas materi.
+ */
 class Materi extends Model
 {
     protected $table = 'materi';
@@ -47,24 +50,36 @@ class Materi extends Model
     ];
 
     // Accessor untuk title
+    /**
+     * Accessor untuk atribut title.
+     */
     public function getTitleAttribute()
     {
         return $this->judul;
     }
 
     // Accessor content
+    /**
+     * Accessor untuk atribut content.
+     */
     public function getContentAttribute()
     {
         return $this->attributes['content'] ?? $this->attributes['isi'] ?? null;
     }
 
     // Accessor description
+    /**
+     * Accessor untuk atribut description.
+     */
     public function getDescriptionAttribute()
     {
         return $this->attributes['description'] ?? $this->attributes['isi'] ?? null;
     }
 
     // Accessor video_url
+    /**
+     * Accessor untuk atribut video url.
+     */
     public function getVideoUrlAttribute()
     {
         if ($this->type === 'video') {
@@ -74,6 +89,9 @@ class Materi extends Model
     }
 
     // Accessor file_path untuk PDF
+    /**
+     * Accessor untuk atribut file path.
+     */
     public function getFilePathAttribute()
     {
         if ($this->type === 'pdf') {
@@ -82,6 +100,9 @@ class Materi extends Model
         return null;
     }
 
+    /**
+     * Accessor untuk atribut file url full.
+     */
     public function getFileUrlFullAttribute()
     {
         // 1. Prioritaskan url_konten jika sudah merupakan Full URL (biasanya dari Supabase)
@@ -186,6 +207,9 @@ class Materi extends Model
         return $scheme . '://' . $targetHost . ($port ? ':' . $port : '') . $path . $query . $fragment;
     }
 
+    /**
+     * Menangani logika model.
+     */
     protected function maybeSignedSupabaseUrl(?string $url): ?string
     {
         if (!$url) {
@@ -217,32 +241,50 @@ class Materi extends Model
     }
 
     // Relationships
+    /**
+     * Relasi belongsTo ke Kursus.
+     */
     public function kursus(): BelongsTo
     {
         return $this->belongsTo(Kursus::class, 'kursus_id');
     }
 
+    /**
+     * Relasi belongsTo ke CourseSection.
+     */
     public function section(): BelongsTo
     {
         return $this->belongsTo(CourseSection::class, 'section_id');
     }
 
+    /**
+     * Relasi hasOne ke Assignment.
+     */
     public function assignment()
     {
         return $this->hasOne(Assignment::class, 'materi_id');
     }
 
     // Relasi ke Attendances (for class_session type)
+    /**
+     * Relasi hasMany ke Attendance.
+     */
     public function attendances()
     {
         return $this->hasMany(Attendance::class, 'materi_id');
     }
 
+    /**
+     * Menangani logika model.
+     */
     protected function materialsDisk(): string
     {
         return config('filesystems.materials_disk', 'public');
     }
 
+    /**
+     * Menangani logika model.
+     */
     protected function generateUrl(string $path): ?string
     {
         if (str_starts_with($path, 'http')) {
@@ -278,6 +320,9 @@ class Materi extends Model
     }
 
     // Helper methods
+    /**
+     * Mengambil type icon.
+     */
     public function getTypeIcon(): string
     {
         return match ($this->type) {
@@ -290,6 +335,9 @@ class Materi extends Model
         };
     }
 
+    /**
+     * Mengambil type color.
+     */
     public function getTypeColor(): string
     {
         return match ($this->type) {
@@ -303,12 +351,18 @@ class Materi extends Model
     }
 
     // Check if this is a class session
+    /**
+     * Memeriksa kelas sesi.
+     */
     public function isClassSession(): bool
     {
         return $this->type === 'class_session';
     }
 
     // Get formatted session datetime
+    /**
+     * Accessor untuk atribut formatted sesi date.
+     */
     public function getFormattedSessionDateAttribute(): ?string
     {
         if (!$this->session_date)
@@ -317,6 +371,9 @@ class Materi extends Model
     }
 
     // Get formatted session time
+    /**
+     * Accessor untuk atribut formatted sesi time.
+     */
     public function getFormattedSessionTimeAttribute(): ?string
     {
         if (!$this->session_start_time || !$this->session_end_time)
@@ -325,6 +382,9 @@ class Materi extends Model
     }
 
     // Check if session is upcoming
+    /**
+     * Memeriksa upcoming.
+     */
     public function isUpcoming(): bool
     {
         if (!$this->session_date)
@@ -333,6 +393,9 @@ class Materi extends Model
     }
 
     // Check if session is today
+    /**
+     * Memeriksa today.
+     */
     public function isToday(): bool
     {
         if (!$this->session_date)

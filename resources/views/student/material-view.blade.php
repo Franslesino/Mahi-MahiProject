@@ -208,6 +208,33 @@
             min-height: 500px;
         }
 
+        #materialViewer:fullscreen,
+        #materialViewer:-webkit-full-screen {
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+        }
+
+        #materialViewer:fullscreen .viewer-container,
+        #materialViewer:-webkit-full-screen .viewer-container {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            border: none;
+            border-radius: 0;
+        }
+
+        #materialViewer:fullscreen video,
+        #materialViewer:fullscreen iframe,
+        #materialViewer:-webkit-full-screen video,
+        #materialViewer:-webkit-full-screen iframe {
+            height: 100%;
+            min-height: 0;
+        }
+
         .viewer-placeholder {
             color: rgba(255, 255, 255, 0.6);
             font-size: 1rem;

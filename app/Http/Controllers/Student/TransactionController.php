@@ -14,6 +14,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Controller untuk fitur transaksi.
+ */
 class TransactionController extends Controller
 {
     /**

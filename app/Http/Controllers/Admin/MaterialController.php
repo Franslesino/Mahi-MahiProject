@@ -9,19 +9,31 @@ use Illuminate\Http\Request;
 use App\Services\SupabaseStorageService;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Controller untuk fitur materi.
+ */
 class MaterialController extends Controller
 {
+    /**
+     * Menampilkan daftar materi.
+     */
     public function index(Kursus $course)
     {
         $materials = $course->materi()->orderBy('urutan')->get();
         return view('admin.courses.materials.index', compact('course', 'materials'));
     }
 
+    /**
+     * Menampilkan form tambah materi.
+     */
     public function create(Kursus $course)
     {
         return view('admin.courses.materials.create', compact('course'));
     }
 
+    /**
+     * Menyimpan materi.
+     */
     public function store(Request $request, Kursus $course)
     {
         $validated = $request->validate([
@@ -38,8 +50,8 @@ class MaterialController extends Controller
             'is_preview' => 'nullable|boolean',
             'status_terkunci' => 'nullable|boolean',
             'status' => 'nullable|in:published,draft',
-            // Class session fields
-            'session_date' => 'required_if:type,class_session|nullable|date',
+            // Class session fields - Validasi dengan after_or_equal:today untuk prevent back date
+            'session_date' => 'required_if:type,class_session|nullable|date|date_format:Y-m-d|after_or_equal:today',
             'session_start_time' => 'required_if:type,class_session|nullable',
             'session_end_time' => 'required_if:type,class_session|nullable',
             'session_location' => 'nullable|string|max:255',
@@ -77,6 +89,9 @@ class MaterialController extends Controller
             ->with('success', 'Materi berhasil ditambahkan!');
     }
 
+    /**
+     * Menampilkan form ubah materi.
+     */
     public function edit(Kursus $course, Materi $material)
     {
         // Verify material belongs to course
@@ -87,6 +102,9 @@ class MaterialController extends Controller
         return view('admin.courses.materials.edit', compact('course', 'material'));
     }
 
+    /**
+     * Memperbarui materi.
+     */
     public function update(Request $request, Kursus $course, Materi $material)
     {
         // Verify material belongs to course
@@ -108,8 +126,8 @@ class MaterialController extends Controller
             'is_preview' => 'nullable|boolean',
             'status_terkunci' => 'nullable|boolean',
             'status' => 'nullable|in:published,draft',
-            // Class session fields
-            'session_date' => 'required_if:type,class_session|nullable|date',
+            // Class session fields - Validasi dengan after_or_equal:today untuk prevent back date
+            'session_date' => 'required_if:type,class_session|nullable|date|date_format:Y-m-d|after_or_equal:today',
             'session_start_time' => 'required_if:type,class_session|nullable',
             'session_end_time' => 'required_if:type,class_session|nullable',
             'session_location' => 'nullable|string|max:255',
@@ -141,6 +159,9 @@ class MaterialController extends Controller
             ->with('success', 'Materi berhasil diperbarui!');
     }
 
+    /**
+     * Menghapus materi.
+     */
     public function destroy(Kursus $course, Materi $material)
     {
         // Verify material belongs to course
@@ -162,6 +183,9 @@ class MaterialController extends Controller
             ->with('success', 'Materi berhasil dihapus!');
     }
 
+    /**
+     * Mengurutkan ulang materi.
+     */
     public function reorder(Request $request, Kursus $course)
     {
         $validated = $request->validate([

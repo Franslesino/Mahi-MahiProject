@@ -10,6 +10,9 @@ use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Controller untuk fitur instruktur.
+ */
 class InstructorController extends Controller
 {
     /**
@@ -19,7 +22,7 @@ class InstructorController extends Controller
     {
         $instructorId = Auth::id();
 
-       // ✅ PERBAIKAN: Get courses dari kedua kolom
+        // Fetch instructor's courses (as creator or assigned instructor)
     $myCourses = Kursus::where(function($query) use ($instructorId) {
             $query->where('pembuat', $instructorId)
                   ->orWhere('instructor_id', $instructorId);

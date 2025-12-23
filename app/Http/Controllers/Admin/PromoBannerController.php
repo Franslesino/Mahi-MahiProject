@@ -6,19 +6,31 @@ use App\Http\Controllers\Controller;
 use App\Models\PromoBanner;
 use Illuminate\Http\Request;
 
+/**
+ * Controller untuk fitur promo banner.
+ */
 class PromoBannerController extends Controller
 {
+    /**
+     * Menampilkan daftar promo banner.
+     */
     public function index()
     {
         $banners = PromoBanner::orderBy('order')->orderBy('created_at', 'desc')->paginate(10);
         return view('admin.promo-banners.index', compact('banners'));
     }
 
+    /**
+     * Menampilkan form tambah promo banner.
+     */
     public function create()
     {
         return view('admin.promo-banners.create');
     }
 
+    /**
+     * Menyimpan promo banner.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -43,16 +55,25 @@ class PromoBannerController extends Controller
             ->with('success', 'Banner promo berhasil ditambahkan!');
     }
 
+    /**
+     * Menampilkan detail promo banner.
+     */
     public function show(PromoBanner $promoBanner)
     {
         return view('admin.promo-banners.show', compact('promoBanner'));
     }
 
+    /**
+     * Menampilkan form ubah promo banner.
+     */
     public function edit(PromoBanner $promoBanner)
     {
         return view('admin.promo-banners.edit', compact('promoBanner'));
     }
 
+    /**
+     * Memperbarui promo banner.
+     */
     public function update(Request $request, PromoBanner $promoBanner)
     {
         $validated = $request->validate([
@@ -77,6 +98,9 @@ class PromoBannerController extends Controller
             ->with('success', 'Banner promo berhasil diperbarui!');
     }
 
+    /**
+     * Menghapus promo banner.
+     */
     public function destroy(PromoBanner $promoBanner)
     {
         $promoBanner->delete();
@@ -85,6 +109,9 @@ class PromoBannerController extends Controller
             ->with('success', 'Banner promo berhasil dihapus!');
     }
 
+    /**
+     * Mengubah status status.
+     */
     public function toggleStatus(PromoBanner $promoBanner)
     {
         $promoBanner->update([

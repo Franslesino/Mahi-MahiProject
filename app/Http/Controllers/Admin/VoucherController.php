@@ -7,8 +7,14 @@ use App\Models\Voucher;
 use App\Models\Kursus;
 use Illuminate\Http\Request;
 
+/**
+ * Controller untuk fitur voucher.
+ */
 class VoucherController extends Controller
 {
+    /**
+     * Menampilkan daftar voucher.
+     */
     public function index()
     {
         $vouchers = Voucher::withCount('usages')
@@ -18,6 +24,9 @@ class VoucherController extends Controller
         return view('admin.vouchers.index', compact('vouchers'));
     }
 
+    /**
+     * Menampilkan form tambah voucher.
+     */
     public function create()
     {
         $courses = Kursus::where('status_diterbitkan', true)
@@ -27,6 +36,9 @@ class VoucherController extends Controller
         return view('admin.vouchers.create', compact('courses'));
     }
 
+    /**
+     * Menyimpan voucher.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -70,6 +82,9 @@ class VoucherController extends Controller
             ->with('success', 'Voucher berhasil ditambahkan!');
     }
 
+    /**
+     * Menampilkan form ubah voucher.
+     */
     public function edit(Voucher $voucher)
     {
         $courses = Kursus::where('status_diterbitkan', true)
@@ -79,6 +94,9 @@ class VoucherController extends Controller
         return view('admin.vouchers.edit', compact('voucher', 'courses'));
     }
 
+    /**
+     * Memperbarui voucher.
+     */
     public function update(Request $request, Voucher $voucher)
     {
         $validated = $request->validate([
@@ -120,6 +138,9 @@ class VoucherController extends Controller
             ->with('success', 'Voucher berhasil diupdate!');
     }
 
+    /**
+     * Menghapus voucher.
+     */
     public function destroy(Voucher $voucher)
     {
         // Cek apakah voucher sudah digunakan
@@ -134,6 +155,9 @@ class VoucherController extends Controller
             ->with('success', 'Voucher berhasil dihapus!');
     }
 
+    /**
+     * Menampilkan detail voucher.
+     */
     public function show(Voucher $voucher)
     {
         $voucher->load(['usages.user', 'usages.transaction']);
@@ -141,6 +165,9 @@ class VoucherController extends Controller
         return view('admin.vouchers.show', compact('voucher'));
     }
 
+    /**
+     * Mengubah status status.
+     */
     public function toggleStatus(Voucher $voucher)
     {
         $voucher->update(['is_active' => !$voucher->is_active]);

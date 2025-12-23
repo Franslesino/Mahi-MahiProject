@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Password as PasswordBroker;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Str;
 
+/**
+ * Controller untuk fitur reset kata sandi.
+ */
 class ResetPasswordController extends Controller
 {
     /**

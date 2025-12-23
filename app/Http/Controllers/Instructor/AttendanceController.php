@@ -9,6 +9,9 @@ use App\Models\Kursus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Controller untuk fitur absensi.
+ */
 class AttendanceController extends Controller
 {
     /**

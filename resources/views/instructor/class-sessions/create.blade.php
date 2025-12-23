@@ -36,7 +36,9 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal <span
                             class="text-red-500">*</span></label>
-                    <input type="date" name="tanggal" value="{{ old('tanggal') }}" required
+                    <!-- Input date dengan atribut min untuk prevent back date (hanya tanggal hari ini ke depan) -->
+                    <input type="date" name="tanggal" value="{{ old('tanggal') }}" 
+                        min="{{ date('Y-m-d') }}" required
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#005F56] focus:border-transparent">
                     @error('tanggal')
                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -130,4 +132,45 @@
             </div>
         </form>
     </div>
+
+    <!-- JavaScript untuk validasi dan disable tanggal lampau -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ambil input element untuk tanggal
+            const tanggalInput = document.querySelector('input[name="tanggal"]');
+            
+            if (tanggalInput) {
+                // Dapatkan tanggal hari ini dalam format YYYY-MM-DD
+                const today = new Date();
+                const minDate = today.toISOString().split('T')[0];
+                
+                // Set attribute min untuk disable tanggal lampau
+                tanggalInput.setAttribute('min', minDate);
+                
+                // Tambahkan event listener untuk validasi saat user mengubah nilai
+                tanggalInput.addEventListener('change', function() {
+                    const selectedDate = new Date(this.value + 'T00:00:00');
+                    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                    
+                    // Cek apakah tanggal yang dipilih lebih awal dari hari ini
+                    if (selectedDate < todayDate) {
+                        // Tampilkan peringatan error
+                        alert('Tanggal tidak boleh lebih awal dari hari ini!');
+                        // Reset nilai input ke kosong
+                        this.value = '';
+                    }
+                });
+                
+                // Disable klik pada tanggal lampau di calendar picker (jika browser support)
+                tanggalInput.addEventListener('input', function() {
+                    const selectedDate = new Date(this.value + 'T00:00:00');
+                    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                    
+                    if (selectedDate < todayDate) {
+                        this.value = '';
+                    }
+                });
+            }
+        });
+    </script>
 @endsection

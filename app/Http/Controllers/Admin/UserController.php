@@ -8,13 +8,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
+/**
+ * Controller untuk fitur pengguna.
+ */
 class UserController extends Controller
 {
+    /**
+     * Menangani proses construct.
+     */
     public function __construct()
     {
         $this->middleware(['auth', 'role:admin']);
     }
 
+    /**
+     * Menampilkan daftar pengguna.
+     */
     public function index(Request $request)
     {
         $query = User::query();
@@ -37,12 +46,18 @@ class UserController extends Controller
         return view('admin.users.index', compact('users'));
     }
 
+    /**
+     * Menampilkan form tambah pengguna.
+     */
     public function create()
     {
         $instructors = User::where('role', 'instructor')->get();
         return view('admin.users.create', compact('instructors'));
     }
 
+    /**
+     * Menyimpan pengguna.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -151,11 +166,17 @@ class UserController extends Controller
         return view('admin.users.show', compact('user', 'stats'));
     }
 
+    /**
+     * Menampilkan form ubah pengguna.
+     */
     public function edit(User $user)
     {
         return view('admin.users.edit', compact('user'));
     }
 
+    /**
+     * Memperbarui pengguna.
+     */
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
@@ -192,6 +213,9 @@ class UserController extends Controller
             ->with('success', 'Pengguna berhasil diperbarui!');
     }
 
+    /**
+     * Menghapus pengguna.
+     */
     public function destroy(User $user)
     {
         $user->delete();

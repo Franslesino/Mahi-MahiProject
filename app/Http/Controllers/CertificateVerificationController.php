@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Sertifikat;
 use Illuminate\Http\Request;
 
+/**
+ * Controller untuk fitur verifikasi sertifikat.
+ */
 class CertificateVerificationController extends Controller
 {
     /**

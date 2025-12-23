@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Auth;
 use App\Services\SupabaseStorageService;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Controller untuk fitur profil.
+ */
 class ProfileController extends Controller
 {
     /**
@@ -29,9 +32,8 @@ class ProfileController extends Controller
 
         // Validasi input
         $validated = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name'  => ['required', 'string', 'max:255'],
-            'phone'      => ['nullable', 'string', 'max:20'],
+            'name'       => ['required', 'string', 'max:255'],
+            'phone'      => ['nullable', 'regex:/^[0-9+\-\s()]*$/', 'max:20'],
             'dob'        => ['nullable', 'date'],
             'gender'     => ['nullable', 'in:Pria,Wanita,Other'],
             'nim'        => ['nullable', 'string', 'max:50'],
@@ -40,19 +42,13 @@ class ProfileController extends Controller
         ]);
 
         // Update field teks
-        $user->first_name = $validated['first_name'];
-        $user->last_name  = $validated['last_name'];
-        $user->name       = trim($validated['first_name'].' '.$validated['last_name']);
+        $user->name = $validated['name'];
 
         $user->phone = $validated['phone'] ?? null;
-        $user->dob   = $validated['dob'] ?? null;
+        $user->dob = $validated['dob'] ?? null;
         $user->gender = $validated['gender'] ?? null;
-                $user->profesi    = $validated['profesi'] ?? null;
-
-
-        if (array_key_exists('nim', $validated)) {
-            $user->nim = $validated['nim'];
-        }
+        $user->profesi = $validated['profesi'] ?? null;
+        $user->nim = $validated['nim'] ?? null;
 
         /**
          * Upload Avatar (Foto Profil)

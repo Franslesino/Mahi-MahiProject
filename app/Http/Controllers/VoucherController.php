@@ -4,9 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Voucher;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
+/**
+ * Controller untuk fitur voucher.
+ */
 class VoucherController extends Controller
 {
+    /**
+     * Memvalidasi voucher.
+     */
     public function validateVoucher(Request $request)
     {
         $request->validate([
@@ -15,6 +22,15 @@ class VoucherController extends Controller
             'price' => 'required|numeric|min:0',
         ]);
 
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda harus login terlebih dahulu untuk menggunakan voucher.'
+            ], 401);
+        }
+
+        $userId = Auth::id();
         $voucher = Voucher::where('code', strtoupper($request->voucher_code))->first();
 
         // Check if voucher exists
@@ -34,7 +50,7 @@ class VoucherController extends Controller
         }
 
         // Check if user can use this voucher
-        if (!$voucher->canBeUsedBy(auth()->id(), $request->course_id)) {
+        if (!$voucher->canBeUsedBy($userId, $request->course_id)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Anda tidak dapat menggunakan voucher ini atau sudah pernah menggunakannya.'

@@ -25,6 +25,16 @@ use Illuminate\Support\Facades\Auth;
 // Public Routes
 // ==========================
 Route::get('/', function (Request $request) {
+    if (Auth::check()) {
+        $user = Auth::user();
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+        if ($user->role === 'instructor') {
+            return redirect()->route('instructor.dashboard');
+        }
+    }
+
     $query = Kursus::where('status_diterbitkan', true);
 
     // 🔍 Search (by judul & deskripsi)
@@ -416,6 +426,12 @@ Route::middleware('auth')->group(function () {
 
             // Dashboard (using controller)
             Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+            // Certificate access (admin)
+            Route::get('enrollments/{enrollment}/certificate/download', [StudentController::class, 'downloadCertificate'])
+                ->name('certificate.download');
+            Route::get('enrollments/{enrollment}/certificate/stream', [StudentController::class, 'streamCertificate'])
+                ->name('certificate.stream');
 
             // Users management
             Route::resource('users', UserController::class);

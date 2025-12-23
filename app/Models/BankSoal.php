@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Model untuk entitas bank soal.
+ */
 class BankSoal extends Model
 {
     protected $table = 'bank_soal';
@@ -15,6 +18,9 @@ class BankSoal extends Model
         'kategori',
     ];
 
+    /**
+     * Relasi hasMany ke OpsiJawaban.
+     */
     public function opsiJawaban()
     {
         return $this->hasMany(OpsiJawaban::class, 'bank_soal_id');
@@ -28,11 +34,17 @@ class BankSoal extends Model
         return $this->opsiJawaban();
     }
 
+    /**
+     * Relasi hasMany ke JawabanPeserta.
+     */
     public function jawabanPeserta()
     {
         return $this->hasMany(JawabanPeserta::class, 'bank_soal_id');
     }
 
+    /**
+     * Menangani logika model.
+     */
     public function relasiQuiz()
     {
         return $this->belongsToMany(

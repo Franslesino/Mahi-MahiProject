@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Model untuk entitas pembayaran.
+ */
 class Pembayaran extends Model
 {
     protected $table = 'pembayaran';
@@ -23,11 +26,17 @@ class Pembayaran extends Model
         'tanggal_pembayaran' => 'datetime',
     ];
 
+    /**
+     * Relasi belongsTo ke Pesanan.
+     */
     public function pesanan()
     {
         return $this->belongsTo(Pesanan::class, 'pesanan_id');
     }
 
+    /**
+     * Relasi belongsTo ke User.
+     */
     public function user()
     {
         return $this->belongsTo(User::class);

@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Model untuk entitas kuis.
+ */
 class Quiz extends Model
 {
     protected $table = 'quiz';
@@ -26,11 +29,17 @@ class Quiz extends Model
         'is_active' => 'boolean',
     ];
 
+    /**
+     * Relasi belongsTo ke Kursus.
+     */
     public function kursus()
     {
         return $this->belongsTo(Kursus::class, 'kursus_id');
     }
 
+    /**
+     * Menangani logika model.
+     */
     public function soal()
     {
         return $this->belongsToMany(
@@ -49,11 +58,17 @@ class Quiz extends Model
         return $this->soal()->orderBy('relasi_quiz.urutan');
     }
 
+    /**
+     * Relasi hasMany ke JawabanPeserta.
+     */
     public function jawabanPeserta()
     {
         return $this->hasMany(JawabanPeserta::class, 'quiz_id');
     }
 
+    /**
+     * Relasi hasMany ke RelasiQuiz.
+     */
     public function relasiQuiz()
     {
         return $this->hasMany(RelasiQuiz::class, 'quiz_id');

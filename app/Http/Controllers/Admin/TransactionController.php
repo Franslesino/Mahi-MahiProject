@@ -6,8 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 
+/**
+ * Controller untuk fitur transaksi.
+ */
 class TransactionController extends Controller
 {
+    /**
+     * Menampilkan daftar transaksi.
+     */
     public function index(Request $request)
     {
         $query = Transaction::with(['user', 'kursus']);
@@ -62,6 +68,9 @@ class TransactionController extends Controller
         return view('admin.transactions.index', compact('transactions', 'stats'));
     }
 
+    /**
+     * Menampilkan detail transaksi.
+     */
     public function show(Transaction $transaction)
     {
         $transaction->load(['user', 'kursus.pembuat']);
@@ -69,6 +78,9 @@ class TransactionController extends Controller
         return view('admin.transactions.show', compact('transaction'));
     }
 
+    /**
+     * Memperbarui status.
+     */
     public function updateStatus(Request $request, Transaction $transaction)
     {
         $request->validate([
@@ -100,6 +112,9 @@ class TransactionController extends Controller
         return redirect()->back()->with('success', 'Status transaksi berhasil diperbarui');
     }
 
+    /**
+     * Menghapus transaksi.
+     */
     public function destroy(Transaction $transaction)
     {
         // Only allow deletion of cancelled/expired transactions
@@ -113,6 +128,9 @@ class TransactionController extends Controller
             ->with('success', 'Transaksi berhasil dihapus');
     }
 
+    /**
+     * Mengekspor transaksi.
+     */
     public function export(Request $request)
     {
         // TODO: Implement export to Excel/PDF

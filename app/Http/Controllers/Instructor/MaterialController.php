@@ -18,8 +18,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
+/**
+ * Controller untuk fitur materi.
+ */
 class MaterialController extends Controller
 {
+    /**
+     * Menampilkan daftar materi.
+     */
     public function index()
     {
         $instructorId = Auth::id();
@@ -38,6 +44,9 @@ class MaterialController extends Controller
         return view('instructor.courses', compact('courses'));
     }
 
+    /**
+     * Menampilkan detail materi.
+     */
     public function show(Kursus $course)
     {
         if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
@@ -56,7 +65,7 @@ class MaterialController extends Controller
 
         // Stats
         $materialIds = $course->materi()->pluck('id');
-        $totalMaterials = $materialIds->count(); // angka display apa adanya
+        $totalMaterials = $materialIds->count(); // angka display
         $totalMaterialsForProgress = max(1, $totalMaterials); // divisor progress supaya tidak 0
         $totalVideos = $course->materi()->where('type', 'video')->count();
         $studentsCount = $course->enrollments()
@@ -159,6 +168,9 @@ class MaterialController extends Controller
         ));
     }
 
+    /**
+     * Menampilkan pratinjau materi.
+     */
     public function preview(Kursus $course, Materi $material)
     {
         if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
@@ -187,6 +199,9 @@ class MaterialController extends Controller
         ));
     }
 
+    /**
+     * Menayangkan materi file.
+     */
     public function streamMaterialFile(Kursus $course, Materi $material)
     {
         if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
@@ -200,6 +215,9 @@ class MaterialController extends Controller
         return $this->streamMaterialAsset($material);
     }
 
+    /**
+     * Menayangkan materi asset.
+     */
     protected function streamMaterialAsset(Materi $material)
     {
         $source = $material->file_url ?: $material->url_konten;
@@ -213,6 +231,11 @@ class MaterialController extends Controller
         $filenameBase = Str::slug($material->judul ?? $material->title ?? 'material');
         $extension = pathinfo(parse_url($source, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION);
         $downloadName = $filenameBase . ($extension ? '.' . $extension : '');
+
+        if (filter_var($source, FILTER_VALIDATE_URL)) {
+            $publicUrl = $material->file_url_full ?? $source;
+            return redirect()->away($publicUrl);
+        }
 
         $supabase = app(SupabaseStorageService::class);
         $supabaseObject = $supabase->fetchObject($source);
@@ -278,6 +301,9 @@ class MaterialController extends Controller
     }
 
 
+    /**
+     * Menampilkan form tambah materi.
+     */
     public function create(Kursus $course)
     {
         if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
@@ -290,6 +316,9 @@ class MaterialController extends Controller
         return view('instructor.materials.create', compact('course', 'sections'));
     }
 
+    /**
+     * Menyimpan materi.
+     */
     public function store(Request $request, Kursus $course)
     {
         if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
@@ -341,7 +370,7 @@ class MaterialController extends Controller
 
         // Add class session validation rules
         if ($request->type === 'class_session') {
-            $rules['session_date'] = 'required|date';
+            $rules['session_date'] = 'required|date|date_format:Y-m-d|after_or_equal:today';
             $rules['session_start_time'] = 'required';
             $rules['session_end_time'] = 'required';
             $rules['session_location'] = 'nullable|string|max:255';
@@ -349,7 +378,9 @@ class MaterialController extends Controller
             $rules['session_type'] = 'required|in:offline,online';
         }
 
-        $request->validate($rules);
+        $request->validate($rules, [
+            'session_date.after_or_equal' => 'Tanggal sesi tidak boleh lebih awal dari hari ini.',
+        ]);
 
         $fileUrl = null;
         $filePublicUrl = null;
@@ -418,6 +449,9 @@ class MaterialController extends Controller
             ->with('success', $successMessage);
     }
 
+    /**
+     * Menampilkan form ubah materi.
+     */
     public function edit(Kursus $course, Materi $material)
     {
         if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
@@ -430,6 +464,9 @@ class MaterialController extends Controller
         return view('instructor.materials.edit', compact('course', 'material', 'sections'));
     }
 
+    /**
+     * Memperbarui materi.
+     */
     public function update(Request $request, Kursus $course, Materi $material)
     {
         if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
@@ -478,7 +515,7 @@ class MaterialController extends Controller
 
         // Add class session validation rules only if type is class_session
         if ($request->type === 'class_session') {
-            $rules['session_date'] = 'required|date';
+            $rules['session_date'] = 'required|date|date_format:Y-m-d|after_or_equal:today';
             $rules['session_start_time'] = 'required';
             $rules['session_end_time'] = 'required';
             $rules['session_location'] = 'nullable|string|max:255';
@@ -486,7 +523,9 @@ class MaterialController extends Controller
             $rules['session_type'] = ['required', Rule::in(['offline', 'online'])];
         }
 
-        $request->validate($rules);
+        $request->validate($rules, [
+            'session_date.after_or_equal' => 'Tanggal sesi tidak boleh lebih awal dari hari ini.',
+        ]);
 
         $updateData = [
             'section_id' => $request->section_id,
@@ -548,6 +587,9 @@ class MaterialController extends Controller
             ->with('success', 'Materi berhasil diperbarui.');
     }
 
+    /**
+     * Menghapus materi.
+     */
     public function destroy(Kursus $course, Materi $material)
     {
         if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {
@@ -575,6 +617,9 @@ class MaterialController extends Controller
             ->with('success', 'Materi berhasil dihapus.');
     }
 
+    /**
+     * Menghapus all.
+     */
     public function destroyAll(Kursus $course)
     {
         if ($course->pembuat !== Auth::id() && $course->instructor_id !== Auth::id()) {

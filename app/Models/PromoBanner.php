@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
+/**
+ * Model untuk entitas promo banner.
+ */
 class PromoBanner extends Model
 {
     protected $fillable = [
@@ -29,6 +32,9 @@ class PromoBanner extends Model
     ];
 
     // Scope for active banners
+    /**
+     * Scope query untuk active.
+     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true)
@@ -44,6 +50,9 @@ class PromoBanner extends Model
     }
 
     // Check if banner is valid
+    /**
+     * Memeriksa valid.
+     */
     public function isValid(): bool
     {
         if (!$this->is_active) {

@@ -9,8 +9,14 @@ use App\Models\Transaction;
 use App\Models\Enrollment;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Controller untuk fitur dashboard.
+ */
 class DashboardController extends Controller
 {
+    /**
+     * Menampilkan daftar dashboard.
+     */
     public function index()
     {
         // Basic Stats

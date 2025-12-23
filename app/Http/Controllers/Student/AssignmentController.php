@@ -9,8 +9,14 @@ use App\Models\Enrollment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Controller untuk fitur tugas.
+ */
 class AssignmentController extends Controller
 {
+    /**
+     * Menampilkan daftar tugas.
+     */
     public function index()
     {
         // Get enrolled courses
@@ -30,6 +36,9 @@ class AssignmentController extends Controller
         return view('student.assignments.index', compact('assignments'));
     }
 
+    /**
+     * Menampilkan detail tugas.
+     */
     public function show(Assignment $assignment)
     {
         // Check if user is enrolled
@@ -68,6 +77,9 @@ class AssignmentController extends Controller
         return view('student.assignments.show', compact('assignment', 'submissions', 'canStartNew', 'inProgressSubmission'));
     }
 
+    /**
+     * Memulai tugas.
+     */
     public function start(Assignment $assignment)
     {
         // Check if user is enrolled
@@ -121,6 +133,9 @@ class AssignmentController extends Controller
         return redirect()->route('student.assignments.take', [$assignment, $submission]);
     }
 
+    /**
+     * Menangani proses take.
+     */
     public function take(Assignment $assignment, Submission $submission)
     {
         // Verify ownership
@@ -155,6 +170,9 @@ class AssignmentController extends Controller
         return view('student.assignments.take', compact('assignment', 'submission', 'questions'));
     }
 
+    /**
+     * Mengirim tugas.
+     */
     public function submit(Assignment $assignment, Submission $submission, Request $request)
     {
         // Verify ownership
@@ -226,6 +244,9 @@ class AssignmentController extends Controller
             ->with('success', 'Assignment berhasil diserahkan!');
     }
 
+    /**
+     * Menampilkan hasil tugas.
+     */
     public function result(Assignment $assignment, Submission $submission)
     {
         // Verify ownership

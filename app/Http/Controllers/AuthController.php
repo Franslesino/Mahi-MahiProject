@@ -12,6 +12,9 @@ use Illuminate\Validation\Rules\Password;
 use Laravel\Socialite\Facades\Socialite;
 use Exception;
 
+/**
+ * Controller untuk fitur autentikasi.
+ */
 class AuthController extends Controller
 {
     /**

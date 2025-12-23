@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Model untuk entitas sertifikat.
+ */
 class Sertifikat extends Model
 {
     protected $table = 'sertifikat';
@@ -23,6 +26,9 @@ class Sertifikat extends Model
         'tanggal_diterbitkan' => 'datetime',
     ];
 
+    /**
+     * Relasi belongsTo ke Enrollment.
+     */
     public function enrollment()
     {
         return $this->belongsTo(Enrollment::class, 'enrollment_id');

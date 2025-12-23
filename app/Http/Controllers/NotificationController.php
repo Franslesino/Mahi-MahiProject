@@ -6,6 +6,9 @@ use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Controller untuk fitur notifikasi.
+ */
 class NotificationController extends Controller
 {
     /**

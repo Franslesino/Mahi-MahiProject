@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Model untuk entitas absensi.
+ */
 class Attendance extends Model
 {
     use HasFactory;
@@ -33,6 +36,9 @@ class Attendance extends Model
     const STATUS_SAKIT = 'sakit';
     const STATUS_TERLAMBAT = 'terlambat';
 
+    /**
+     * Mengambil status options.
+     */
     public static function getStatusOptions()
     {
         return [
@@ -45,42 +51,63 @@ class Attendance extends Model
     }
 
     // Relasi ke ClassSession
+    /**
+     * Relasi belongsTo ke ClassSession.
+     */
     public function classSession()
     {
         return $this->belongsTo(ClassSession::class, 'class_session_id');
     }
 
     // Relasi ke Materi (for material-based class sessions)
+    /**
+     * Relasi belongsTo ke Materi.
+     */
     public function materi()
     {
         return $this->belongsTo(Materi::class, 'materi_id');
     }
 
     // Relasi ke Enrollment
+    /**
+     * Relasi belongsTo ke Enrollment.
+     */
     public function enrollment()
     {
         return $this->belongsTo(Enrollment::class, 'enrollment_id');
     }
 
     // Relasi ke User (student)
+    /**
+     * Relasi belongsTo ke User.
+     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
     // Relasi ke User yang update (instructor)
+    /**
+     * Relasi belongsTo ke User.
+     */
     public function updatedByUser()
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
     // Accessor untuk label status
+    /**
+     * Accessor untuk atribut status label.
+     */
     public function getStatusLabelAttribute()
     {
         return self::getStatusOptions()[$this->status] ?? $this->status;
     }
 
     // Accessor untuk badge warna
+    /**
+     * Accessor untuk atribut status badge.
+     */
     public function getStatusBadgeAttribute()
     {
         $colors = [

@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
+/**
+ * Model untuk entitas transaksi.
+ */
 class Transaction extends Model
 {
     use HasFactory;
@@ -42,49 +45,76 @@ class Transaction extends Model
     ];
 
     // Relationships
+    /**
+     * Relasi belongsTo ke User.
+     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Relasi belongsTo ke Kursus.
+     */
     public function kursus()
     {
         return $this->belongsTo(Kursus::class);
     }
 
     // Scopes
+    /**
+     * Scope query untuk pending.
+     */
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
     }
 
+    /**
+     * Scope query untuk paid.
+     */
     public function scopePaid($query)
     {
         return $query->where('status', 'paid');
     }
 
+    /**
+     * Scope query untuk expired.
+     */
     public function scopeExpired($query)
     {
         return $query->where('status', 'expired');
     }
 
     // Helper Methods
+    /**
+     * Memeriksa pending.
+     */
     public function isPending()
     {
         return $this->status === 'pending';
     }
 
+    /**
+     * Memeriksa paid.
+     */
     public function isPaid()
     {
         return $this->status === 'paid';
     }
 
+    /**
+     * Memeriksa expired.
+     */
     public function isExpired()
     {
         return $this->status === 'expired' || 
                ($this->payment_deadline && Carbon::now()->gt($this->payment_deadline));
     }
 
+    /**
+     * Menangani logika model.
+     */
     public function markAsPaid()
     {
         $this->update([
@@ -93,6 +123,9 @@ class Transaction extends Model
         ]);
     }
 
+    /**
+     * Menangani logika model.
+     */
     public function markAsExpired()
     {
         $this->update([
@@ -133,6 +166,9 @@ class Transaction extends Model
         return $midtransService->handleNotification($notification);
     }
 
+    /**
+     * Accessor untuk atribut status badge.
+     */
     public function getStatusBadgeAttribute()
     {
         return match($this->status) {
@@ -145,6 +181,9 @@ class Transaction extends Model
         };
     }
 
+    /**
+     * Accessor untuk atribut formatted deadline.
+     */
     public function getFormattedDeadlineAttribute()
     {
         if (!$this->payment_deadline) return null;
@@ -152,6 +191,9 @@ class Transaction extends Model
     }
 
     // Generate unique transaction code
+    /**
+     * Menangani logika model.
+     */
     public static function generateTransactionCode()
     {
         do {

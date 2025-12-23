@@ -18,8 +18,14 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
+/**
+ * Controller untuk fitur kursus.
+ */
 class CourseController extends Controller
 {
+    /**
+     * Menampilkan daftar kursus.
+     */
     public function index(Request $request)
     {
         $query = Kursus::with(['pembuat', 'instructor']);
@@ -46,12 +52,18 @@ class CourseController extends Controller
         return view('admin.courses.index', compact('courses'));
     }
 
+    /**
+     * Menampilkan form tambah kursus.
+     */
     public function create()
     {
         $instructors = User::where('role', 'instructor')->get();
         return view('admin.courses.create', compact('instructors'));
     }
 
+    /**
+     * Menyimpan kursus.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -125,6 +137,9 @@ class CourseController extends Controller
             ->with('success', 'Kursus berhasil ditambahkan!');
     }
 
+    /**
+     * Menampilkan form ubah kursus.
+     */
     public function edit(Kursus $course)
     {
         $instructors = User::where('role', 'instructor')->get();
@@ -132,6 +147,9 @@ class CourseController extends Controller
         return view('admin.courses.edit', compact('course', 'instructors'));
     }
 
+    /**
+     * Memperbarui kursus.
+     */
     public function update(Request $request, Kursus $course)
     {
         $validated = $request->validate([
@@ -206,6 +224,9 @@ class CourseController extends Controller
             ->with('success', 'Kursus berhasil diupdate!');
     }
 
+    /**
+     * Menghapus kursus.
+     */
     public function destroy(Kursus $course)
     {
         if ($course->image) {
@@ -223,6 +244,9 @@ class CourseController extends Controller
             ->with('success', 'Kursus berhasil dihapus!');
     }
 
+    /**
+     * Menampilkan detail kursus.
+     */
     public function show(Kursus $course)
     {
         $course->load([
@@ -676,12 +700,14 @@ class CourseController extends Controller
             'status' => 'nullable|in:published,draft',
             'status_terkunci' => 'nullable|boolean',
             // Class session fields
-            'session_date' => 'required_if:type,class_session|nullable|date',
+            'session_date' => 'required_if:type,class_session|nullable|date|date_format:Y-m-d|after_or_equal:today',
             'session_start_time' => 'required_if:type,class_session|nullable',
             'session_end_time' => 'required_if:type,class_session|nullable',
             'session_location' => 'nullable|string|max:255',
             'session_meeting_link' => 'nullable|url',
             'session_type' => 'required_if:type,class_session|nullable|in:offline,online',
+        ], [
+            'session_date.after_or_equal' => 'Tanggal sesi tidak boleh lebih awal dari hari ini.',
         ]);
 
         $lastMaterial = \App\Models\Materi::where('section_id', $section->id)
@@ -751,12 +777,14 @@ class CourseController extends Controller
             'status' => 'nullable|in:published,draft',
             'duration' => 'nullable|integer|min:0',
             // Class session fields
-            'session_date' => 'required_if:type,class_session|nullable|date',
+            'session_date' => 'required_if:type,class_session|nullable|date|date_format:Y-m-d|after_or_equal:today',
             'session_start_time' => 'required_if:type,class_session|nullable',
             'session_end_time' => 'required_if:type,class_session|nullable',
             'session_location' => 'nullable|string|max:255',
             'session_meeting_link' => 'nullable|url',
             'session_type' => 'required_if:type,class_session|nullable|in:offline,online',
+        ], [
+            'session_date.after_or_equal' => 'Tanggal sesi tidak boleh lebih awal dari hari ini.',
         ]);
 
         $data = [
@@ -847,6 +875,9 @@ class CourseController extends Controller
         ));
     }
 
+    /**
+     * Menayangkan materi file.
+     */
     public function streamMaterialFile(Kursus $course, Materi $material)
     {
         if ($material->kursus_id !== $course->id) {
@@ -856,6 +887,9 @@ class CourseController extends Controller
         return $this->streamMaterialAsset($material);
     }
 
+    /**
+     * Menayangkan materi asset.
+     */
     protected function streamMaterialAsset(Materi $material)
     {
         $source = $material->file_url ?: $material->url_konten;
@@ -869,6 +903,11 @@ class CourseController extends Controller
         $filenameBase = Str::slug($material->judul ?? $material->title ?? 'material');
         $extension = pathinfo(parse_url($source, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION);
         $downloadName = $filenameBase . ($extension ? '.' . $extension : '');
+
+        if (filter_var($source, FILTER_VALIDATE_URL)) {
+            $publicUrl = $material->file_url_full ?? $source;
+            return redirect()->away($publicUrl);
+        }
 
         $supabase = app(SupabaseStorageService::class);
         $supabaseObject = $supabase->fetchObject($source);

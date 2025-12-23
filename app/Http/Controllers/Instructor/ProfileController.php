@@ -9,8 +9,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Controller untuk fitur profil.
+ */
 class ProfileController extends Controller
 {
+    /**
+     * Menampilkan form ubah profil.
+     */
     public function edit()
     {
         $user = Auth::user();
@@ -18,6 +24,9 @@ class ProfileController extends Controller
         return view('instructor.profile-sidebar', compact('user'));
     }
 
+    /**
+     * Memperbarui profil.
+     */
     public function update(Request $request)
     {
         $user = Auth::user();

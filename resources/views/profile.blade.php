@@ -77,25 +77,13 @@
                     </div>
                 </div>
 
-                {{-- First Name --}}
+                {{-- Full Name --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Nama Depan</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap</label>
                     <input
                         type="text"
-                        name="first_name"
-                        value="{{ old('first_name', $user->first_name) }}"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
-                        required
-                    >
-                </div>
-
-                {{-- Last Name --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Nama Belakang</label>
-                    <input
-                        type="text"
-                        name="last_name"
-                        value="{{ old('last_name', $user->last_name) }}"
+                        name="name"
+                        value="{{ old('name', $user->name) }}"
                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
                         required
                     >
@@ -118,6 +106,8 @@
                     <input
                         type="tel"
                         name="phone"
+                        inputmode="numeric"
+                        pattern="[0-9+\-\s()]*"
                         value="{{ old('phone', $user->phone) }}"
                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
                         placeholder="08xxxxxxxxxx"
@@ -168,18 +158,7 @@
                     </select>
                 </div>
 
-                {{-- (Opsional) NIM kalau kolom ada --}}
-                @if (Schema::hasColumn('users', 'nim'))
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">NIM</label>
-                        <input
-                            type="text"
-                            name="nim"
-                            value="{{ old('nim', $user->nim) }}"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
-                        >
-                    </div>
-                @endif
+              
 
                 {{-- Tombol --}}
                 <div class="flex gap-3 pt-4">

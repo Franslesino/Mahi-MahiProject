@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Model untuk entitas voucher usage.
+ */
 class VoucherUsage extends Model
 {
     use HasFactory;
@@ -25,16 +28,25 @@ class VoucherUsage extends Model
     ];
 
     // Relationships
+    /**
+     * Relasi belongsTo ke Voucher.
+     */
     public function voucher()
     {
         return $this->belongsTo(Voucher::class);
     }
 
+    /**
+     * Relasi belongsTo ke User.
+     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Relasi belongsTo ke Transaction.
+     */
     public function transaction()
     {
         return $this->belongsTo(Transaction::class);

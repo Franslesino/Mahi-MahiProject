@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Model untuk entitas voucher.
+ */
 class Voucher extends Model
 {
     use HasFactory;
@@ -38,17 +41,26 @@ class Voucher extends Model
     ];
 
     // Relationships
+    /**
+     * Relasi hasMany ke VoucherUsage.
+     */
     public function usages()
     {
         return $this->hasMany(VoucherUsage::class);
     }
 
+    /**
+     * Relasi hasManyThrough ke Transaction.
+     */
     public function transactions()
     {
         return $this->hasManyThrough(Transaction::class, VoucherUsage::class);
     }
 
     // Scopes
+    /**
+     * Scope query untuk active.
+     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true)
@@ -63,6 +75,9 @@ class Voucher extends Model
     }
 
     // Helper Methods
+    /**
+     * Memeriksa valid.
+     */
     public function isValid(): bool
     {
         if (!$this->is_active) {
@@ -87,6 +102,9 @@ class Voucher extends Model
         return true;
     }
 
+    /**
+     * Memeriksa be used by.
+     */
     public function canBeUsedBy($userId, $courseId = null): bool
     {
         // Check if voucher is valid
@@ -120,6 +138,9 @@ class Voucher extends Model
         return true;
     }
 
+    /**
+     * Menghitung discount.
+     */
     public function calculateDiscount($price): float
     {
         if ($this->type === 'percentage') {
@@ -137,11 +158,17 @@ class Voucher extends Model
         return min($this->value, $price); // Discount tidak boleh lebih dari harga
     }
 
+    /**
+     * Menangani logika model.
+     */
     public function incrementUsage(): void
     {
         $this->increment('used_count');
     }
 
+    /**
+     * Accessor untuk atribut discount text.
+     */
     public function getDiscountTextAttribute(): string
     {
         if ($this->type === 'percentage') {

@@ -12,8 +12,14 @@ use App\Models\RelasiQuiz;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Controller untuk fitur kuis final.
+ */
 class FinalQuizController extends Controller
 {
+    /**
+     * Menampilkan form ubah kuis final.
+     */
     public function edit($kursusId)
     {
         $kursus = Kursus::with(['finalQuiz.soal.options'])->findOrFail($kursusId);
@@ -32,6 +38,9 @@ class FinalQuizController extends Controller
         return view('admin.courses.final-quiz-settings', compact('kursus', 'availableQuizzes', 'questionBanks'));
     }
 
+    /**
+     * Memperbarui kuis final.
+     */
     public function update(Request $request, $kursusId)
     {
         $kursus = Kursus::findOrFail($kursusId);
@@ -73,6 +82,9 @@ class FinalQuizController extends Controller
             ->with('success', 'Pengaturan final quiz berhasil diperbarui!');
     }
 
+    /**
+     * Menampilkan form tambah kuis.
+     */
     public function createQuiz($kursusId)
     {
         $kursus = Kursus::findOrFail($kursusId);
@@ -86,6 +98,9 @@ class FinalQuizController extends Controller
         return view('admin.courses.create-final-quiz', compact('kursus'));
     }
 
+    /**
+     * Menyimpan kuis.
+     */
     public function storeQuiz(Request $request, $kursusId)
     {
         $kursus = Kursus::findOrFail($kursusId);
@@ -124,6 +139,9 @@ class FinalQuizController extends Controller
             ->with('success', 'Final quiz berhasil dibuat! Silakan tambahkan soal-soal.');
     }
 
+    /**
+     * Mengimpor from bank soal.
+     */
     public function importFromBankSoal(Request $request, $kursusId)
     {
         $kursus = Kursus::with('finalQuiz')->findOrFail($kursusId);
@@ -153,6 +171,9 @@ class FinalQuizController extends Controller
             ->with('success', count($validated['question_ids']) . ' soal berhasil ditambahkan!');
     }
 
+    /**
+     * Menyimpan new soal.
+     */
     public function storeNewQuestion(Request $request, $kursusId)
     {
         $kursus = Kursus::with('finalQuiz')->findOrFail($kursusId);
@@ -246,6 +267,9 @@ class FinalQuizController extends Controller
             ->with('success', 'Soal baru berhasil ditambahkan!');
     }
 
+    /**
+     * Menghapus soal.
+     */
     public function removeQuestion($kursusId, $questionId)
     {
         $kursus = Kursus::with('finalQuiz')->findOrFail($kursusId);
@@ -280,6 +304,9 @@ class FinalQuizController extends Controller
             ->with('success', 'Soal berhasil dihapus!');
     }
 
+    /**
+     * Mengubah status activation.
+     */
     public function toggleActivation($kursusId)
     {
         $kursus = Kursus::with('finalQuiz.soal')->findOrFail($kursusId);
@@ -302,6 +329,9 @@ class FinalQuizController extends Controller
             ->with('success', "Final quiz berhasil {$status}!");
     }
 
+    /**
+     * Menampilkan statistik kuis final.
+     */
     public function statistics($kursusId)
     {
         $kursus = Kursus::with('finalQuiz')->findOrFail($kursusId);

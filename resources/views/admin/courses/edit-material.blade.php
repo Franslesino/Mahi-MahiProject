@@ -157,7 +157,12 @@
                     <div class="grid md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Sesi *</label>
-                            <input type="date" name="session_date" value="{{ old('session_date', $material->session_date ? $material->session_date->format('Y-m-d') : '') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <!-- Input date dengan atribut min untuk prevent back date (hanya tanggal hari ini ke depan) -->
+                            <input type="date" name="session_date" 
+                                value="{{ old('session_date', $material->session_date ? $material->session_date->format('Y-m-d') : '') }}" 
+                                min="{{ date('Y-m-d') }}"
+                                required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Jam Mulai *</label>
@@ -287,6 +292,42 @@ function toggleContentFields() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     toggleContentFields();
+    
+    // Validasi date input untuk prevent back date
+    const sessionDateInput = document.querySelector('input[name="session_date"]');
+    
+    if (sessionDateInput) {
+        // Dapatkan tanggal hari ini dalam format YYYY-MM-DD
+        const today = new Date();
+        const minDate = today.toISOString().split('T')[0];
+        
+        // Set attribute min untuk disable tanggal lampau
+        sessionDateInput.setAttribute('min', minDate);
+        
+        // Tambahkan event listener untuk validasi saat user mengubah nilai
+        sessionDateInput.addEventListener('change', function() {
+            const selectedDate = new Date(this.value + 'T00:00:00');
+            const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            
+            // Cek apakah tanggal yang dipilih lebih awal dari hari ini
+            if (selectedDate < todayDate) {
+                // Tampilkan peringatan error
+                alert('Tanggal sesi kelas tidak boleh lebih awal dari hari ini!');
+                // Reset nilai input ke kosong
+                this.value = '';
+            }
+        });
+        
+        // Disable klik pada tanggal lampau di calendar picker (jika browser support)
+        sessionDateInput.addEventListener('input', function() {
+            const selectedDate = new Date(this.value + 'T00:00:00');
+            const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            
+            if (selectedDate < todayDate) {
+                this.value = '';
+            }
+        });
+    }
 });
 </script>
 @endsection

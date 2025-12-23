@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 /**
+ * Model untuk entitas pengguna.
+ *
  * @property int $id
  * @property string $name
  * @property string $email
@@ -58,11 +60,17 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     // --- Relasi ke Kursus ---
+    /**
+     * Relasi hasMany ke Kursus.
+     */
     public function kursusAsInstructor()
     {
         return $this->hasMany(Kursus::class, 'pembuat');
     }
 
+    /**
+     * Relasi hasMany ke Kursus.
+     */
     public function instructorCourses()
     {
         return $this->hasMany(Kursus::class, 'instructor_id');
@@ -145,12 +153,18 @@ class User extends Authenticatable implements MustVerifyEmail
 
 
     // --- Relasi ke Materi ---
+    /**
+     * Relasi hasMany ke Materi.
+     */
     public function materi()
     {
         return $this->hasMany(Materi::class);
     }
 
     // --- Relasi ke Pesanan ---
+    /**
+     * Relasi hasMany ke Pesanan.
+     */
     public function pesanan()
     {
         return $this->hasMany(Pesanan::class);
@@ -161,33 +175,51 @@ class User extends Authenticatable implements MustVerifyEmail
 
 
     // --- Relasi ke Notifications ---
+    /**
+     * Relasi hasMany ke Notification.
+     */
     public function notifications()
     {
         return $this->hasMany(Notification::class)->orderBy('created_at', 'desc');
     }
 
+    /**
+     * Relasi hasMany ke Notification.
+     */
     public function unreadNotifications()
     {
         return $this->hasMany(Notification::class)->whereNull('read_at')->orderBy('created_at', 'desc');
     }
 
     // --- Role helper ---
+    /**
+     * Memeriksa admin.
+     */
     public function isAdmin()
     {
         return $this->role === 'admin';
     }
 
+    /**
+     * Memeriksa instructor.
+     */
     public function isInstructor()
     {
         return $this->role === 'instructor';
     }
 
+    /**
+     * Memeriksa student.
+     */
     public function isStudent()
     {
         return $this->role === 'student';
     }
 
     // --- Google OAuth helper ---
+    /**
+     * Memeriksa google pengguna.
+     */
     public function isGoogleUser()
     {
         return !is_null($this->google_id);

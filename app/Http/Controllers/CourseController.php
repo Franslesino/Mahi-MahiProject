@@ -7,8 +7,14 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth; //
 
+/**
+ * Controller untuk fitur kursus.
+ */
 class CourseController extends Controller
 {
+    /**
+     * Menampilkan daftar kursus.
+     */
     public function index()
     {
         $courses = Kursus::with(['pembuat'])
@@ -19,12 +25,18 @@ class CourseController extends Controller
         return view('admin.courses.index', compact('courses'));
     }
 
+    /**
+     * Menampilkan form tambah kursus.
+     */
     public function create()
     {
         $instructors = User::where('role', 'instructor')->get();
         return view('admin.courses.create', compact('instructors'));
     }
 
+    /**
+     * Menyimpan kursus.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -47,12 +59,18 @@ class CourseController extends Controller
                          ->with('success', 'Kursus berhasil ditambahkan!');
     }
 
+    /**
+     * Menampilkan form ubah kursus.
+     */
     public function edit(Kursus $kursus)
     {
         $instructors = User::where('role', 'instructor')->get();
         return view('admin.courses.edit', compact('kursus', 'instructors'));
     }
 
+    /**
+     * Memperbarui kursus.
+     */
     public function update(Request $request, Kursus $kursus)
     {
         $validated = $request->validate([
@@ -72,6 +90,9 @@ class CourseController extends Controller
                         ->with('success', 'Kursus berhasil diupdate!');
     }
 
+    /**
+     * Menghapus kursus.
+     */
     public function destroy(Kursus $kursus)
     {
         $kursus->delete();
@@ -80,6 +101,9 @@ class CourseController extends Controller
                         ->with('success', 'Kursus berhasil dihapus!');
     }
 
+    /**
+     * Menampilkan detail kursus.
+     */
     public function show(Kursus $kursus)
     {
         $kursus->load(['pembuat', 'materi']);

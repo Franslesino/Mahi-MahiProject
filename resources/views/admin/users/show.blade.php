@@ -434,7 +434,7 @@
                                                 </div>
                                             </div>
                                             @if($sertifikat->url_unduhan)
-                                                <a href="{{ $sertifikat->url_unduhan }}" target="_blank"
+                                                <a href="{{ route('admin.certificate.download', $sertifikat->enrollment) }}"
                                                     class="ml-4 px-3 py-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 flex items-center gap-2">
                                                     <i class="fas fa-download"></i>
                                                     <span class="text-sm font-medium">Unduh</span>

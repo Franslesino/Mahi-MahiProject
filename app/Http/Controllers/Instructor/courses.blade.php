@@ -1,13 +1,20 @@
 @extends('layouts.instructor')
 
 @section('content')
+<!-- ================================
+     HALAMAN KELOLA KURSUS INSTRUCTOR
+     Menampilkan daftar semua kursus yang diajar beserta statistik
+     ================================ -->
 <div class="p-8">
+    <!-- HEADER HALAMAN -->
     <div class="mb-6">
         <h2 class="text-2xl font-bold text-gray-800">Kursus Saya</h2>
         <p class="text-gray-600 mt-1">Kelola materi dan konten kursus Anda</p>
     </div>
 
+    <!-- CEK APAKAH ADA KURSUS -->
     @if($courses->isEmpty())
+        <!-- PESAN JIKA TIDAK ADA KURSUS -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
             <i class="fas fa-book text-gray-300 text-6xl mb-4"></i>
             <h3 class="text-xl font-semibold text-gray-700 mb-2">Belum Ada Kursus</h3>
@@ -15,10 +22,15 @@
             <p class="text-sm text-gray-400">Hubungi admin untuk menambahkan kursus ke akun Anda.</p>
         </div>
     @else
+        <!-- GRID KARTU KURSUS -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- LOOP SETIAP KURSUS -->
             @foreach($courses as $course)
+                <!-- KARTU KURSUS INDIVIDUAL -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
+                    <!-- GAMBAR HEADER KARTU -->
                     <div class="h-48 bg-gradient-to-br from-blue-500 to-blue-600 relative">
+                        <!-- Tampilkan gambar kursus jika ada, jika tidak tampilkan icon -->
                         @if($course->image)
                             <img src="{{ Storage::url($course->image) }}" alt="{{ $course->title }}" class="w-full h-full object-cover">
                         @else
@@ -26,11 +38,15 @@
                                 <i class="fas fa-graduation-cap text-white text-6xl opacity-20"></i>
                             </div>
                         @endif
+                        
+                        <!-- STATUS BADGE: Menunjukkan status kursus (Active/Draft/Inactive) -->
                         <div class="absolute top-4 right-4">
                             <span class="px-3 py-1 rounded-full text-xs font-medium {{ $course->status === 'active' ? 'bg-green-100 text-green-700' : ($course->status === 'draft' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700') }}">
                                 {{ ucfirst($course->status) }}
                             </span>
                         </div>
+                        
+                        <!-- BADGE KHUSUS: Tampilkan badge jika kursus memiliki sertifikat atau penghargaan -->
                         @if($course->badge)
                             <div class="absolute top-4 left-4">
                                 <span class="px-3 py-1 rounded-full text-xs font-medium bg-{{ $course->badge_color }}-100 text-{{ $course->badge_color }}-700">
@@ -40,45 +56,59 @@
                         @endif
                     </div>
 
+                    <!-- KONTEN KARTU -->
                     <div class="p-6">
+                        <!-- KATEGORI DAN MODE KURSUS -->
                         <div class="mb-2">
+                            <!-- Tag Kategori (Misal: Programming, Business, etc) -->
                             <span class="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
                                 {{ $course->category }}
                             </span>
+                            <!-- Tag Mode (Misal: Self-paced, Instructor-led) -->
                             <span class="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded ml-2">
                                 {{ $course->mode }}
                             </span>
                         </div>
 
+                        <!-- JUDUL KURSUS -->
                         <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
                             {{ $course->title }}
                         </h3>
+                        
+                        <!-- DESKRIPSI KURSUS (Dipotong maksimal 3 baris) -->
                         <p class="text-gray-600 text-sm mb-4 line-clamp-3">
                             {{ $course->description }}
                         </p>
 
+                        <!-- STATISTIK KURSUS: Jumlah materi dan video -->
                         <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                            <!-- Jumlah materi/konten dalam kursus -->
                             <div class="flex items-center gap-1">
                                 <i class="fas fa-file-alt"></i>
                                 <span>{{ $course->materials_count }} Materi</span>
                             </div>
+                            <!-- Jumlah video dalam kursus -->
                             <div class="flex items-center gap-1">
                                 <i class="fas fa-video"></i>
                                 <span>{{ $course->videos }} Video</span>
                             </div>
                         </div>
 
+                        <!-- HARGA KURSUS -->
                         @if($course->price)
                             <div class="flex items-center gap-2 mb-4">
+                                <!-- Jika ada diskon, tampilkan harga diskon dan harga asli (coret) -->
                                 @if($course->discount_price)
                                     <span class="text-lg font-bold text-green-600">Rp {{ number_format($course->discount_price, 0, ',', '.') }}</span>
                                     <span class="text-sm text-gray-500 line-through">Rp {{ number_format($course->price, 0, ',', '.') }}</span>
                                 @else
+                                    <!-- Jika tidak ada diskon, tampilkan harga normal -->
                                     <span class="text-lg font-bold text-gray-900">Rp {{ number_format($course->price, 0, ',', '.') }}</span>
                                 @endif
                             </div>
                         @endif
 
+                        <!-- TOMBOL KELOLA MATERI: Membawa ke halaman detail kursus untuk mengelola materi -->
                         <a href="{{ route('instructor.courses.show', $course) }}" 
                            class="block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
                             Kelola Materi

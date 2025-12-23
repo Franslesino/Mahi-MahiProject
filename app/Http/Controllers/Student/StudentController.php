@@ -19,11 +19,18 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
+/**
+ * Controller untuk fitur student.
+ */
 class StudentController extends Controller
 {
+    /**
+     * Menangani proses construct.
+     */
     public function __construct()
     {
-        $this->middleware(['auth', 'role:student']);
+        $this->middleware(['auth', 'role:student'])->except(['downloadCertificate', 'streamCertificate']);
+        $this->middleware('auth')->only(['downloadCertificate', 'streamCertificate']);
     }
 
     /**
@@ -127,6 +134,9 @@ class StudentController extends Controller
         ]);
     }
 
+    /**
+     * Menangani proses view materi.
+     */
     public function viewMaterial(Request $request, Kursus $course, $materialId)
     {
         $enrollment = Enrollment::where('user_id', Auth::id())
@@ -160,6 +170,9 @@ class StudentController extends Controller
         ]);
     }
 
+    /**
+     * Menandai materi complete.
+     */
     public function markMaterialComplete(Request $request, Kursus $course, $materialId)
     {
         $enrollment = Enrollment::where('user_id', Auth::id())
@@ -292,6 +305,9 @@ class StudentController extends Controller
         abort(404, 'File tidak ditemukan');
     }
 
+    /**
+     * Menangani proses kuis.
+     */
     public function quiz(Request $request, Kursus $course, Materi $material)
     {
         $enrollment = Enrollment::where('user_id', Auth::id())
@@ -347,6 +363,9 @@ class StudentController extends Controller
         ]);
     }
 
+    /**
+     * Menangani proses kuis submit.
+     */
     public function quizSubmit(Request $request, Kursus $course, Materi $material)
     {
         $enrollment = Enrollment::where('user_id', Auth::id())
@@ -415,6 +434,9 @@ class StudentController extends Controller
         ]);
     }
 
+    /**
+     * Menangani proses compute kuis results.
+     */
     private function computeQuizResults($assignment, $answers)
     {
         $results = [];
@@ -838,7 +860,8 @@ HTML;
      */
     public function downloadCertificate(Enrollment $enrollment)
     {
-        if ($enrollment->user_id !== Auth::id()) {
+        $user = Auth::user();
+        if (!$user || (!$user->isAdmin() && $enrollment->user_id !== $user->id)) {
             abort(403, 'Unauthorized');
         }
 
@@ -907,7 +930,8 @@ HTML;
      */
     public function streamCertificate(Enrollment $enrollment)
     {
-        if ($enrollment->user_id !== Auth::id()) {
+        $user = Auth::user();
+        if (!$user || (!$user->isAdmin() && $enrollment->user_id !== $user->id)) {
             abort(403, 'Unauthorized');
         }
 
@@ -982,6 +1006,9 @@ HTML;
         abort(404, 'Certificate file not found');
     }
 
+    /**
+     * Menangani proses resolve sertifikat public path.
+     */
     private function resolveCertificatePublicPath(?string $url): ?string
     {
         if (!$url) {

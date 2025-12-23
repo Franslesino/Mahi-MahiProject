@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Model untuk entitas soal option.
+ */
 class QuestionOption extends Model
 {
     use HasFactory;
